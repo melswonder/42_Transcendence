@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-transcendence}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - transcendence-network
+
+  backend:
+    image: python
+    container_name: python
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/transcendence}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./python:/app
+    networks:
+      - transcendence-network
+
+  frontend:
+    image: typescript
+    container_name: typescript
+    build:
+      context: ./typescript
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      # クライアントサイド（ブラウザ）からのアクセス用
+      # ブラウザから実行されるため、localhost を使用
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    depends_on:
+      - backend
+    volumes:
+      - ./typescript:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - transcendence-network
+
+networks:
+  transcendence-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
