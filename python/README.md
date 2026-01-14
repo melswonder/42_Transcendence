@@ -20,6 +20,7 @@ source ./.venv/bin/activate
 source ./.venv/bin/activate.fish 
 ```
 
+# 下やらなくていいかも1/14 uvで自動的にvenvを見ることができるらしく、sourceをわざわざしなくてもいいらしい
 # .venvを常に適応するためには
 ```bash
 pwd | xargs -I {} echo "{}/.venv/bin/activate"
