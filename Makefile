@@ -28,15 +28,15 @@ restart: down up
 logs:
 	docker compose -f $(COMPOSE_FILE) logs -f
 
-#
+# このプロジェクトのコンテナとイメージのみ削除（ボリュームは保持）
 clean: down
-	docker system prune -a -f
-	docker volume prune -f
+	docker rmi -f postgres python typescript 2>/dev/null || true
 
-fclean: clean
-	docker rmi -f $$(docker images -qa) 2>/dev/null || true
-	docker volume rm $$(docker volume ls -q) 2>/dev/null || true
-	docker network rm $$(docker network ls -q) 2>/dev/null || true
+# このプロジェクトのコンテナ、イメージ、ボリューム、ネットワークを全て削除
+fclean: down
+	docker rmi -f postgres python typescript 2>/dev/null || true
+	docker volume rm postgres_data 2>/dev/null || true
+	docker network rm transcendence_network 2>/dev/null || true
 
 re: fclean all
 

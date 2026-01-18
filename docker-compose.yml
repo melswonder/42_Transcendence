@@ -4,6 +4,9 @@ services:
   db:
     image: postgres
     container_name: postgres
+    build:
+      context: ./db/postgres
+      dockerfile: Dockerfile
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -61,7 +64,9 @@ services:
 
 networks:
   transcendence-network:
+    name: transcendence-network
     driver: bridge
 
 volumes:
   postgres_data:
+    name: postgres_data
