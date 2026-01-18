@@ -64,7 +64,7 @@ services:
 
 networks:
   transcendence-network:
-    name: transcendence_network
+    name: transcendence-network
     driver: bridge
 
 volumes:

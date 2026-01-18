@@ -35,8 +35,8 @@ clean: down
 # このプロジェクトのコンテナ、イメージ、ボリューム、ネットワークを全て削除
 fclean: down
 	docker rmi -f postgres python typescript 2>/dev/null || true
-	docker volume rm -f postgres_data 2>/dev/null || true
-	docker network rm -f transcendence_network 2>/dev/null || true
+	docker volume rm postgres_data 2>/dev/null || true
+	docker network rm transcendence_network 2>/dev/null || true
 
 re: fclean all
 
