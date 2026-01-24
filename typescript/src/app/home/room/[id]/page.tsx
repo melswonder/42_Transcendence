@@ -1,5 +1,10 @@
 import { RoomDetailWidget } from '@/widgets/room';
 
-export default function RoomDetailPage({ params }: { params: { id: string } }) {
-  return <RoomDetailWidget roomId={params.id} />;
+interface RoomPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function RoomPage({ params }: RoomPageProps) {
+  const { id } = await params;
+  return <RoomDetailWidget roomId={id} />;
 }

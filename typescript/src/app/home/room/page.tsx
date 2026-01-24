@@ -1,5 +1,5 @@
 import { RoomWidget } from '@/widgets/room';
 
-export default function RoomPage() {
+export default function RoomListPage() {
   return <RoomWidget />;
 }

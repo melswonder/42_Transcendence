@@ -1,7 +1,7 @@
-import HomePage from "./HomePage/page";
+'use client';
+
+import { HomeWidget } from '@/widgets/home';
 
 export default function Home() {
-  return (
-    <HomePage />
-  );
+  return <HomeWidget />;
 }
