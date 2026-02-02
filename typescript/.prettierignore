@@ -1,0 +1,9 @@
+.next
+out
+build
+node_modules
+dist
+*.min.js
+*.min.css
+pnpm-lock.yaml
+package-lock.json
