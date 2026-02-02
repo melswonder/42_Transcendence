@@ -9,11 +9,15 @@
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "validate": "pnpm format && pnpm lint"
+    "validate": "pnpm format && pnpm lint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
   },
   "dependencies": {
     "@mantine/core": "^8.3.14",
     "@mantine/hooks": "^8.3.14",
+    "@prisma/client": "^7.3.0",
     "dotenv": "^17.2.3",
     "next": "16.1.1",
     "react": "19.2.3",
@@ -31,6 +35,7 @@
     "postcss": "^8.5.6",
     "postcss-preset-mantine": "^1.18.0",
     "prettier": "^3.8.1",
+    "prisma": "^7.3.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
