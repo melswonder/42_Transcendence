@@ -1,5 +1,5 @@
-import HomePage from "./HomePage/page";
+import { HomeWidget } from "@/widgets/home";
 
 export default function Home() {
-  return <HomePage />;
+  return <HomeWidget />;
 }
