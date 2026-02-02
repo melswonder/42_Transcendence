@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "validate": "pnpm format && pnpm lint"
   },
   "dependencies": {
     "@mantine/core": "^8.3.14",
