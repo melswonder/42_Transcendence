@@ -1,1 +1,1 @@
-export { HomeWidget } from './ui/HomeWidget';
+export { HomeWidget } from "./ui/HomeWidget";

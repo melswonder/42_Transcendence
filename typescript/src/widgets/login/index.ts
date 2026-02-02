@@ -1,1 +1,1 @@
-export { LoginWidget } from './ui/LoginWidget';
+export { LoginWidget } from "./ui/LoginWidget";

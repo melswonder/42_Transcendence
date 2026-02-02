@@ -1,1 +1,1 @@
-export { UserAgreementWidget } from './ui/UserAgreementWidget';
+export { UserAgreementWidget } from "./ui/UserAgreementWidget";

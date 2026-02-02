@@ -1,1 +1,1 @@
-export { RegisterWidget } from './ui/RegisterWidget';
+export { RegisterWidget } from "./ui/RegisterWidget";

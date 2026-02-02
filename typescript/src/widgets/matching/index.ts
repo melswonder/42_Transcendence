@@ -1,1 +1,1 @@
-export { MatchingWidget } from './ui/MatchingWidget';
+export { MatchingWidget } from "./ui/MatchingWidget";

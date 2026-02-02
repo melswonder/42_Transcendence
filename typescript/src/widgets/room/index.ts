@@ -1,2 +1,2 @@
-export { RoomWidget } from './ui/RoomWidget';
-export { RoomDetailWidget } from './ui/RoomDetailWidget';
+export { RoomWidget } from "./ui/RoomWidget";
+export { RoomDetailWidget } from "./ui/RoomDetailWidget";

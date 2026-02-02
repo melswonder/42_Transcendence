@@ -1,4 +1,4 @@
-import { UserAgreementWidget } from '@/widgets/user-agreement';
+import { UserAgreementWidget } from "@/widgets/user-agreement";
 
 export default function UserAgreementPage() {
   return <UserAgreementWidget />;

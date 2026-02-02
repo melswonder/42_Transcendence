@@ -1,1 +1,1 @@
-export { PrivacyWidget } from './ui/PrivacyWidget';
+export { PrivacyWidget } from "./ui/PrivacyWidget";

@@ -1,1 +1,1 @@
-export { BattleWidget } from './ui/BattleWidget';
+export { BattleWidget } from "./ui/BattleWidget";
