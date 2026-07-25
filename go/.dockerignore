@@ -1,0 +1,5 @@
+tmp/
+*.env
+.env
+.env.local
+.git

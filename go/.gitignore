@@ -1,0 +1,7 @@
+# build artifacts
+tmp/
+main
+
+# env
+.env
+.env.local
