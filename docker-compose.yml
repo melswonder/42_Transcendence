@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   db:
-    image: postgres
+    image: transcendence-db
     container_name: postgres
     build:
       context: ./db/postgres
@@ -24,7 +22,7 @@ services:
       - transcendence-network
 
   backend:
-    image: go
+    image: transcendence-backend
     container_name: go
     build:
       context: ./go
@@ -42,7 +40,7 @@ services:
       - transcendence-network
 
   frontend:
-    image: typescript
+    image: transcendence-frontend
     container_name: typescript
     build:
       context: ./typescript
