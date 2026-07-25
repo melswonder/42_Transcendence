@@ -16,17 +16,20 @@ export NVM_DIR="$HOME/.nvm"
 # shellcheck disable=SC1091
 \. "$NVM_DIR/nvm.sh"
 
-# Node.js 20
-echo "⬇️  Node.js 20 をインストール中..."
-nvm install 20
-nvm use 20
+# Node.js 22（pnpm 11 が Node >= 22.13 を要求するため）
+echo "⬇️  Node.js 22 をインストール中..."
+nvm install 22
+nvm use 22
 
-# pnpm（corepack 経由）
+# pnpm（corepack 経由。バージョンは package.json の packageManager に従う）
 corepack enable pnpm
 
 # 依存関係インストール（絶対パスで typescript へ）
-echo "⬇️  pnpm install（typescript/）..."
 cd "$ROOT_DIR/typescript"
+echo "⬇️  pnpm をインストール中（packageManager のピン留めを適用）..."
+corepack install
+
+echo "⬇️  pnpm install（typescript/）..."
 pnpm install
 
 echo "✅ フロントエンド セットアップ完了: node $(node -v) / pnpm $(pnpm -v)"
