@@ -30,11 +30,11 @@ logs:
 
 # このプロジェクトのコンテナとイメージのみ削除（ボリュームは保持）
 clean: down
-	docker rmi -f postgres go typescript 2>/dev/null || true
+	docker rmi -f transcendence-db transcendence-backend transcendence-frontend 2>/dev/null || true
 
 # このプロジェクトのコンテナ、イメージ、ボリューム、ネットワークを全て削除
 fclean: down
-	docker rmi -f postgres go typescript 2>/dev/null || true
+	docker rmi -f transcendence-db transcendence-backend transcendence-frontend 2>/dev/null || true
 	docker volume rm postgres_data 2>/dev/null || true
 	docker network rm transcendence-network 2>/dev/null || true
 
