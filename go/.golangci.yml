@@ -1,0 +1,44 @@
+version: "2"
+
+linters:
+  # standard = errcheck, govet, ineffassign, staticcheck, unused
+  default: standard
+  enable:
+    - bodyclose # HTTP レスポンスボディの Close 漏れ
+    - errorlint # errors.Is / errors.As / %w の使い方
+    - misspell # よくあるスペルミス
+    - revive # golint 後継の一般的なスタイルチェック
+    - sqlclosecheck # sql.Rows / sql.Stmt の Close 漏れ
+  settings:
+    revive:
+      # デフォルトの revive は「exported な要素すべてに英語のドキュメントコメント必須」まで
+      # 要求してくるため、この構成では実用的なルールだけを明示的に有効化する。
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: range
+        - name: receiver-naming
+        - name: superfluous-else
+        - name: time-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: unused-parameter
+        - name: var-declaration
+  exclusions:
+    presets:
+      - std-error-handling
+    paths:
+      - tmp
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
