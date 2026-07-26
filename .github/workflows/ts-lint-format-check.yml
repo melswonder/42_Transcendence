@@ -1,0 +1,59 @@
+name: TypeScript Lint and Format
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'typescript/**'
+      - '.github/workflows/lint-format-check.yml'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'typescript/**'
+      - '.github/workflows/lint-format-check.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: typescript
+
+jobs:
+  lint-and-format:
+    name: Lint and Format (TypeScript)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # pnpm のバージョンは typescript/package.json の packageManager から読む
+      # （手書きしないことで package.json とのズレを防ぐ）
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: typescript/package.json
+
+      # engines.node は ">=22.13"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: typescript/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check code formatting with Prettier
+        run: pnpm format:check
+
+      - name: Run ESLint
+        if: ${{ !cancelled() }}
+        run: pnpm lint

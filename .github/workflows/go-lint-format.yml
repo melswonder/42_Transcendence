@@ -1,0 +1,59 @@
+name: Go Lint and Format
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'go/**'
+      - '.github/workflows/go-lint-format.yml'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'go/**'
+      - '.github/workflows/go-lint-format.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: go
+
+jobs:
+  lint-and-format:
+    name: Lint and Format (Go)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Go のバージョンは go/go.mod から読む
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+          # 標準ライブラリのみで go.sum が無いため、依存キャッシュは無効化する
+          cache: false
+
+      - name: Build
+        run: go build ./...
+
+      # golangci-lint の設定は go/.golangci.yml
+      # （standard セット + bodyclose / errorlint / misspell / revive / sqlclosecheck）
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.12.2
+          working-directory: go
+
+      # 上の action がインストールした golangci-lint を使って整形漏れを検出する
+      # （.golangci.yml の formatters: gofmt / goimports が対象）
+      - name: Check formatting (gofmt / goimports)
+        if: ${{ !cancelled() }}
+        run: golangci-lint fmt --diff
