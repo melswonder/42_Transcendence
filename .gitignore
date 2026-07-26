@@ -31,3 +31,6 @@ yarn-error.log*
 # Go
 go/tmp/
 go/main
+
+# pnpm
+.pnpm-store/

@@ -82,9 +82,9 @@ esac
 echo
 echo "🎉 セットアップ完了！"
 echo "   新しいシェルを開くか、以下を実行して PATH を反映してください:"
-if [ "$OS" = "macos" ]; then
-  echo "     source ~/.zshrc"
-else
-  echo "     source ~/.bashrc"
-fi
+# OS ではなくログインシェルで判定する（Linux でも zsh のことがある）
+case "$(basename "${SHELL:-bash}")" in
+  zsh) echo "     source ~/.zshrc" ;;
+  *)   echo "     source ~/.bashrc" ;;
+esac
 echo "   Docker でまとめて起動する場合は、リポジトリ直下で 'make' を実行してください。"
