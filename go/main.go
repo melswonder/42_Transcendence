@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
+	"transcendence-backend/handler"
 	"transcendence-backend/infrastructure"
-	"transcendence-backend/interface/handler"
 	"transcendence-backend/usecase"
 )
 

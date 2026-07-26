@@ -50,11 +50,14 @@ curl localhost:8000
 ### 大原則: 依存は内側にだけ流れる
 
 ```
-infrastructure ──> interface(handler) ──> usecase ──> domain
-     (外側)                                            (内側)
+infrastructure ──> handler ──> usecase ──> domain
+     (外側)                                 (内側)
 
-     依存の向き ───────────────────────────────────>
+     依存の向き ────────────────────────────>
 ```
+
+> Clean Architecture の原典では handler の層を "interface adapters" と呼ぶが、
+> `interface` は Go のキーワードで import パスも冗長になるため、ここでは `handler/` としている。
 
 外側（DB・HTTP といった技術の詳細）は内側を知ってよいが、
 **内側は外側を絶対に知ってはいけない**。`domain` は誰にも依存しない。
@@ -67,12 +70,12 @@ infrastructure ──> interface(handler) ──> usecase ──> domain
 
 ### 各層の責務
 
-| 層             | ディレクトリ         | 責務                                       | 依存してよい相手   |
-| -------------- | -------------------- | ------------------------------------------ | ------------------ |
-| domain         | `domain/`            | エンティティとビジネスルール               | なし（最も内側）   |
-| usecase        | `usecase/`           | 操作の流れ。必要な依存を interface で宣言  | domain             |
-| interface      | `interface/handler/` | HTTP ⇔ domain の変換、ルーティング         | usecase, domain    |
-| infrastructure | `infrastructure/`    | DB など技術詳細。usecase の interface を実装 | usecase, domain    |
+| 層             | ディレクトリ      | 責務                                         | 依存してよい相手 |
+| -------------- | ----------------- | -------------------------------------------- | ---------------- |
+| domain         | `domain/`         | エンティティとビジネスルール                 | なし（最も内側） |
+| usecase        | `usecase/`        | 操作の流れ。必要な依存を interface で宣言    | domain           |
+| handler        | `handler/`        | HTTP ⇔ domain の変換、ルーティング           | usecase, domain  |
+| infrastructure | `infrastructure/` | DB など技術詳細。usecase の interface を実装 | usecase, domain  |
 
 ### 繋ぎ目のキモ: 依存性逆転
 
@@ -139,7 +142,7 @@ func (r *GreetingRepo) Get() domain.Greeting {
 }
 ```
 
-**4. `interface/handler/greeting.go` — HTTP ⇔ domain の変換だけ**
+**4. `handler/greeting.go` — HTTP ⇔ domain の変換だけ**
 
 処理そのものは書かず、`usecase` を呼んで結果を JSON にするだけ。
 
@@ -195,7 +198,7 @@ type MatchUsecase struct{ repo MatchRepository }
 最初はメモリ実装で作り、後から PostgreSQL 実装に差し替えればいい。
 `usecase` 側は一切変更が要らない。
 
-**4. `interface/handler/match.go` — HTTP の入出力**
+**4. `handler/match.go` — HTTP の入出力**
 
 JSON をデコードして `usecase` に渡し、結果をエンコードして返すだけ。
 

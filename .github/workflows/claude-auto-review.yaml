@@ -30,7 +30,7 @@ jobs:
               パッケージマネージャは pnpm。アーキテクチャは FSD (Feature-Sliced Design) を採用し、
               ESLint で層の依存ルールを強制、Prettier で整形している。
             - `go/` : バックエンド。Go 標準ライブラリ (net/http) を使用。
-              Clean Architecture を採用（依存の向きは内側へ: infrastructure → interface(handler) → usecase → domain。
+              Clean Architecture を採用（依存の向きは内側へ: infrastructure → handler → usecase → domain。
               domain は何にも依存しない）。
             - `db/` : PostgreSQL。
 
