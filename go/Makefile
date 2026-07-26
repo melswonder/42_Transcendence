@@ -15,12 +15,23 @@ dev:
 build:
 	go build -o ./tmp/main .
 
-# 整形
+# 整形（golangci-lint が必要: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2）
 fmt:
-	go fmt ./...
+	golangci-lint fmt
 
-# 静的解析
+# 整形漏れのチェック（CI と同じ）
+fmt-check:
+	golangci-lint fmt --diff
+
+# 静的解析（CI と同じ。設定は .golangci.yml）
+lint:
+	golangci-lint run
+
+# 静的解析（golangci-lint 無しで最低限だけ確認したいとき）
 vet:
 	go vet ./...
 
-.PHONY: all start dev build fmt vet
+# CI と同じ内容をまとめて実行
+ci: build lint fmt-check
+
+.PHONY: all start dev build fmt fmt-check lint vet ci
