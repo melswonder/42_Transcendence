@@ -125,7 +125,7 @@ App Router では **すべてのコンポーネントがデフォルトで Serve
 ```tsx
 // Server Component（既定）: async にして直接 await できる
 export default async function Page() {
-  const res = await fetch("http://backend:8000");
+  const res = await fetch("http://backend:4000");
   const data = await res.json();
   return <p>{data.message}</p>;
 }
@@ -199,8 +199,8 @@ v3 までと違い **`tailwind.config.js` は無い**。設定は CSS に直接�
 
 | 呼び出し元                       | URL                                                          | 理由                                        |
 | -------------------------------- | ------------------------------------------------------------ | ------------------------------------------- |
-| Client Component / ブラウザ      | `process.env.NEXT_PUBLIC_API_URL`（`http://localhost:8000`） | ブラウザから見えるホスト名が必要            |
-| Server Component / Route Handler | `http://backend:8000`                                        | コンテナ間通信。Docker のネットワークで解決 |
+| Client Component / ブラウザ      | `process.env.NEXT_PUBLIC_API_URL`（`http://localhost:4000`） | ブラウザから見えるホスト名が必要            |
+| Server Component / Route Handler | `http://backend:4000`                                        | コンテナ間通信。Docker のネットワークで解決 |
 
 `NEXT_PUBLIC_` が付いた環境変数だけがブラウザ向けのバンドルに埋め込まれる。
 逆に言うと、**秘密にしたい値に `NEXT_PUBLIC_` を付けてはいけない**。

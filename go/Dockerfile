@@ -16,7 +16,7 @@ RUN go mod download
 COPY . .
 
 # ポートを公開
-EXPOSE 8000
+EXPOSE 4000
 
 # air でホットリロード起動（開発モード）
 CMD ["air", "-c", ".air.toml"]

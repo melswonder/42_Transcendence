@@ -25,7 +25,7 @@ air によるホットリロードが効くので、`go/` 以下を編集すれ�
 ### ホストで直接
 
 ```bash
-make start              # デフォルト :8000
+make start              # デフォルト :4000
 make port=5555 start    # ポート指定
 make dev                # ホットリロード（air が必要）
 ```
@@ -41,7 +41,7 @@ go install github.com/air-verse/air@v1.61.7
 ### 動作確認
 
 ```bash
-curl localhost:8000
+curl localhost:4000
 # {"message":"Hello from Go!"}
 ```
 
@@ -257,7 +257,7 @@ CI は [.github/workflows/go-lint-format.yml](../.github/workflows/go-lint-forma
 
 | 変数           | 説明                  | デフォルト |
 | -------------- | --------------------- | ---------- |
-| `PORT`         | リッスンするポート    | `8000`     |
+| `PORT`         | リッスンするポート    | `4000`     |
 | `DATABASE_URL` | PostgreSQL 接続文字列 | -          |
 
 Docker で起動する場合はルートの `.env` から渡される。

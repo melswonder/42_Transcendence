@@ -28,7 +28,7 @@ services:
       context: ./go
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "4000:4000"
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/transcendence}
     depends_on:
@@ -50,7 +50,7 @@ services:
     environment:
       # クライアントサイド（ブラウザ）からのアクセス用
       # ブラウザから実行されるため、localhost を使用
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
     depends_on:
       - backend
     volumes:

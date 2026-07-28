@@ -7,7 +7,7 @@ Next.js（フロントエンド） + Go（バックエンド） + PostgreSQL の
 ```
 42_Transcendence/
 ├── typescript/   フロントエンド : Next.js (App Router) + TailwindCSS  → :3000
-├── go/           バックエンド   : Go 標準ライブラリ (net/http)         → :8000
+├── go/           バックエンド   : Go 標準ライブラリ (net/http)         → :4000
 ├── db/postgres/  データベース   : PostgreSQL 16                        → :5432
 ├── setup/        ローカル開発環境のセットアップスクリプト
 ├── docker-compose.yml
@@ -22,12 +22,12 @@ Next.js（フロントエンド） + Go（バックエンド） + PostgreSQL の
 ## サービス間の関係
 
 ```
-ブラウザ ──> frontend (:3000) ──> backend (:8000) ──> db (:5432)
+ブラウザ ──> frontend (:3000) ──> backend (:4000) ──> db (:5432)
               Next.js              Go net/http        PostgreSQL
 ```
 
-ブラウザから直接叩く API の URL は `NEXT_PUBLIC_API_URL`（既定 `http://localhost:8000`）。
-サーバー間通信ではコンテナ名（`http://backend:8000`）で解決できるが、
+ブラウザから直接叩く API の URL は `NEXT_PUBLIC_API_URL`（既定 `http://localhost:4000`）。
+サーバー間通信ではコンテナ名（`http://backend:4000`）で解決できるが、
 `NEXT_PUBLIC_` 付きの変数はブラウザで評価されるため `localhost` を使う点に注意。
 
 ## はじめかた
@@ -44,7 +44,7 @@ cp .env.example .env
 | `POSTGRES_PASSWORD`   | DB パスワード                              | `postgres`                      |
 | `POSTGRES_DB`         | DB 名                                      | `transcendence`                 |
 | `DATABASE_URL`        | バックエンドの接続文字列                   | `postgresql://postgres:...`     |
-| `NEXT_PUBLIC_API_URL` | ブラウザから見たバックエンドの URL         | `http://localhost:8000`         |
+| `NEXT_PUBLIC_API_URL` | ブラウザから見たバックエンドの URL         | `http://localhost:4000`         |
 
 ### 2. Docker で全部起動（推奨）
 
@@ -55,7 +55,7 @@ make down   # 停止・削除
 ```
 
 - http://localhost:3000 … フロントエンド
-- http://localhost:8000 … バックエンド（`{"message":"Hello from Go!"}` が返る）
+- http://localhost:4000 … バックエンド（`{"message":"Hello from Go!"}` が返る）
 
 どちらもホットリロードが効く。`./go` と `./typescript` がコンテナにマウントされていて、
 Go は air、Next.js は dev サーバーがファイル変更を検知する。
