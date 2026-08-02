@@ -1,14 +1,20 @@
 # 42_Transcendence
 
-Next.js（フロントエンド） + Go（バックエンド） + PostgreSQL の3コンテナ構成のプロジェクト。
+オンライン対戦型 **Quoridor（コリドール）** プラットフォーム。
+Next.js（フロントエンド） + Go（バックエンド） + PostgreSQL の3コンテナ構成。
 
 ## 構成
 
 ```
 42_Transcendence/
 ├── typescript/   フロントエンド : Next.js (App Router) + TailwindCSS  → :3000
-├── go/           バックエンド   : Go 標準ライブラリ (net/http)         → :4000
+│   └── types/models.ts           DB スキーマに対応する型定義
+├── go/           バックエンド   : Go (net/http)                        → :4000
+│   ├── cmd/migrate/  GORM の構造体から DDL を生成（Atlas 用）
+│   ├── atlas.hcl     マイグレーション設定
+│   └── infrastructure/model.go   GORM の永続化モデル
 ├── db/postgres/  データベース   : PostgreSQL 16                        → :5432
+├── docs/         設計ドキュメント（評価対象。Notion ではなくここが正本）
 ├── setup/        ローカル開発環境のセットアップスクリプト
 ├── docker-compose.yml
 └── Makefile      docker compose のラッパー
@@ -16,8 +22,59 @@ Next.js（フロントエンド） + Go（バックエンド） + PostgreSQL の
 
 各ディレクトリの詳細はそれぞれの README を参照:
 
-- [typescript/README.md](typescript/README.md) — Next.js App Router の使い方、Tailwind、Lint/Format
-- [go/README.md](go/README.md) — Clean Architecture の考え方、層の追加方法、Lint/Format
+- [typescript/README.md](typescript/README.md) — App Router、Server/Client Component、Feature-Sliced Design、型定義の同期、Tailwind、Lint/Format
+- [go/README.md](go/README.md) — Clean Architecture の考え方、層の追加方法、DB マイグレーション、Lint/Format
+
+## ドキュメント
+
+設計資料は `docs/` に置く。**Notion は下書きであり、評価対象は Git リポジトリ内のこちら。**
+
+| ドキュメント | 内容 |
+| --- | --- |
+| [docs/database-design.md](docs/database-design.md) | DB 設計の正本。全テーブル・制約・インデックス・トランザクション境界・Redis キー |
+| [docs/FSD.md](docs/FSD.md) | フロントエンドの Feature-Sliced Design |
+
+## 技術スタック
+
+### 現在使っているもの
+
+| 領域 | 技術 | 選定理由 |
+| --- | --- | --- |
+| フロントエンド | **Next.js** (App Router) + TypeScript | 課題が求めるフレームワーク要件を満たす。SSR とファイルベースルーティングでページ追加のコストが低い |
+| スタイリング | **TailwindCSS** | 盤面 UI をレスポンシブに組むのに、独自 CSS を書かずクラスだけで完結できる |
+| フロント設計 | **Feature-Sliced Design** | 層ごとの依存方向が決まっているため、機能追加で構造が壊れにくい（[docs/FSD.md](docs/FSD.md)） |
+| バックエンド | **Go** + `net/http` | 標準ライブラリだけで HTTP と goroutine による並行処理が完結する。WebSocket の多重接続を捌く用途に向く |
+| バックエンド設計 | **Clean Architecture** | ゲームルール（domain）を HTTP・DB・WebSocket から独立させ、単体テストできる状態に保つ |
+| データベース | **PostgreSQL 16** | 後述 |
+| ORM | **GORM** | Go で最も広く使われる ORM。構造体からスキーマを導出でき、`cmd/migrate` の仕組みがそのまま使える |
+| マイグレーション | **Atlas** (`ariga.io/atlas`) | GORM の `AutoMigrate` と違い、**バージョン管理された SQL ファイル**として差分を残せる。ロールバック手順を持てる |
+| 実行環境 | **Docker Compose** | `cp .env.example .env` の後、単一コマンドで全サービスが起動する |
+| ホットリロード | **air**（Go） / Next.js dev server | `go/` `typescript/` をコンテナにマウントしているため、編集が即反映される |
+| Lint / Format | **golangci-lint v2**（Go） / **ESLint + Prettier**（TS） | CI と同じチェックをローカルで実行できる |
+
+### なぜ PostgreSQL を選んだか
+
+このプロジェクトは**アプリケーションのバグやレースコンディションを DB 制約で止める**方針を採っている（[docs/database-design.md](docs/database-design.md) §1）。そのために以下が必要で、いずれも PostgreSQL で使える。
+
+- **partial unique index** — 「進行中の対局に同時参加できない」「退会済みユーザーは handle の一意性判定から外す」といった条件付き一意制約
+- **CHECK 制約** — 盤面座標の範囲（0〜8）、`walls_remaining + walls_used = 10` のような複数列にまたがる不変条件
+- **`citext`** — 大文字小文字を区別しないメールアドレスの一意性
+- **`JSONB`** — `match_actions.payload` に操作内容を型を固定せず保存する
+- **`TIMESTAMPTZ`** — タイムゾーン付きの時刻。タイムアウト判定の正本になる
+- **トランザクションと行ロック** — `SELECT ... FOR UPDATE` で同一ターンの競合操作を直列化する
+
+MySQL でも大半は代替できるが、partial unique index が無いため上記の二重参加防止をアプリ側検証に逃がすことになる。設計方針と合わないため PostgreSQL を選んだ。
+
+### 今後追加する予定のもの
+
+| 領域 | 技術 | 対応 Issue |
+| --- | --- | --- |
+| バックエンドフレームワーク | Gin（`net/http` から移行） | [#2](../../issues/2) |
+| キャッシュ・presence・Pub/Sub | Redis | [#3](../../issues/3) |
+| リアルタイム通信 | WebSocket（サーバー権威型） | [#8](../../issues/8) |
+| リバースプロキシ / HTTPS・WSS | Caddy または Nginx | [#15](../../issues/15) |
+| API ドキュメント | OpenAPI / Swagger | [#12](../../issues/12) |
+| 多言語対応 | i18n（日本語 / 英語 / フランス語） | [#14](../../issues/14) |
 
 ## サービス間の関係
 
@@ -69,6 +126,21 @@ Go / Node のツールチェーンをホストに入れる:
 ./setup/setup.sh go           # Go だけ
 ./setup/setup.sh typescript   # フロントだけ
 ```
+
+## データベースとマイグレーション
+
+スキーマの正本は [docs/database-design.md](docs/database-design.md)。それを GORM の構造体へ写したものが `go/infrastructure/model.go`。
+
+```bash
+cd go
+make schema         # GORM の構造体から DDL を生成して表示（確認用）
+make migrate-diff name=add_users   # 差分から migration ファイルを生成
+make migrate-apply  # DB へ適用
+```
+
+**注意: 生成された DDL は完成形ではない。** partial unique index、`CREATE EXTENSION citext`、循環外部キーは GORM のタグでは表現できないため、手書きの SQL migration で補う必要がある。何を補うべきかは `go/infrastructure/model.go` の各構造体のコメントに書いてある。
+
+詳細は [go/README.md#データベース--マイグレーション](go/README.md#データベース--マイグレーション)。
 
 ## Makefile（ルート）
 
