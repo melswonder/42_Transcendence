@@ -37,8 +37,8 @@ nvm alias default 22
 # pnpm（corepack 経由。バージョンは package.json の packageManager に従う）
 corepack enable pnpm
 
-# 依存関係インストール（絶対パスで typescript へ）
-cd "$ROOT_DIR/typescript"
+# 依存関係インストール（絶対パスで frontend へ）
+cd "$ROOT_DIR/frontend"
 echo "⬇️  pnpm をインストール中（packageManager のピン留めを適用）..."
 corepack install
 
@@ -48,7 +48,7 @@ corepack install
 STORE_DIR="${PNPM_STORE_DIR:-$ROOT_DIR/.pnpm-store}"
 mkdir -p "$STORE_DIR"
 
-echo "⬇️  pnpm install（typescript/ / store: $STORE_DIR）..."
+echo "⬇️  pnpm install（frontend/ / store: $STORE_DIR）..."
 pnpm install --store-dir "$STORE_DIR"
 
 echo "✅ フロントエンド セットアップ完了: node $(node -v) / pnpm $(pnpm -v)"

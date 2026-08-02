@@ -7,7 +7,7 @@ Go 1.24 / 外部フレームワークなし 設計は**Clean Architecture**。
 ```bash
 # Docker（ルートから）
 make up
-make exec-go
+make exec-backend
 
 # ホストで直接
 make start              # :4000
@@ -182,8 +182,8 @@ go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
 //nolint:errcheck // ベストエフォートなので失敗しても続行する
 ```
 
-CI は [.github/workflows/go-lint-format.yml](../.github/workflows/go-lint-format.yml)。
-`go/**` に変更がある PR / push で走るので、push 前に `make ci` を通しておくと落ちない。
+CI は [.github/workflows/backend-lint-format.yml](../.github/workflows/backend-lint-format.yml)。
+`backend/**` に変更がある PR / push で走るので、push 前に `make ci` を通しておくと落ちない。
 
 ## 環境変数
 

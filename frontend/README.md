@@ -8,7 +8,7 @@ Next.js 16（App Router）/ React 19 / TailwindCSS v4。パッケージマネー
 ```bash
 # Docker（ルートから）
 make up                 # http://localhost:3000
-make exec-typescript
+make exec-frontend
 
 # ホストで直接
 corepack enable pnpm            # package.json でピン留めした pnpm が使えるようになる
@@ -102,7 +102,7 @@ export default function Counter() {
 ## ディレクトリ構成
 
 ```
-typescript/
+frontend/
 ├── app/                  ルーティングと画面（App Router）
 │   ├── layout.tsx        ルートレイアウト
 │   ├── page.tsx          トップページ
@@ -155,7 +155,7 @@ docs/database-design.md          設計の正本（人が読む）
         │  写す
         ├──────────────────────────────┐
         ▼                              ▼
-go/infrastructure/model.go       typescript/types/models.ts
+backend/infrastructure/model.go  frontend/types/models.ts
    GORM の構造体（→ Atlas）         フロントの型
 ```
 
@@ -197,7 +197,7 @@ v3 までと違い **`tailwind.config.js` は無い**。設定は CSS に直接�
 `NEXT_PUBLIC_` が付いた環境変数**だけ**がブラウザ向けのバンドルに埋め込まれる。
 逆に言うと、**秘密にしたい値に `NEXT_PUBLIC_` を付けてはいけない**。
 
-許可されるオリジンはバックエンド側の `go/main.go` の `allowedOrigins` にある。
+許可されるオリジンはバックエンド側の `backend/main.go` の `allowedOrigins` にある。
 サービス間の関係はルートの [README.md](../README.md#サービス間の関係) を参照。
 
 ## Lint / Format
@@ -216,7 +216,7 @@ pnpm lint        # 静的解析
 pnpm lint:fix    # 自動修正できるものを直す
 ```
 
-CI は [lint-format-check.yml](../.github/workflows/lint-format-check.yml)。
-`typescript/**` に変更がある PR / push で走るので、push 前に `pnpm format && pnpm lint` を通しておくと落ちない。
+CI は [frontend-lint-format.yml](../.github/workflows/frontend-lint-format.yml)。
+`frontend/**` に変更がある PR / push で走るので、push 前に `pnpm format && pnpm lint` を通しておくと落ちない。
 
 レビュー観点は [pull_request_template.md](../.github/pull_request_template.md) にある。

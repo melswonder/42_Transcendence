@@ -247,4 +247,4 @@ export default async function Page({
 3. 同じボタンや fetch を 2 回書いたら `shared/` へ下ろす
 4. ログイン・マッチメイキングなど動作が増えたら `features/` を切る
 
-フロント側のセットアップやコマンドは [typescript/README.md](../typescript/README.md) を参照。
+フロント側のセットアップやコマンドは [frontend/README.md](../frontend/README.md) を参照。

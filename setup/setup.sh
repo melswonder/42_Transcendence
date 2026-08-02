@@ -5,9 +5,9 @@
 #   両方（またはどちらか一方）をセットアップする。
 #
 # 使い方:
-#   ./setup.sh              # Go と TypeScript 両方
-#   ./setup.sh go           # Go だけ
-#   ./setup.sh typescript   # フロントエンドだけ（ts でも可）
+#   ./setup.sh              # バックエンドとフロントエンド両方
+#   ./setup.sh backend      # バックエンド（Go）だけ
+#   ./setup.sh frontend     # フロントエンド（TypeScript）だけ
 #   ./setup.sh -h           # ヘルプ
 # ------------------------------------------------------------
 set -euo pipefail
@@ -20,9 +20,9 @@ usage() {
 Usage: ./setup.sh [target]
 
   target:
-    all          Go と TypeScript の両方をセットアップ（デフォルト）
-    go           Go バックエンドのみ
-    typescript   フロントエンドのみ（ts でも可）
+    all          バックエンドとフロントエンドの両方をセットアップ（デフォルト）
+    backend      バックエンド（Go）のみ（go でも可）
+    frontend     フロントエンド（TypeScript）のみ（ts / typescript でも可）
     -h, --help   このヘルプを表示
 EOF
 }
@@ -48,32 +48,32 @@ setup_env() {
   fi
 }
 
-run_go() {
-  echo "==================== Go セットアップ ($OS) ===================="
-  bash "$SCRIPT_DIR/go/$OS.sh"
+run_backend() {
+  echo "=============== バックエンド（Go）セットアップ ($OS) ==============="
+  bash "$SCRIPT_DIR/backend/$OS.sh"
 }
 
-run_ts() {
-  echo "================ TypeScript セットアップ ($OS) ================"
-  bash "$SCRIPT_DIR/typescript/$OS.sh"
+run_frontend() {
+  echo "========= フロントエンド（TypeScript）セットアップ ($OS) ========="
+  bash "$SCRIPT_DIR/frontend/$OS.sh"
 }
 
 echo "🖥  OS: $OS / 対象: $TARGET"
 
 case "$TARGET" in
   -h|--help) usage; exit 0 ;;
-  go)
+  backend|go)
     setup_env
-    run_go
+    run_backend
     ;;
-  typescript|ts)
+  frontend|typescript|ts)
     setup_env
-    run_ts
+    run_frontend
     ;;
   all)
     setup_env
-    run_go
-    run_ts
+    run_backend
+    run_frontend
     ;;
   *)
     echo "❌ 不明な引数: $TARGET"; echo; usage; exit 1 ;;

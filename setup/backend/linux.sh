@@ -3,7 +3,7 @@
 set -euo pipefail
 
 GO_VERSION=1.23.4
-GO_REQUIRED_MINOR=23   # go/go.mod の go ディレクティブに合わせる（1.x の x）
+GO_REQUIRED_MINOR=23   # backend/go.mod の go ディレクティブに合わせる（1.x の x）
 
 # CPU アーキテクチャを判定
 case "$(uname -m)" in
@@ -71,7 +71,7 @@ if ! grep -qsF "$GO_BIN_DIR" "$RC_FILE" 2>/dev/null; then
 fi
 
 # air（ホットリロード）
-# @latest は Go 1.26 以上を要求するため、Go 1.23 対応の最終版に固定（go/Dockerfile と揃える）
+# @latest は Go 1.26 以上を要求するため、Go 1.23 対応の最終版に固定（backend/Dockerfile と揃える）
 echo "⬇️  air をインストール中..."
 go install github.com/air-verse/air@v1.61.7
 

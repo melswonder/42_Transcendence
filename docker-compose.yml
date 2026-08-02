@@ -23,9 +23,9 @@ services:
 
   backend:
     image: transcendence-backend
-    container_name: go
+    container_name: backend
     build:
-      context: ./go
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "4000:4000"
@@ -35,15 +35,15 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ./go:/app
+      - ./backend:/app
     networks:
       - transcendence-network
 
   frontend:
     image: transcendence-frontend
-    container_name: typescript
+    container_name: frontend
     build:
-      context: ./typescript
+      context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
@@ -54,7 +54,7 @@ services:
     depends_on:
       - backend
     volumes:
-      - ./typescript:/app
+      - ./frontend:/app
       - /app/node_modules
       - /app/.next
     networks:

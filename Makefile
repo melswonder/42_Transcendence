@@ -52,10 +52,10 @@ images:
 exec-postgres:
 	docker exec -it postgres bash
 
-exec-go:
-	docker exec -it go sh
+exec-backend:
+	docker exec -it backend sh
 
-exec-typescript:
-	docker exec -it typescript bash
+exec-frontend:
+	docker exec -it frontend bash
 
-.PHONY: all build up down stop start restart logs clean fclean re status exec-postgres exec-go exec-typescript
+.PHONY: all build up down stop start restart logs clean fclean re status exec-postgres exec-backend exec-frontend

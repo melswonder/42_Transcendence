@@ -6,15 +6,15 @@ on:
       - main
       - develop
     paths:
-      - 'typescript/**'
-      - '.github/workflows/lint-format-check.yml'
+      - 'frontend/**'
+      - '.github/workflows/frontend-lint-format.yml'
   push:
     branches:
       - main
       - develop
     paths:
-      - 'typescript/**'
-      - '.github/workflows/lint-format-check.yml'
+      - 'frontend/**'
+      - '.github/workflows/frontend-lint-format.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -22,7 +22,7 @@ concurrency:
 
 defaults:
   run:
-    working-directory: typescript
+    working-directory: frontend
 
 jobs:
   lint-and-format:
@@ -33,12 +33,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # pnpm のバージョンは typescript/package.json の packageManager から読む
+      # pnpm のバージョンは frontend/package.json の packageManager から読む
       # （手書きしないことで package.json とのズレを防ぐ）
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          package_json_file: typescript/package.json
+          package_json_file: frontend/package.json
 
       # engines.node は ">=22.13"
       - name: Setup Node.js
@@ -46,7 +46,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
-          cache-dependency-path: typescript/pnpm-lock.yaml
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

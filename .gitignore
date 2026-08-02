@@ -29,8 +29,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # Go
-go/tmp/
-go/main
+backend/tmp/
+backend/main
 
 # pnpm
 .pnpm-store/
