@@ -143,7 +143,8 @@ shared     どこからでも使える汎用部品。UI・hooks・lib・types
 共有したくなったら一段下の層へ下ろす。これを守ると、機能を消すときにディレクトリごと消せる。
 
 現状は `app/` と `types/`（将来 `shared/types` に相当）だけ。画面が増えるタイミングで上記の層を切っていく。
-層の定義は [docs/FSD.md](../docs/FSD.md)、原典は [公式ドキュメント](https://feature-sliced.github.io/documentation/)。
+層の定義・スライスとセグメントの切り方・Next.js App Router との噛み合わせは [docs/FSD.md](../docs/FSD.md)、
+原典は [公式ドキュメント](https://feature-sliced.github.io/documentation/)。
 
 ## 型定義とスキーマの同期
 
