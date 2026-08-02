@@ -1,33 +1,21 @@
-# バックエンド（Go 標準ライブラリ net/http）
+# バックエンド 言語Go
 
-Go 1.23 / 外部フレームワークなし。設計は **Clean Architecture**。
-
-## 目次
-
-- [起動する](#起動する)
-- [アーキテクチャ](#アーキテクチャ)
-- [今のコードを読んでみる（Greeting の例）](#今のコードを読んでみるgreeting-の例)
-- [機能を追加する手順](#機能を追加する手順)
-- [Lint / Format](#lint--format)
-- [環境変数](#環境変数)
+Go 1.24 / 外部フレームワークなし 設計は**Clean Architecture**。
 
 ## 起動する
 
-### Docker（ルートから）
-
 ```bash
-make up          # 全サービス起動
-make exec-go     # コンテナに入る
-```
+# Docker（ルートから）
+make up
+make exec-go
 
-air によるホットリロードが効くので、`go/` 以下を編集すれば自動で再ビルドされる。
-
-### ホストで直接
-
-```bash
-make start              # デフォルト :4000
-make port=5555 start    # ポート指定
+# ホストで直接
+make start              # :4000
+make port=5555 start
 make dev                # ホットリロード（air が必要）
+
+# 動作確認
+curl localhost:4000     # {"message":"Hello from Go!"}
 ```
 
 air のインストール:
@@ -36,37 +24,38 @@ air のインストール:
 go install github.com/air-verse/air@v1.61.7
 ```
 
-> `@latest` は Go 1.26 以上を要求するため、このプロジェクト（Go 1.23）では v1.61.7 に固定する。
-
-### 動作確認
-
-```bash
-curl localhost:4000
-# {"message":"Hello from Go!"}
-```
+> `@latest` は Go 1.26 以上を要求するため、このプロジェクト（Go 1.24）では v1.61.7 に固定する。
 
 ## アーキテクチャ
 
 ### 大原則: 依存は内側にだけ流れる
 
 ```
-infrastructure ──> handler ──> usecase ──> domain
-     (外側)                                 (内側)
-
-     依存の向き ────────────────────────────>
+外側    handler                    infrastructure
+        HTTP の入出力               DB・外部サービス
+           │                          │
+           │ 呼ぶ                      │ interface を実装する
+           ▼                          ▼
+内側    usecase   操作の流れ + repository interface の宣言
+           │
+           ▼
+内側    domain    エンティティとルール。何にも依存しない
 ```
-
-> Clean Architecture の原典では handler の層を "interface adapters" と呼ぶが、
-> `interface` は Go のキーワードで import パスも冗長になるため、ここでは `handler/` としている。
 
 外側（DB・HTTP といった技術の詳細）は内側を知ってよいが、
 **内側は外側を絶対に知ってはいけない**。`domain` は誰にも依存しない。
+
+`handler` と `infrastructure` は**互いに依存しない兄弟**で、どちらも外側にいる。
+両者を繋いで組み立てるのは `main.go`（composition root）の仕事。
 
 なぜそうするのか:
 
 - DB を PostgreSQL から別のものに変えても、`domain` と `usecase` は書き換えなくていい
 - HTTP を WebSocket や gRPC に変えても、ビジネスロジックはそのまま使える
 - `usecase` のテストで本物の DB を用意しなくていい（偽物の実装を差し込めばいい）
+
+> Clean Architecture の原典では handler の層を "interface adapters" と呼ぶが、
+> `interface` は Go のキーワードで import パスも冗長になるため、ここでは `handler/` としている。
 
 ### 各層の責務
 
@@ -102,128 +91,79 @@ infrastructure ──> handler ──> usecase ──> domain
 `usecase` は「Get() できる何か」しか知らない。それが PostgreSQL なのかメモリなのかは知らないし、
 知る必要もない。具象を作って注入する配線は `main.go`（composition root）だけが担当する。
 
-## 今のコードを読んでみる（Greeting の例）
+4層すべてが揃った最小の実例が `*/greeting.go`（`GET /` が JSON を返すだけ）。まずこれを読むとよい。
 
-現状は `GET /` が JSON を返すだけだが、4層すべてが揃っている最小の見本になっている。
+### 機能を追加する手順
 
-**1. `domain/greeting.go` — 何にも依存しない**
+**内側から外側へ**作っていく。
 
-```go
-type Greeting struct {
-	Message string
-}
+1. `domain/xxx.go` — エンティティとビジネスルール（HTTP も DB も出てこない）
+2. `usecase/xxx.go` — 操作の流れ。必要な依存を `XxxRepository` interface として宣言する
+3. `infrastructure/xxx.go` — 2 の interface を実装。最初はメモリ実装で作り、後から PostgreSQL 実装へ差し替えればいい（`usecase` 側の変更は不要）
+4. `handler/xxx.go` — JSON をデコードして `usecase` に渡し、結果をエンコードして返すだけ
+5. `main.go` — 具象を作って内側へ注入し、ルーティングに登録する
+
+レビュー観点は [pull_request_template.md](../.github/pull_request_template.md) にある。
+
+## データベース / マイグレーション
+
+スキーマの正本は [docs/database-design.md](../docs/database-design.md)。そこから下流へこう流れる。
+
+```
+docs/database-design.md          設計の正本（人が読む）
+        │  写す
+        ▼
+infrastructure/model.go          GORM の構造体
+        │  go run ./cmd/migrate
+        ▼
+DDL（CREATE TABLE ...）          あるべきスキーマ
+        │  atlas migrate diff
+        ▼
+migrations/*.sql                 バージョン管理された移行手順
+        │  atlas migrate apply
+        ▼
+PostgreSQL
 ```
 
-**2. `usecase/greeting.go` — 欲しい機能を interface で宣言し、それだけを使う**
+```bash
+make schema                        # DDL を表示（DB 不要）
+make migrate-diff name=add_users   # 差分から migrations/*.sql を生成
+make migrate-apply                 # DB へ適用
 
-```go
-// 繋ぎ目。実装は infrastructure が提供する。
-type GreetingRepository interface {
-	Get() domain.Greeting
-}
-
-type GreetingUsecase struct {
-	repo GreetingRepository // 具象ではなく interface を持つ
-}
-
-func (u *GreetingUsecase) Hello() domain.Greeting {
-	return u.repo.Get()
-}
+curl -sSf https://atlasgo.sh | sh  # Atlas のインストール
 ```
 
-**3. `infrastructure/greeting.go` — interface を実装する**
+押さえておくこと:
 
-```go
-// コンパイル時に「ちゃんと実装できているか」を検査する定型句
-var _ usecase.GreetingRepository = (*GreetingRepo)(nil)
+- **GORM の `AutoMigrate` は使わない。** 起動時にテーブルを勝手に書き換えるため記録が残らず、ロールバックもできない。代わりに Atlas で差分を SQL ファイルとして残す
+- **`make schema` の出力は完成形ではない。** partial unique index・`CREATE EXTENSION citext`・複数列 CHECK・循環 FK は GORM のタグで表現できないため、`migrations/` に手書き SQL として足す。何を足すべきかは `infrastructure/model.go` の各構造体の doc コメントに列挙してある
+- **GORM モデルは `domain` ではなく `infrastructure` に置く。** GORM のタグは DB の都合であり、`domain` に書くと「何にも依存しない」原則が崩れるため。`domain` のエンティティとは別物として扱い、変換は repository の責務
+- `cmd/migrate` は DDL を標準出力へ吐くだけの部品で、単体では何も migrate しない。設定の詳細は [atlas.hcl](atlas.hcl) の冒頭コメントを参照
 
-func (r *GreetingRepo) Get() domain.Greeting {
-	return domain.Greeting{Message: "Hello from Go!"}
-}
-```
+## 依存管理（go.mod / go.sum）
 
-**4. `handler/greeting.go` — HTTP ⇔ domain の変換だけ**
+| ファイル | 役割 | 例え |
+| --- | --- | --- |
+| `go.mod` | モジュール名、必要な Go バージョン、依存パッケージとそのバージョンの**宣言** | 買い物リスト |
+| `go.sum` | 実際にダウンロードした各モジュールの**ハッシュ台帳**。改ざん検知に使う | レシート＋封印シール |
 
-処理そのものは書かず、`usecase` を呼んで結果を JSON にするだけ。
+**どちらも Git にコミットする。** これがあるおかげで、誰がいつビルドしても同じ依存が入る（再現性）。
 
-**5. `main.go` — 配線（composition root）**
+`go.mod` の `// indirect` は「自分のコードが直接 import していない」という印。`gorm.io/gorm` が indirect にいるのは、コード中で `import "gorm.io/gorm"` を書かず GORM タグ（文字列）だけを使っているため。
 
-```go
-repo := infrastructure.NewGreetingRepo() // 具象を作り
-uc := usecase.NewGreetingUsecase(repo)   // 内側へ注入していく
-h := handler.NewGreetingHandler(uc)
+| コマンド | 内容 |
+| --- | --- |
+| `go get X` | X を追加・更新 |
+| `go mod tidy` | 実際の import と突き合わせて過不足を修正。**依存を足したら必ず実行する** |
+| `go mod verify` | 手元のキャッシュが `go.sum` と一致するか検証 |
 
-mux.HandleFunc("/", h.Hello)
-```
-
-`main.go` は CORS ミドルウェアも持っている。許可オリジンは `allowedOrigins` で管理。
-
-## 機能を追加する手順
-
-例として「対戦結果（Match）」を足す場合、**内側から外側へ**作っていく。
-
-**1. `domain/match.go` — エンティティとルール**
-
-```go
-package domain
-
-type Match struct {
-	ID      string
-	Player1 string
-	Player2 string
-	Score1  int
-	Score2  int
-}
-
-// ビジネスルールは domain に置く（HTTP も DB も出てこない）
-func (m Match) Winner() string { ... }
-func (m Match) Validate() error { ... }
-```
-
-**2. `usecase/match.go` — 流れと、必要な依存の宣言**
-
-```go
-package usecase
-
-type MatchRepository interface {  // ← 繋ぎ目をここで宣言
-	Save(m domain.Match) error
-	FindAll() ([]domain.Match, error)
-}
-
-type MatchUsecase struct{ repo MatchRepository }
-```
-
-**3. `infrastructure/match.go` — 実装**
-
-最初はメモリ実装で作り、後から PostgreSQL 実装に差し替えればいい。
-`usecase` 側は一切変更が要らない。
-
-**4. `handler/match.go` — HTTP の入出力**
-
-JSON をデコードして `usecase` に渡し、結果をエンコードして返すだけ。
-
-**5. `main.go` に配線を追加**
-
-```go
-matchRepo := infrastructure.NewInMemoryMatchRepo()
-matchUC := usecase.NewMatchUsecase(matchRepo)
-matchHandler := handler.NewMatchHandler(matchUC)
-mux.HandleFunc("/matches", matchHandler.Handle)
-```
-
-### レビューで見られるポイント
-
-- `domain` が外側（`net/http`、DB ドライバ、`usecase`）を import していないか
-- `usecase` が具象型ではなく interface に依存しているか
-- error を握りつぶしていないか（`_ = doSomething()` になっていないか）
-- goroutine のリーク・競合状態がないか
+> `go.sum` が 1700 行を超えているのは、`atlas-provider-gorm` が MySQL / PostgreSQL / SQLite / SQL Server / Cloud Spanner の全ドライバを引き連れてくるため。これらは `cmd/migrate` のためだけで、アプリ本体は使わない。
 
 ## Lint / Format
 
-整形と静的解析は **golangci-lint v2** に集約している（設定は [.golangci.yml](.golangci.yml)）。
+整形と静的解析は **golangci-lint v2** に集約している（有効な linter は [.golangci.yml](.golangci.yml)）。
 
 ```bash
-# インストール
 go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
 ```
 
@@ -231,18 +171,10 @@ go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
 | ---------------- | ------------------------------------------------- |
 | `make lint`      | 静的解析（CI と同じ）                             |
 | `make fmt`       | 整形（gofmt + goimports）                         |
-| `make fmt-check` | 整形漏れの検出（CI と同じ。差分を表示するだけ）   |
-| `make ci`        | `build` + `lint` + `fmt-check` をまとめて         |
+| `make fmt-check` | 整形漏れの検出（差分表示のみ）                     |
+| `make ci`        | `build` + `lint` + `fmt-check`                    |
 | `make vet`       | golangci-lint 無しで最低限だけ見たいとき          |
 | `make build`     | `./tmp/main` にビルド                             |
-
-有効にしている linter:
-
-- **standard セット** … errcheck（error の無視）、govet、ineffassign、staticcheck、unused
-- **bodyclose / sqlclosecheck** … HTTP レスポンスや DB rows の Close 漏れ
-- **errorlint** … `errors.Is` / `errors.As` / `%w` の使い方
-- **misspell** … スペルミス
-- **revive** … 一般的なスタイル（doc コメント必須系は無効化済み）
 
 1箇所だけ例外にしたいときは、その行の上に理由付きで書く:
 
