@@ -1,10 +1,11 @@
-FROM golang:1.23-alpine
+# backend/go.mod の go ディレクティブと同じ 1.26 系にする。
+# ここがズレると go.mod を満たすために toolchain を毎ビルド落としに行くことになる。
+FROM golang:1.26-alpine
 
 WORKDIR /app
 
 # ホットリロード用ツール air をインストール
-# @latest は Go 1.26 以上を要求するため、Go 1.23 対応の最終版に固定する
-RUN go install github.com/air-verse/air@v1.61.7
+RUN go install github.com/air-verse/air@latest
 
 # 依存関係ファイルをコピー
 COPY go.mod go.sum* ./

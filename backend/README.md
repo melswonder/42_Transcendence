@@ -1,6 +1,6 @@
 # バックエンド 言語Go
 
-Go 1.24 / 外部フレームワークなし 設計は**Clean Architecture**。
+Go 1.26 / 設計は**Clean Architecture**。
 
 ## 起動する
 
@@ -21,10 +21,8 @@ curl localhost:4000     # {"message":"Hello from Go!"}
 air のインストール:
 
 ```bash
-go install github.com/air-verse/air@v1.61.7
+go install github.com/air-verse/air@latest
 ```
-
-> `@latest` は Go 1.26 以上を要求するため、このプロジェクト（Go 1.24）では v1.61.7 に固定する。
 
 ## アーキテクチャ
 
