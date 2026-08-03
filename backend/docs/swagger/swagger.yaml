@@ -1,0 +1,26 @@
+basePath: /api/v1
+host: localhost:4000
+info:
+  contact: {}
+  description: swaggoの動作確認用APIです。
+  title: Sample API
+  version: "1.0"
+paths:
+  /hello:
+    get:
+      consumes:
+      - application/json
+      description: Simple hello world endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 挨拶を取得
+      tags:
+      - example
+swagger: "2.0"
