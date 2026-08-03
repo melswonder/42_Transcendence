@@ -1,7 +1,7 @@
 # .tbls.yml
 
 # DSN (Database Source Name) to connect database
-dsn: postgresql://postgres:postgres@localhost:5432/transcendence
+dsn: postgresql://postgres:postgres@localhost:5432/transcendence?sslmode=disable
 
 # Path to generate document
 # Default is `dbdoc`
