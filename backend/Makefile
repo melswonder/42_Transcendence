@@ -28,6 +28,14 @@ migrate-diff:
 migrate-apply:
 	atlas migrate apply --env gorm --url "$(DATABASE_URL)"
 
+# Swaggerドキュメントを生成（swag が必要: go install github.com/swaggo/swag/cmd/swag@v1.16.4）
+swagger:
+	swag init -g cmd/swaggo/main.go -o docs/swagger
+
+# Swagger UI付きの確認用サーバーを起動（http://localhost:4000/swagger/index.html）
+swagger-serve: swagger
+	go run ./cmd/swaggo
+
 # 整形（golangci-lint が必要: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2）
 fmt:
 	golangci-lint fmt
