@@ -1,0 +1,11 @@
+# tbls: DBのスキーマからドキュメント（ER図・テーブル定義）を生成する。
+#
+#   tbls doc          # docPath へドキュメントを生成
+#   tbls diff         # 生成済みドキュメントと実DBの差分
+#   tbls coverage     # テーブル・カラムのコメント網羅率
+#
+# ローカルのDockerのPostgresはTLS無効なので sslmode=disable が要る。
+# 認証情報は docker-compose.yml と同じ開発用の固定値。
+dsn: postgres://postgres:postgres@localhost:5432/transcendence?sslmode=disable
+
+docPath: docs/schema
