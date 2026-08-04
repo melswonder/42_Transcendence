@@ -49,8 +49,8 @@ images:
 	docker images
 
 # shellに入る
-exec-postgres:
-	docker exec -it postgres bash
+exec-db:
+	docker exec -it postgres psql -U postgres -d transcendence
 
 exec-backend:
 	docker exec -it backend sh
