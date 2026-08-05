@@ -1,17 +1,8 @@
-// GORM の永続化モデルを置く。docs/database-design.md を正本とし、それをGoの構造体へ写したもの。
+// Package infrastructure holds the GORM persistence models.
 //
-// domain 層ではなく infrastructure 層に置くのは、GORMタグがDBの都合であり、
-// domain は「何にも依存しない」層だから（Issue #6 の受け入れ条件）。
-// domain のエンティティとは別物として扱い、変換は repository の責務とする。
-//
-// 設計書の制約のうち、以下はGORMのタグでは表現できないため手書きSQL migrationで補う
-// （docs/database-design.md §13）。
-//
-//   - partial unique index（WHERE句付きのUNIQUE）
-//   - CREATE EXTENSION citext
-//   - users ⇄ media_assets の循環FK（ALTER TABLE で後付けが必要）
-//
-// したがって cmd/migrate が出力するDDLは土台であって完成形ではない。
+// 正本は docs/database-design.md。GORMタグで表現できないもの
+// （partial unique index / CREATE EXTENSION citext / users ⇄ media_assets の循環FK）は
+// 手書きSQL migrationで補う（§13）。以下 @migration 印がそれ。
 package infrastructure
 
 import (
@@ -20,23 +11,19 @@ import (
 	"github.com/google/uuid"
 )
 
-// User は docs/database-design.md §3 users に対応する。
+// User - users (§3)
 //
-// 手書きmigrationで追加が必要なもの:
-//   - CREATE UNIQUE INDEX ux_users_email  ON users(email)  WHERE email IS NOT NULL AND anonymized_at IS NULL;
-//   - CREATE UNIQUE INDEX ux_users_handle ON users(handle) WHERE anonymized_at IS NULL;
-//   - CHECK (password_hash IS NOT NULL OR email IS NOT NULL OR anonymized_at IS NOT NULL)
-//   - avatar_asset_id の FK（MediaAsset との循環参照のため）
+// @migration ux_users_email  UNIQUE(email)  WHERE email IS NOT NULL AND anonymized_at IS NULL
+// @migration ux_users_handle UNIQUE(handle) WHERE anonymized_at IS NULL
+// @migration CHECK (password_hash IS NOT NULL OR email IS NOT NULL OR anonymized_at IS NOT NULL)
+// @migration FK avatar_asset_id -> media_assets(id)  ※循環参照のため後付け
 type User struct {
-	ID uuid.UUID `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()"`
-	// OAuthプロバイダがメールを返さない場合があるためNULL許容。
-	Email *string `gorm:"column:email;type:citext"`
-	// OAuth専用ユーザーはパスワードを持たないためNULL許容。
-	PasswordHash *string `gorm:"column:password_hash;type:text"`
-	DisplayName  string  `gorm:"column:display_name;type:varchar(50);not null"`
-	Handle       string  `gorm:"column:handle;type:varchar(30);not null"`
-	// FK制約は循環参照のため手書きmigrationで後付けする。
-	AvatarAssetID    *uuid.UUID `gorm:"column:avatar_asset_id;type:uuid"`
+	ID               uuid.UUID  `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()"`
+	Email            *string    `gorm:"column:email;type:citext"`       // OAuthがメールを返さない場合があるためNULL許容
+	PasswordHash     *string    `gorm:"column:password_hash;type:text"` // OAuth専用ユーザーは持たない
+	DisplayName      string     `gorm:"column:display_name;type:varchar(50);not null"`
+	Handle           string     `gorm:"column:handle;type:varchar(30);not null"`
+	AvatarAssetID    *uuid.UUID `gorm:"column:avatar_asset_id;type:uuid"` // FKは手書きmigrationで付与
 	PreferredLocale  string     `gorm:"column:preferred_locale;type:varchar(10);not null;default:ja"`
 	Status           string     `gorm:"column:status;type:varchar(20);not null;default:active;check:status IN ('active','suspended','deleted')"`
 	Level            int        `gorm:"column:level;type:integer;not null;default:1;check:level >= 1"`
@@ -48,15 +35,13 @@ type User struct {
 
 func (User) TableName() string { return "users" }
 
-// MediaAsset は docs/database-design.md §3 media_assets に対応する。
-// アバター画像のアップロード管理に使う。未設定時はレコードを作らず、
-// frontend/backend共通のデフォルトアバターURLを返す。
+// MediaAsset - media_assets (§3)
+// アバター画像のアップロード管理。未設定時はレコードを作らずデフォルトアバターURLを返す。
 type MediaAsset struct {
-	ID          uuid.UUID `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()"`
-	OwnerUserID uuid.UUID `gorm:"column:owner_user_id;type:uuid;not null;index:idx_media_assets_owner,priority:1"`
-	Purpose     string    `gorm:"column:purpose;type:varchar(30);not null;index:idx_media_assets_owner,priority:2;check:purpose IN ('avatar')"`
-	// 推測困難な値を入れる。URLから他人のアセットを列挙できないようにするため。
-	StorageKey       string     `gorm:"column:storage_key;type:text;not null;uniqueIndex"`
+	ID               uuid.UUID  `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()"`
+	OwnerUserID      uuid.UUID  `gorm:"column:owner_user_id;type:uuid;not null;index:idx_media_assets_owner,priority:1"`
+	Purpose          string     `gorm:"column:purpose;type:varchar(30);not null;index:idx_media_assets_owner,priority:2;check:purpose IN ('avatar')"`
+	StorageKey       string     `gorm:"column:storage_key;type:text;not null;uniqueIndex"` // 推測困難な値。URLからの列挙を防ぐ
 	OriginalFilename string     `gorm:"column:original_filename;type:varchar(255);not null"`
 	MimeType         string     `gorm:"column:mime_type;type:varchar(100);not null"`
 	SizeBytes        int64      `gorm:"column:size_bytes;type:bigint;not null;check:size_bytes > 0"`
@@ -72,12 +57,11 @@ type MediaAsset struct {
 
 func (MediaAsset) TableName() string { return "media_assets" }
 
-// OAuthAccount は docs/database-design.md §3 oauth_accounts に対応する。
+// OAuthAccount - oauth_accounts (§3)
 type OAuthAccount struct {
-	ID     uuid.UUID `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()"`
-	UserID uuid.UUID `gorm:"column:user_id;type:uuid;not null;index"`
-	// provider identity の重複を防ぐ。同じGitHubアカウントで2ユーザーは作れない。
-	Provider          string    `gorm:"column:provider;type:varchar(30);not null;uniqueIndex:ux_oauth_provider_account,priority:1;check:provider IN ('google','github','42')"`
+	ID                uuid.UUID `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()"`
+	UserID            uuid.UUID `gorm:"column:user_id;type:uuid;not null;index"`
+	Provider          string    `gorm:"column:provider;type:varchar(30);not null;uniqueIndex:ux_oauth_provider_account,priority:1;check:provider IN ('google','github','42')"` // (provider, account_id) で一意
 	ProviderAccountID string    `gorm:"column:provider_account_id;type:varchar(255);not null;uniqueIndex:ux_oauth_provider_account,priority:2"`
 	ProviderEmail     *string   `gorm:"column:provider_email;type:citext"`
 	CreatedAt         time.Time `gorm:"column:created_at;type:timestamptz;not null;autoCreateTime"`
@@ -87,8 +71,8 @@ type OAuthAccount struct {
 
 func (OAuthAccount) TableName() string { return "oauth_accounts" }
 
-// Session は docs/database-design.md §3 sessions に対応する。
-// raw token は保存せず、ハッシュのみを持つ。
+// Session - sessions (§3)
+// raw token は保存せずハッシュのみ持つ。
 type Session struct {
 	ID         uuid.UUID  `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()"`
 	UserID     uuid.UUID  `gorm:"column:user_id;type:uuid;not null;index:idx_sessions_user_expires,priority:1"`
@@ -103,16 +87,16 @@ type Session struct {
 
 func (Session) TableName() string { return "sessions" }
 
-// Friendship は docs/database-design.md §3 friendships に対応する。
+// Friendship - friendships (§3)
 //
-// (A,B) と (B,A) の二重登録を防ぐため user_low_id < user_high_id に正規化する。
-// アプリ側は常に LEAST/GREATEST で並べ替えてから読み書きすること。
-// CHECK (user_low_id < user_high_id) は手書きmigrationで追加する。
+// (A,B)/(B,A) の二重登録を防ぐため user_low_id < user_high_id に正規化する。
+// 読み書きの前に必ず LEAST/GREATEST で並べ替えること。
+//
+// @migration CHECK (user_low_id < user_high_id)
 type Friendship struct {
-	UserLowID  uuid.UUID `gorm:"column:user_low_id;type:uuid;primaryKey"`
-	UserHighID uuid.UUID `gorm:"column:user_high_id;type:uuid;primaryKey;index:idx_friendships_high_status,priority:1"`
-	// どちらが申請したかを保持する。正規化により行の並びからは判別できないため。
-	RequestedByUserID uuid.UUID `gorm:"column:requested_by_user_id;type:uuid;not null"`
+	UserLowID         uuid.UUID `gorm:"column:user_low_id;type:uuid;primaryKey"`
+	UserHighID        uuid.UUID `gorm:"column:user_high_id;type:uuid;primaryKey;index:idx_friendships_high_status,priority:1"`
+	RequestedByUserID uuid.UUID `gorm:"column:requested_by_user_id;type:uuid;not null"` // 正規化後は行の並びから申請者を判別できないため保持
 	Status            string    `gorm:"column:status;type:varchar(20);not null;index:idx_friendships_high_status,priority:2;check:status IN ('pending','accepted','rejected')"`
 	CreatedAt         time.Time `gorm:"column:created_at;type:timestamptz;not null;autoCreateTime"`
 	UpdatedAt         time.Time `gorm:"column:updated_at;type:timestamptz;not null;autoUpdateTime"`
@@ -123,10 +107,8 @@ type Friendship struct {
 
 func (Friendship) TableName() string { return "friendships" }
 
-// Block は docs/database-design.md §3 blocks に対応する。
-//
-// ブロックは方向を持つ関係なので Friendship とは別テーブルにする。
-// 「AがBをブロックしたが、BはAをブロックしていない」を表現するため。
+// Block - blocks (§3)
+// 方向を持つ関係のため Friendship とは別テーブル（片側だけのブロックを表現する）。
 type Block struct {
 	ID            uuid.UUID `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()"`
 	BlockerUserID uuid.UUID `gorm:"column:blocker_user_id;type:uuid;not null;uniqueIndex:ux_blocks_pair,priority:1"`
