@@ -21,6 +21,25 @@ services:
     networks:
       - transcendence-network
 
+  atlas-dev:
+    image: postgres:16-alpine
+    container_name: atlas-dev
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: atlas_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./backend/migrations/20260803000000_enable_citext.sql:/docker-entrypoint-initdb.d/01_citext.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - transcendence-network
+
   backend:
     image: transcendence-backend
     container_name: backend
