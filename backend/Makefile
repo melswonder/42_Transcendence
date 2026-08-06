@@ -19,10 +19,15 @@ build:
 schema:
 	go run ./cmd/migrate
 
-# 差分からmigrationを生成（atlas と Docker が必要。DBの事前起動は不要）
+# 差分からmigrationを生成
+# 事前に scratch用DBの起動が必要: docker compose up -d atlas-dev
 # 使い方: make migrate-diff name=add_users
 migrate-diff:
 	atlas migrate diff $(name) --env gorm
+
+# migrationを手で編集した後に atlas.sum を再計算（忘れると次のdiff/applyが落ちる）
+migrate-hash:
+	atlas migrate hash --env gorm
 
 # migrationをDBへ適用
 migrate-apply:
@@ -55,4 +60,4 @@ vet:
 # CI と同じ内容をまとめて実行
 ci: build lint fmt-check
 
-.PHONY: all start dev build schema migrate-diff migrate-apply fmt fmt-check lint vet ci
+.PHONY: all start dev build schema migrate-diff migrate-hash migrate-apply fmt fmt-check lint vet ci

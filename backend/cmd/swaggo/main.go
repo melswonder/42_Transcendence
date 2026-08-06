@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -28,7 +29,9 @@ func main() {
 	// Swagger UIのエンドポイントを追加
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	r.Run(":4000")
+	if err := r.Run(":4000"); err != nil {
+		fmt.Println(err)
+	}
 }
 
 // HelloHandler 挨拶を返すハンドラ

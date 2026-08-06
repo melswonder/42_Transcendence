@@ -5,8 +5,14 @@
 //   atlas migrate hash --env gorm          # atlas.sum を再計算
 //   atlas migrate apply --env gorm --url "$DATABASE_URL"
 //
-// dev URL は Atlas が使い捨ての Postgres コンテナを起動して使う。差分計算のためだけの
-// 空DBで、実行のたびに作られて捨てられる。Docker が動いていればよく、事前準備は不要。
+// dev は Atlas が差分計算に使うスクラッチDB。docker-compose の atlas-dev サービスで、
+// 事前に `docker compose up -d atlas-dev` が必要。
+//
+// Atlas 組み込みの docker://postgres/16/dev は使わない。あちらは citext 拡張を
+// 入れる手段が atlas login（有料）でしか無く、拡張の無いDBでは
+//   pq: type "citext" does not exist
+// で差分生成が落ちるため。atlas-dev は migrations の citext 用ファイルを
+// 初期化スクリプトとしてマウントしてある（docker-compose.yml 参照）。
 
 data "external_schema" "gorm" {
   program = [
@@ -19,7 +25,7 @@ data "external_schema" "gorm" {
 env "gorm" {
   src = data.external_schema.gorm.url
   // バージョンは db/postgres/Dockerfile と揃える
-  dev = "docker://postgres/16/dev?search_path=public"
+  dev = "postgres://postgres:postgres@localhost:5433/atlas_dev?sslmode=disable&search_path=public"
 
   migration {
     dir = "file://migrations"
