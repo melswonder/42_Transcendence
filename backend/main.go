@@ -17,8 +17,8 @@ var allowedOrigins = map[string]bool{
 }
 
 // CORSミドルウェア
-func cors(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func cors(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
 		if allowedOrigins[origin] {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
@@ -33,23 +33,12 @@ func cors(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		next(w, r)
-	}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func main() {
-	// --- 依存の配線（composition root）---
-	// 外側の具象を生成し、内側へ interface として注入していく。
-	repo := infrastructure.NewGreetingRepo() // infrastructure（具象）
-	uc := usecase.NewGreetingUsecase(repo)   // usecase に repo を注入
-	h := handler.NewGreetingHandler(uc)      // handler に usecase を注入
-
-	// --- ルーティング ---
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", h.Hello)
-
-	// CORS をアプリ全体に適用
-	root := cors(mux.ServeHTTP)
+	root := newApplicationHandler()
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -60,4 +49,13 @@ func main() {
 	if err := http.ListenAndServe(":"+port, root); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// newApplicationHandler is the composition root. It is the only place where
+// concrete infrastructure adapters are selected and connected to inner layers.
+func newApplicationHandler() http.Handler {
+	repositories := infrastructure.NewRepositories()
+	services := usecase.NewServices(repositories.Dependencies())
+
+	return cors(handler.NewRouter(handler.NewHandlers(services)))
 }

@@ -1,8 +1,3 @@
-// Package infrastructure holds the GORM persistence models.
-//
-// 正本は docs/database-design.md。GORMタグで表現できないもの
-// （partial unique index / CREATE EXTENSION citext / users ⇄ media_assets の循環FK）は
-// 手書きSQL migrationで補う（§13）。以下 @migration 印がそれ。
 package infrastructure
 
 import (
