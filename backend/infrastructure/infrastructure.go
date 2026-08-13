@@ -9,14 +9,20 @@
 // は隠蔽されており、インフラ層だけがその具体的な手段を知っています。
 package infrastructure
 
-import "transcendence-backend/usecase"
+import (
+	"gorm.io/gorm"
+
+	"transcendence-backend/usecase"
+)
 
 type Repositories struct {
+	db   *gorm.DB
 	Ping usecase.PingRepository
 }
 
-func NewRepositories() Repositories {
+func NewRepositories(db *gorm.DB) Repositories {
 	return Repositories{
+		db: db,
 		Ping: NewPingRepo(),
 	}
 }

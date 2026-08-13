@@ -5,7 +5,7 @@ all: start
 
 # 通常起動
 start:
-	PORT=$(port) go run .
+	PORT=$(port) go run ./cmd/serv
 
 # ホットリロード起動（air が必要: go install github.com/air-verse/air@latest）
 dev:
@@ -13,7 +13,7 @@ dev:
 
 # ビルド
 build:
-	go build -o ./tmp/main .
+	go build -o ./tmp/main ./cmd/serv
 
 # GORMの構造体からDDLを生成して標準出力へ（確認用）
 schema:
