@@ -50,6 +50,8 @@ services:
       - "4000:4000"
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/transcendence}
+      # TLSの要否は接続文字列に混ぜず、この変数で切り替える。
+      PGSSLMODE: ${PGSSLMODE:-disable}
     depends_on:
       db:
         condition: service_healthy

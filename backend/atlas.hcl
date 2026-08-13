@@ -25,7 +25,7 @@ data "external_schema" "gorm" {
 env "gorm" {
   src = data.external_schema.gorm.url
   // バージョンは db/postgres/Dockerfile と揃える
-  dev = "postgres://postgres:postgres@localhost:5433/atlas_dev?sslmode=disable&search_path=public"
+  dev = "postgres://postgres:postgres@localhost:5433/atlas_dev?search_path=public"
 
   migration {
     dir = "file://migrations"
