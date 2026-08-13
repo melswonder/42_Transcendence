@@ -22,7 +22,7 @@ type Repositories struct {
 
 func NewRepositories(db *gorm.DB) Repositories {
 	return Repositories{
-		db: db,
+		db:   db,
 		Ping: NewPingRepo(),
 	}
 }

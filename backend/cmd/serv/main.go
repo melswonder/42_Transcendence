@@ -49,7 +49,8 @@ func newApplicationHandler(db *gorm.DB) http.Handler {
 	return cors(handler.NewRouter(handlers))
 }
 
-func main() {
+// dbの接続
+func mustConnectDB() *gorm.DB {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
 		log.Fatal("DATABASE_URL is not set")
@@ -61,6 +62,11 @@ func main() {
 	}
 	log.Print("database connected")
 
+	return db
+}
+
+func main() {
+	db := mustConnectDB()
 	root := newApplicationHandler(db)
 
 	port := os.Getenv("PORT")
