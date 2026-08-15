@@ -1,6 +1,1149 @@
 {
   "name": "transcendence",
-  "tables": null,
+  "tables": [
+    {
+      "name": "atlas_schema_revisions.atlas_schema_revisions",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "version",
+          "type": "varchar",
+          "nullable": false
+        },
+        {
+          "name": "description",
+          "type": "varchar",
+          "nullable": false
+        },
+        {
+          "name": "type",
+          "type": "bigint",
+          "nullable": false,
+          "default": "2"
+        },
+        {
+          "name": "applied",
+          "type": "bigint",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "total",
+          "type": "bigint",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "executed_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "execution_time",
+          "type": "bigint",
+          "nullable": false
+        },
+        {
+          "name": "error",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "error_stmt",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "hash",
+          "type": "varchar",
+          "nullable": false
+        },
+        {
+          "name": "partial_hashes",
+          "type": "jsonb",
+          "nullable": true
+        },
+        {
+          "name": "operator_version",
+          "type": "varchar",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "atlas_schema_revisions_pkey",
+          "def": "CREATE UNIQUE INDEX atlas_schema_revisions_pkey ON atlas_schema_revisions.atlas_schema_revisions USING btree (version)",
+          "table": "atlas_schema_revisions.atlas_schema_revisions",
+          "columns": [
+            "version"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "atlas_schema_revisions_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (version)",
+          "table": "atlas_schema_revisions.atlas_schema_revisions",
+          "referenced_table": "",
+          "columns": [
+            "version"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.users",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "email",
+          "type": "citext",
+          "nullable": true
+        },
+        {
+          "name": "password_hash",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "display_name",
+          "type": "varchar(50)",
+          "nullable": false
+        },
+        {
+          "name": "handle",
+          "type": "varchar(30)",
+          "nullable": false
+        },
+        {
+          "name": "avatar_asset_id",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "preferred_locale",
+          "type": "varchar(10)",
+          "nullable": false,
+          "default": "'ja'::character varying"
+        },
+        {
+          "name": "status",
+          "type": "varchar(20)",
+          "nullable": false,
+          "default": "'active'::character varying"
+        },
+        {
+          "name": "level",
+          "type": "integer",
+          "nullable": false,
+          "default": "1"
+        },
+        {
+          "name": "experience_points",
+          "type": "integer",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "anonymized_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "users_pkey",
+          "def": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)",
+          "table": "public.users",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "chk_users_experience_points",
+          "type": "CHECK",
+          "def": "CHECK ((experience_points \u003e= 0))",
+          "table": "public.users",
+          "referenced_table": "",
+          "columns": [
+            "experience_points"
+          ]
+        },
+        {
+          "name": "chk_users_level",
+          "type": "CHECK",
+          "def": "CHECK ((level \u003e= 1))",
+          "table": "public.users",
+          "referenced_table": "",
+          "columns": [
+            "level"
+          ]
+        },
+        {
+          "name": "chk_users_status",
+          "type": "CHECK",
+          "def": "CHECK (((status)::text = ANY (ARRAY[('active'::character varying)::text, ('suspended'::character varying)::text, ('deleted'::character varying)::text])))",
+          "table": "public.users",
+          "referenced_table": "",
+          "columns": [
+            "status"
+          ]
+        },
+        {
+          "name": "users_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.users",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.blocks",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "blocker_user_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "blocked_user_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "blocks_pkey",
+          "def": "CREATE UNIQUE INDEX blocks_pkey ON public.blocks USING btree (id)",
+          "table": "public.blocks",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "idx_blocks_blocked_user_id",
+          "def": "CREATE INDEX idx_blocks_blocked_user_id ON public.blocks USING btree (blocked_user_id)",
+          "table": "public.blocks",
+          "columns": [
+            "blocked_user_id"
+          ]
+        },
+        {
+          "name": "ux_blocks_pair",
+          "def": "CREATE UNIQUE INDEX ux_blocks_pair ON public.blocks USING btree (blocker_user_id, blocked_user_id)",
+          "table": "public.blocks",
+          "columns": [
+            "blocker_user_id",
+            "blocked_user_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_blocks_blocked",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (blocked_user_id) REFERENCES users(id)",
+          "table": "public.blocks",
+          "referenced_table": "users",
+          "columns": [
+            "blocked_user_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_blocks_blocker",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (blocker_user_id) REFERENCES users(id)",
+          "table": "public.blocks",
+          "referenced_table": "users",
+          "columns": [
+            "blocker_user_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "blocks_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.blocks",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.friendships",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "user_low_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "user_high_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "requested_by_user_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "varchar(20)",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "friendships_pkey",
+          "def": "CREATE UNIQUE INDEX friendships_pkey ON public.friendships USING btree (user_low_id, user_high_id)",
+          "table": "public.friendships",
+          "columns": [
+            "user_low_id",
+            "user_high_id"
+          ]
+        },
+        {
+          "name": "idx_friendships_high_status",
+          "def": "CREATE INDEX idx_friendships_high_status ON public.friendships USING btree (user_high_id, status)",
+          "table": "public.friendships",
+          "columns": [
+            "user_high_id",
+            "status"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "chk_friendships_status",
+          "type": "CHECK",
+          "def": "CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('accepted'::character varying)::text, ('rejected'::character varying)::text])))",
+          "table": "public.friendships",
+          "referenced_table": "",
+          "columns": [
+            "status"
+          ]
+        },
+        {
+          "name": "fk_friendships_user_high",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (user_high_id) REFERENCES users(id)",
+          "table": "public.friendships",
+          "referenced_table": "users",
+          "columns": [
+            "user_high_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_friendships_user_low",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (user_low_id) REFERENCES users(id)",
+          "table": "public.friendships",
+          "referenced_table": "users",
+          "columns": [
+            "user_low_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "friendships_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (user_low_id, user_high_id)",
+          "table": "public.friendships",
+          "referenced_table": "",
+          "columns": [
+            "user_low_id",
+            "user_high_id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.media_assets",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "owner_user_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "purpose",
+          "type": "varchar(30)",
+          "nullable": false
+        },
+        {
+          "name": "storage_key",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "original_filename",
+          "type": "varchar(255)",
+          "nullable": false
+        },
+        {
+          "name": "mime_type",
+          "type": "varchar(100)",
+          "nullable": false
+        },
+        {
+          "name": "size_bytes",
+          "type": "bigint",
+          "nullable": false
+        },
+        {
+          "name": "width",
+          "type": "integer",
+          "nullable": true
+        },
+        {
+          "name": "height",
+          "type": "integer",
+          "nullable": true
+        },
+        {
+          "name": "checksum_sha256",
+          "type": "character(64)",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "varchar(20)",
+          "nullable": false,
+          "default": "'active'::character varying"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        }
+      ],
+      "indexes": [
+        {
+          "name": "media_assets_pkey",
+          "def": "CREATE UNIQUE INDEX media_assets_pkey ON public.media_assets USING btree (id)",
+          "table": "public.media_assets",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "idx_media_assets_owner",
+          "def": "CREATE INDEX idx_media_assets_owner ON public.media_assets USING btree (owner_user_id, purpose, status)",
+          "table": "public.media_assets",
+          "columns": [
+            "owner_user_id",
+            "purpose",
+            "status"
+          ]
+        },
+        {
+          "name": "idx_media_assets_storage_key",
+          "def": "CREATE UNIQUE INDEX idx_media_assets_storage_key ON public.media_assets USING btree (storage_key)",
+          "table": "public.media_assets",
+          "columns": [
+            "storage_key"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "chk_media_assets_purpose",
+          "type": "CHECK",
+          "def": "CHECK (((purpose)::text = 'avatar'::text))",
+          "table": "public.media_assets",
+          "referenced_table": "",
+          "columns": [
+            "purpose"
+          ]
+        },
+        {
+          "name": "chk_media_assets_size_bytes",
+          "type": "CHECK",
+          "def": "CHECK ((size_bytes \u003e 0))",
+          "table": "public.media_assets",
+          "referenced_table": "",
+          "columns": [
+            "size_bytes"
+          ]
+        },
+        {
+          "name": "chk_media_assets_status",
+          "type": "CHECK",
+          "def": "CHECK (((status)::text = ANY (ARRAY[('active'::character varying)::text, ('deleted'::character varying)::text])))",
+          "table": "public.media_assets",
+          "referenced_table": "",
+          "columns": [
+            "status"
+          ]
+        },
+        {
+          "name": "fk_media_assets_owner",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (owner_user_id) REFERENCES users(id)",
+          "table": "public.media_assets",
+          "referenced_table": "users",
+          "columns": [
+            "owner_user_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "media_assets_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.media_assets",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.oauth_accounts",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "provider",
+          "type": "varchar(30)",
+          "nullable": false
+        },
+        {
+          "name": "provider_account_id",
+          "type": "varchar(255)",
+          "nullable": false
+        },
+        {
+          "name": "provider_email",
+          "type": "citext",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "oauth_accounts_pkey",
+          "def": "CREATE UNIQUE INDEX oauth_accounts_pkey ON public.oauth_accounts USING btree (id)",
+          "table": "public.oauth_accounts",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "idx_oauth_accounts_user_id",
+          "def": "CREATE INDEX idx_oauth_accounts_user_id ON public.oauth_accounts USING btree (user_id)",
+          "table": "public.oauth_accounts",
+          "columns": [
+            "user_id"
+          ]
+        },
+        {
+          "name": "ux_oauth_provider_account",
+          "def": "CREATE UNIQUE INDEX ux_oauth_provider_account ON public.oauth_accounts USING btree (provider, provider_account_id)",
+          "table": "public.oauth_accounts",
+          "columns": [
+            "provider",
+            "provider_account_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "chk_oauth_accounts_provider",
+          "type": "CHECK",
+          "def": "CHECK (((provider)::text = ANY (ARRAY[('google'::character varying)::text, ('github'::character varying)::text, ('42'::character varying)::text])))",
+          "table": "public.oauth_accounts",
+          "referenced_table": "",
+          "columns": [
+            "provider"
+          ]
+        },
+        {
+          "name": "fk_oauth_accounts_user",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (user_id) REFERENCES users(id)",
+          "table": "public.oauth_accounts",
+          "referenced_table": "users",
+          "columns": [
+            "user_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "oauth_accounts_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.oauth_accounts",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.sessions",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "token_hash",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "last_seen_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "sessions_pkey",
+          "def": "CREATE UNIQUE INDEX sessions_pkey ON public.sessions USING btree (id)",
+          "table": "public.sessions",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "idx_sessions_token_hash",
+          "def": "CREATE UNIQUE INDEX idx_sessions_token_hash ON public.sessions USING btree (token_hash)",
+          "table": "public.sessions",
+          "columns": [
+            "token_hash"
+          ]
+        },
+        {
+          "name": "idx_sessions_user_expires",
+          "def": "CREATE INDEX idx_sessions_user_expires ON public.sessions USING btree (user_id, expires_at)",
+          "table": "public.sessions",
+          "columns": [
+            "user_id",
+            "expires_at"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_sessions_user",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (user_id) REFERENCES users(id)",
+          "table": "public.sessions",
+          "referenced_table": "users",
+          "columns": [
+            "user_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "sessions_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.sessions",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "table": "public.blocks",
+      "columns": [
+        "blocked_user_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.users",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (blocked_user_id) REFERENCES users(id)"
+    },
+    {
+      "table": "public.blocks",
+      "columns": [
+        "blocker_user_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.users",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (blocker_user_id) REFERENCES users(id)"
+    },
+    {
+      "table": "public.friendships",
+      "columns": [
+        "user_high_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.users",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (user_high_id) REFERENCES users(id)"
+    },
+    {
+      "table": "public.friendships",
+      "columns": [
+        "user_low_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.users",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (user_low_id) REFERENCES users(id)"
+    },
+    {
+      "table": "public.media_assets",
+      "columns": [
+        "owner_user_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.users",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (owner_user_id) REFERENCES users(id)"
+    },
+    {
+      "table": "public.oauth_accounts",
+      "columns": [
+        "user_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.users",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (user_id) REFERENCES users(id)"
+    },
+    {
+      "table": "public.sessions",
+      "columns": [
+        "user_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.users",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (user_id) REFERENCES users(id)"
+    }
+  ],
+  "functions": [
+    {
+      "name": "public.citextin",
+      "return_type": "citext",
+      "arguments": "cstring",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citextout",
+      "return_type": "cstring",
+      "arguments": "citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citextrecv",
+      "return_type": "citext",
+      "arguments": "internal",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citextsend",
+      "return_type": "bytea",
+      "arguments": "citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext",
+      "return_type": "citext",
+      "arguments": "character",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext",
+      "return_type": "citext",
+      "arguments": "boolean",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext",
+      "return_type": "citext",
+      "arguments": "inet",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_eq",
+      "return_type": "bool",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_ne",
+      "return_type": "bool",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_lt",
+      "return_type": "bool",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_le",
+      "return_type": "bool",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_gt",
+      "return_type": "bool",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_ge",
+      "return_type": "bool",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_cmp",
+      "return_type": "int4",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_hash",
+      "return_type": "int4",
+      "arguments": "citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_smaller",
+      "return_type": "citext",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_larger",
+      "return_type": "citext",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.min",
+      "return_type": "citext",
+      "arguments": "citext",
+      "type": "a"
+    },
+    {
+      "name": "public.max",
+      "return_type": "citext",
+      "arguments": "citext",
+      "type": "a"
+    },
+    {
+      "name": "public.texticlike",
+      "return_type": "bool",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.texticnlike",
+      "return_type": "bool",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.texticregexeq",
+      "return_type": "bool",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.texticregexne",
+      "return_type": "bool",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.texticlike",
+      "return_type": "bool",
+      "arguments": "citext, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.texticnlike",
+      "return_type": "bool",
+      "arguments": "citext, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.texticregexeq",
+      "return_type": "bool",
+      "arguments": "citext, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.texticregexne",
+      "return_type": "bool",
+      "arguments": "citext, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.regexp_match",
+      "return_type": "_text",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.regexp_match",
+      "return_type": "_text",
+      "arguments": "citext, citext, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.regexp_matches",
+      "return_type": "_text",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.regexp_matches",
+      "return_type": "_text",
+      "arguments": "citext, citext, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.regexp_replace",
+      "return_type": "text",
+      "arguments": "citext, citext, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.regexp_replace",
+      "return_type": "text",
+      "arguments": "citext, citext, text, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.regexp_split_to_array",
+      "return_type": "_text",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.regexp_split_to_array",
+      "return_type": "_text",
+      "arguments": "citext, citext, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.regexp_split_to_table",
+      "return_type": "text",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.regexp_split_to_table",
+      "return_type": "text",
+      "arguments": "citext, citext, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.strpos",
+      "return_type": "int4",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.replace",
+      "return_type": "text",
+      "arguments": "citext, citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.split_part",
+      "return_type": "text",
+      "arguments": "citext, citext, integer",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.translate",
+      "return_type": "text",
+      "arguments": "citext, citext, text",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_pattern_lt",
+      "return_type": "bool",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_pattern_le",
+      "return_type": "bool",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_pattern_gt",
+      "return_type": "bool",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_pattern_ge",
+      "return_type": "bool",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_pattern_cmp",
+      "return_type": "int4",
+      "arguments": "citext, citext",
+      "type": "FUNCTION"
+    },
+    {
+      "name": "public.citext_hash_extended",
+      "return_type": "int8",
+      "arguments": "citext, bigint",
+      "type": "FUNCTION"
+    }
+  ],
   "driver": {
     "name": "postgres",
     "database_version": "PostgreSQL 16.14 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
