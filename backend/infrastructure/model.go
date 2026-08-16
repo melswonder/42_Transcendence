@@ -8,16 +8,17 @@ import (
 
 // User - users (§3)
 //
-// @migration ux_users_email  UNIQUE(email)  WHERE email IS NOT NULL AND anonymized_at IS NULL
-// @migration ux_users_handle UNIQUE(handle) WHERE anonymized_at IS NULL
+// ux_users_email / ux_users_handle は WHERE 付きの部分ユニークインデックス。
+// 退会（匿名化）した行を対象から外すことで、退会者が握っていた handle / email を再利用できる。
+//
 // @migration CHECK (password_hash IS NOT NULL OR email IS NOT NULL OR anonymized_at IS NOT NULL)
 // @migration FK avatar_asset_id -> media_assets(id)  ※循環参照のため後付け
 type User struct {
 	ID               uuid.UUID  `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()"`
-	Email            *string    `gorm:"column:email;type:citext"`       // OAuthがメールを返さない場合があるためNULL許容
-	PasswordHash     *string    `gorm:"column:password_hash;type:text"` // OAuth専用ユーザーは持たない
+	Email            *string    `gorm:"column:email;type:citext;uniqueIndex:ux_users_email,where:email IS NOT NULL AND anonymized_at IS NULL"` // OAuthがメールを返さない場合があるためNULL許容
+	PasswordHash     *string    `gorm:"column:password_hash;type:text"`                                                                        // OAuth専用ユーザーは持たない
 	DisplayName      string     `gorm:"column:display_name;type:varchar(50);not null"`
-	Handle           string     `gorm:"column:handle;type:varchar(30);not null"`
+	Handle           string     `gorm:"column:handle;type:varchar(30);not null;uniqueIndex:ux_users_handle,where:anonymized_at IS NULL"`
 	AvatarAssetID    *uuid.UUID `gorm:"column:avatar_asset_id;type:uuid"` // FKは手書きmigrationで付与
 	PreferredLocale  string     `gorm:"column:preferred_locale;type:varchar(10);not null;default:ja"`
 	Status           string     `gorm:"column:status;type:varchar(20);not null;default:active;check:status IN ('active','suspended','deleted')"`
