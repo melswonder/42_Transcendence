@@ -15,15 +15,24 @@ import (
 	"transcendence-backend/usecase"
 )
 
-type Repositories struct {
-	db   *gorm.DB
-	Ping usecase.PingRepository
+// Config は infrastructure 層が外の世界と話すために要る設定。
+type Config struct {
+	Google GoogleOAuthConfig
 }
 
-func NewRepositories(db *gorm.DB) Repositories {
+type Repositories struct {
+	db          *gorm.DB
+	Ping        usecase.PingRepository
+	Auth        usecase.AuthRepository
+	GoogleOAuth usecase.OAuthProvider
+}
+
+func NewRepositories(db *gorm.DB, cfg Config) Repositories {
 	return Repositories{
-		db:   db,
-		Ping: NewPingRepo(),
+		db:          db,
+		Ping:        NewPingRepo(),
+		Auth:        NewAuthRepo(db),
+		GoogleOAuth: NewGoogleOAuth(cfg.Google),
 	}
 }
 
@@ -31,5 +40,7 @@ func NewRepositories(db *gorm.DB) Repositories {
 func (r Repositories) Dependencies() usecase.Dependencies {
 	return usecase.Dependencies{
 		PingRepository: r.Ping,
+		AuthRepository: r.Auth,
+		GoogleOAuth:    r.GoogleOAuth,
 	}
 }
