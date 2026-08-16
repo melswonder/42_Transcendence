@@ -6,6 +6,8 @@ import (
 	"transcendence-backend/usecase"
 )
 
+// PingRepo は usecase.PingRepository の実装。DB も外部サービスも使わない。
+// Get は固定のメッセージ ("pong") を返す。
 type PingRepo struct{}
 
 // usecase.PingRepository を満たしているかコンパイル時に検査。
