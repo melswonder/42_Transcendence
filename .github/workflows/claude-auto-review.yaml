@@ -16,12 +16,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
-          fetch-depth: 1
+          # git diff / git log でベースブランチとの差分を辿るため全履歴を取得する
+          fetch-depth: 0
 
       - name: Automatic PR Review
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # どのツールが拒否されたかをログで確認するため、実行結果のJSONを全出力する
+          show_full_output: true
           prompt: |
             このプルリクエストをレビューし、プロジェクトの規約に沿った包括的なフィードバックを提供してください。
 
@@ -67,4 +70,4 @@ jobs:
             提供された情報が他言語であっても、必ず日本語で回答してください。
           claude_args: |
             --model claude-sonnet-4-6
-            --allowedTools mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__get_pull_request_diff
+            --allowedTools "mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_files,Read,Grep,Glob,Bash(git diff:*),Bash(git log:*)"
