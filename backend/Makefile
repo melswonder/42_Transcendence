@@ -1,6 +1,17 @@
 # デフォルトのポート番号
 port?=4000
 
+# atlas は内部で lib/pq を使う。ローカルの Postgres は TLS を張っていないので明示的に無効化する。
+# 指定が無いと migrate-diff / migrate-apply が
+#   pq: SSL is not enabled on the server
+# で落ちる。
+PGSSLMODE ?= disable
+export PGSSLMODE
+
+# migrate-apply の接続先。docker-compose.yml の既定値と揃えてある。
+# 上書きしたいときは環境変数か make の引数で: make migrate-apply DATABASE_URL=...
+DATABASE_URL ?= postgresql://postgres:postgres@localhost:5432/transcendence
+
 all: start
 
 # 通常起動

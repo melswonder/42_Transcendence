@@ -1,5 +1,3 @@
-// DB接続の生成。アプリ起動時に1回だけ呼ばれ、
-// 以降は同じ *gorm.DB を全リポジトリで共有する。
 package infrastructure
 
 import (
@@ -10,8 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
-// 接続プールの上限。無指定だと際限なく接続を作り、Postgres 側の
-// max_connections（既定100）を食い潰す。
+// maxOpenConns同時に開ける接続の上限
+// maxIdleConns遊んでいる接続を何本まで維持するか
+// connMaxLifetime接続の寿命
+// 実行するときのキャパ的な
 const (
 	maxOpenConns    = 25
 	maxIdleConns    = 25

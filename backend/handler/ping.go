@@ -9,6 +9,8 @@ import (
 	"transcendence-backend/usecase"
 )
 
+// PingHandler は疎通確認の HTTP 入口。
+// Ping は usecase から受け取ったメッセージを JSON で返す。
 type PingHandler struct {
 	uc *usecase.PingUsecase
 }
