@@ -14,7 +14,8 @@
     "lint:fix": "eslint --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "ci:all": "prettier --write . && eslint"
+    "ci:all": "prettier --write . && eslint",
+    "preinstall": "npx only-allow pnpm"
   },
   "dependencies": {
     "next": "16.1.1",
