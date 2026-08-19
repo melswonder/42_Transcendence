@@ -1,8 +1,12 @@
+// Swagger UI の確認用サーバー。
+//
+// spec 本体は apispec（手書きのアノテーション）から `make swagger` で生成される。
+// ここは生成済み spec を表示するだけで、API の実装は持たない。
+// 実装は cmd/serv 側に入る予定なので、そちらが出来たらこのコマンドは役目を終える。
 package main
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 
@@ -13,36 +17,31 @@ import (
 	_ "transcendence-backend/docs/swagger"
 )
 
-// @title			Sample API
+// @title			ft_transcendence API
 // @version		1.0
-// @description	swaggoの動作確認用APIです。
-// @host			localhost:4000
-// @BasePath		/api/v1
+// @description	ユーザー・認証・フレンド・ブロック・アバターを扱う公開 API の仕様。
+// @description	外部クライアントから叩けるよう、認証は Cookie ではなく Bearer トークンで行う。
+// @description	現時点では仕様のみで、エンドポイントの実装はこれから追加される。
+//
+// @contact.name	42 Transcendence
+// @license.name	MIT
+//
+// @host		localhost:4000
+// @BasePath	/api/v1
+// @schemes	http https
+//
+// @securityDefinitions.apikey	BearerAuth
+// @in							header
+// @name						Authorization
+// @description				`Bearer {access_token}` 形式で指定する。トークンは POST /auth/login などで発行する。
 func main() {
 	r := gin.Default()
 
-	v1 := r.Group("/api/v1")
-	{
-		v1.GET("/hello", HelloHandler)
-	}
-
-	// Swagger UIのエンドポイントを追加
+	// Swagger UI (http://localhost:4000/swagger/index.html)
+	// spec そのものは /swagger/doc.json から取れる。外部クライアントはここからコード生成できる。
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	if err := r.Run(":4000"); err != nil {
 		fmt.Println(err)
 	}
-}
-
-// HelloHandler 挨拶を返すハンドラ
-//
-//	@Summary		挨拶を取得
-//	@Description	Simple hello world endpoint
-//	@Tags			example
-//	@Accept			json
-//	@Produce		json
-//	@Success		200	{object}	map[string]string
-//	@Router			/hello [get]
-func HelloHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "hello world"})
 }
