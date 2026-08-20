@@ -3,11 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NavLink } from "@mantine/core";
-import { IconActivity, IconSettings, IconTrophy } from "@tabler/icons-react";
+import {
+  IconActivity,
+  IconChartBar,
+  IconSettings,
+  IconTrophy,
+} from "@tabler/icons-react";
 
 // 画面がまだ無いものは disabled にしておく。作った時点で外す。
 const items = [
   { href: "/", label: "プレイ", icon: IconActivity },
+  { href: "/stats", label: "統計", icon: IconChartBar },
   {
     href: "/leaderboard",
     label: "ランキング",
