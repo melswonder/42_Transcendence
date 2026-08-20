@@ -5,12 +5,15 @@
 | Name | Columns | Comment | Type |
 | ---- | ------- | ------- | ---- |
 | [atlas_schema_revisions.atlas_schema_revisions](atlas_schema_revisions.atlas_schema_revisions.md) | 12 |  | BASE TABLE |
-| [public.users](public.users.md) | 13 |  | BASE TABLE |
+| [public.users](public.users.md) | 14 |  | BASE TABLE |
 | [public.blocks](public.blocks.md) | 4 |  | BASE TABLE |
 | [public.friendships](public.friendships.md) | 6 |  | BASE TABLE |
 | [public.media_assets](public.media_assets.md) | 13 |  | BASE TABLE |
 | [public.oauth_accounts](public.oauth_accounts.md) | 6 |  | BASE TABLE |
 | [public.sessions](public.sessions.md) | 7 |  | BASE TABLE |
+| [public.matches](public.matches.md) | 8 |  | BASE TABLE |
+| [public.match_participants](public.match_participants.md) | 8 |  | BASE TABLE |
+| [public.user_achievements](public.user_achievements.md) | 3 |  | BASE TABLE |
 
 ## Stored procedures and functions
 

@@ -165,6 +165,12 @@
           "name": "anonymized_at",
           "type": "timestamp with time zone",
           "nullable": true
+        },
+        {
+          "name": "rating",
+          "type": "integer",
+          "nullable": false,
+          "default": "1200"
         }
       ],
       "indexes": [
@@ -174,6 +180,30 @@
           "table": "public.users",
           "columns": [
             "id"
+          ]
+        },
+        {
+          "name": "ux_users_email",
+          "def": "CREATE UNIQUE INDEX ux_users_email ON public.users USING btree (email) WHERE ((email IS NOT NULL) AND (anonymized_at IS NULL))",
+          "table": "public.users",
+          "columns": [
+            "email"
+          ]
+        },
+        {
+          "name": "ux_users_handle",
+          "def": "CREATE UNIQUE INDEX ux_users_handle ON public.users USING btree (handle) WHERE (anonymized_at IS NULL)",
+          "table": "public.users",
+          "columns": [
+            "handle"
+          ]
+        },
+        {
+          "name": "idx_users_rating",
+          "def": "CREATE INDEX idx_users_rating ON public.users USING btree (rating DESC)",
+          "table": "public.users",
+          "columns": [
+            "rating"
           ]
         }
       ],
@@ -279,7 +309,7 @@
           "type": "FOREIGN KEY",
           "def": "FOREIGN KEY (blocked_user_id) REFERENCES users(id)",
           "table": "public.blocks",
-          "referenced_table": "users",
+          "referenced_table": "public.users",
           "columns": [
             "blocked_user_id"
           ],
@@ -292,7 +322,7 @@
           "type": "FOREIGN KEY",
           "def": "FOREIGN KEY (blocker_user_id) REFERENCES users(id)",
           "table": "public.blocks",
-          "referenced_table": "users",
+          "referenced_table": "public.users",
           "columns": [
             "blocker_user_id"
           ],
@@ -383,7 +413,7 @@
           "type": "FOREIGN KEY",
           "def": "FOREIGN KEY (user_high_id) REFERENCES users(id)",
           "table": "public.friendships",
-          "referenced_table": "users",
+          "referenced_table": "public.users",
           "columns": [
             "user_high_id"
           ],
@@ -396,7 +426,7 @@
           "type": "FOREIGN KEY",
           "def": "FOREIGN KEY (user_low_id) REFERENCES users(id)",
           "table": "public.friendships",
-          "referenced_table": "users",
+          "referenced_table": "public.users",
           "columns": [
             "user_low_id"
           ],
@@ -553,7 +583,7 @@
           "type": "FOREIGN KEY",
           "def": "FOREIGN KEY (owner_user_id) REFERENCES users(id)",
           "table": "public.media_assets",
-          "referenced_table": "users",
+          "referenced_table": "public.users",
           "columns": [
             "owner_user_id"
           ],
@@ -652,7 +682,7 @@
           "type": "FOREIGN KEY",
           "def": "FOREIGN KEY (user_id) REFERENCES users(id)",
           "table": "public.oauth_accounts",
-          "referenced_table": "users",
+          "referenced_table": "public.users",
           "columns": [
             "user_id"
           ],
@@ -746,7 +776,7 @@
           "type": "FOREIGN KEY",
           "def": "FOREIGN KEY (user_id) REFERENCES users(id)",
           "table": "public.sessions",
-          "referenced_table": "users",
+          "referenced_table": "public.users",
           "columns": [
             "user_id"
           ],
@@ -762,6 +792,353 @@
           "referenced_table": "",
           "columns": [
             "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.matches",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "mode",
+          "type": "varchar(20)",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "varchar(20)",
+          "nullable": false,
+          "default": "'in_progress'::character varying"
+        },
+        {
+          "name": "result_type",
+          "type": "varchar(20)",
+          "nullable": true
+        },
+        {
+          "name": "total_moves",
+          "type": "integer",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        },
+        {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "matches_pkey",
+          "def": "CREATE UNIQUE INDEX matches_pkey ON public.matches USING btree (id)",
+          "table": "public.matches",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "idx_matches_status_finished",
+          "def": "CREATE INDEX idx_matches_status_finished ON public.matches USING btree (status, finished_at DESC)",
+          "table": "public.matches",
+          "columns": [
+            "status",
+            "finished_at"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "chk_matches_finished_after_started",
+          "type": "CHECK",
+          "def": "CHECK (((finished_at IS NULL) OR (finished_at \u003e= started_at)))",
+          "table": "public.matches",
+          "referenced_table": "",
+          "columns": [
+            "finished_at",
+            "started_at"
+          ]
+        },
+        {
+          "name": "chk_matches_finished_has_result",
+          "type": "CHECK",
+          "def": "CHECK ((((status)::text \u003c\u003e 'finished'::text) OR ((result_type IS NOT NULL) AND (finished_at IS NOT NULL))))",
+          "table": "public.matches",
+          "referenced_table": "",
+          "columns": [
+            "status",
+            "result_type",
+            "finished_at"
+          ]
+        },
+        {
+          "name": "chk_matches_mode",
+          "type": "CHECK",
+          "def": "CHECK (((mode)::text = ANY (ARRAY[('ranked'::character varying)::text, ('casual'::character varying)::text, ('ai'::character varying)::text, ('friend'::character varying)::text])))",
+          "table": "public.matches",
+          "referenced_table": "",
+          "columns": [
+            "mode"
+          ]
+        },
+        {
+          "name": "chk_matches_result_type",
+          "type": "CHECK",
+          "def": "CHECK (((result_type IS NULL) OR ((result_type)::text = ANY (ARRAY[('goal'::character varying)::text, ('resign'::character varying)::text, ('timeout'::character varying)::text, ('draw'::character varying)::text, ('abort'::character varying)::text]))))",
+          "table": "public.matches",
+          "referenced_table": "",
+          "columns": [
+            "result_type"
+          ]
+        },
+        {
+          "name": "chk_matches_status",
+          "type": "CHECK",
+          "def": "CHECK (((status)::text = ANY (ARRAY[('in_progress'::character varying)::text, ('finished'::character varying)::text, ('aborted'::character varying)::text])))",
+          "table": "public.matches",
+          "referenced_table": "",
+          "columns": [
+            "status"
+          ]
+        },
+        {
+          "name": "chk_matches_total_moves",
+          "type": "CHECK",
+          "def": "CHECK ((total_moves \u003e= 0))",
+          "table": "public.matches",
+          "referenced_table": "",
+          "columns": [
+            "total_moves"
+          ]
+        },
+        {
+          "name": "matches_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.matches",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.match_participants",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "match_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "seat",
+          "type": "smallint",
+          "nullable": false
+        },
+        {
+          "name": "outcome",
+          "type": "varchar(10)",
+          "nullable": false
+        },
+        {
+          "name": "rating_before",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "rating_after",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "xp_gained",
+          "type": "integer",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "match_participants_pkey",
+          "def": "CREATE UNIQUE INDEX match_participants_pkey ON public.match_participants USING btree (match_id, user_id)",
+          "table": "public.match_participants",
+          "columns": [
+            "match_id",
+            "user_id"
+          ]
+        },
+        {
+          "name": "idx_match_participants_user",
+          "def": "CREATE INDEX idx_match_participants_user ON public.match_participants USING btree (user_id)",
+          "table": "public.match_participants",
+          "columns": [
+            "user_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "chk_match_participants_outcome",
+          "type": "CHECK",
+          "def": "CHECK (((outcome)::text = ANY (ARRAY[('win'::character varying)::text, ('loss'::character varying)::text, ('draw'::character varying)::text])))",
+          "table": "public.match_participants",
+          "referenced_table": "",
+          "columns": [
+            "outcome"
+          ]
+        },
+        {
+          "name": "chk_match_participants_rating",
+          "type": "CHECK",
+          "def": "CHECK (((rating_before \u003e= 0) AND (rating_after \u003e= 0)))",
+          "table": "public.match_participants",
+          "referenced_table": "",
+          "columns": [
+            "rating_before",
+            "rating_after"
+          ]
+        },
+        {
+          "name": "chk_match_participants_seat",
+          "type": "CHECK",
+          "def": "CHECK ((seat = ANY (ARRAY[0, 1])))",
+          "table": "public.match_participants",
+          "referenced_table": "",
+          "columns": [
+            "seat"
+          ]
+        },
+        {
+          "name": "chk_match_participants_xp_gained",
+          "type": "CHECK",
+          "def": "CHECK ((xp_gained \u003e= 0))",
+          "table": "public.match_participants",
+          "referenced_table": "",
+          "columns": [
+            "xp_gained"
+          ]
+        },
+        {
+          "name": "fk_match_participants_user",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (user_id) REFERENCES users(id)",
+          "table": "public.match_participants",
+          "referenced_table": "public.users",
+          "columns": [
+            "user_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "fk_match_participants_match",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (match_id) REFERENCES matches(id)",
+          "table": "public.match_participants",
+          "referenced_table": "public.matches",
+          "columns": [
+            "match_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "match_participants_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (match_id, user_id)",
+          "table": "public.match_participants",
+          "referenced_table": "",
+          "columns": [
+            "match_id",
+            "user_id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.user_achievements",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "code",
+          "type": "varchar(50)",
+          "nullable": false
+        },
+        {
+          "name": "unlocked_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "user_achievements_pkey",
+          "def": "CREATE UNIQUE INDEX user_achievements_pkey ON public.user_achievements USING btree (user_id, code)",
+          "table": "public.user_achievements",
+          "columns": [
+            "user_id",
+            "code"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_user_achievements_user",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (user_id) REFERENCES users(id)",
+          "table": "public.user_achievements",
+          "referenced_table": "public.users",
+          "columns": [
+            "user_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "user_achievements_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (user_id, code)",
+          "table": "public.user_achievements",
+          "referenced_table": "",
+          "columns": [
+            "user_id",
+            "code"
           ]
         }
       ]
@@ -848,6 +1225,45 @@
     },
     {
       "table": "public.sessions",
+      "columns": [
+        "user_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.users",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (user_id) REFERENCES users(id)"
+    },
+    {
+      "table": "public.match_participants",
+      "columns": [
+        "user_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.users",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (user_id) REFERENCES users(id)"
+    },
+    {
+      "table": "public.match_participants",
+      "columns": [
+        "match_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.matches",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (match_id) REFERENCES matches(id)"
+    },
+    {
+      "table": "public.user_achievements",
       "columns": [
         "user_id"
       ],
@@ -1146,7 +1562,7 @@
   ],
   "driver": {
     "name": "postgres",
-    "database_version": "PostgreSQL 16.14 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+    "database_version": "PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
     "meta": {
       "current_schema": "public",
       "search_paths": [
