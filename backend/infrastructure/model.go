@@ -24,6 +24,7 @@ type User struct {
 	Status           string     `gorm:"column:status;type:varchar(20);not null;default:active;check:status IN ('active','suspended','deleted')"`
 	Level            int        `gorm:"column:level;type:integer;not null;default:1;check:level >= 1"`
 	ExperiencePoints int        `gorm:"column:experience_points;type:integer;not null;default:0;check:experience_points >= 0"`
+	Rating           int        `gorm:"column:rating;type:integer;not null;default:1200;index:idx_users_rating,sort:desc"` // Elo。Leaderboard はこの列だけで並べる
 	CreatedAt        time.Time  `gorm:"column:created_at;type:timestamptz;not null;autoCreateTime"`
 	UpdatedAt        time.Time  `gorm:"column:updated_at;type:timestamptz;not null;autoUpdateTime"`
 	AnonymizedAt     *time.Time `gorm:"column:anonymized_at;type:timestamptz"`
@@ -116,3 +117,63 @@ type Block struct {
 }
 
 func (Block) TableName() string { return "blocks" }
+
+// Match - matches
+//
+// 1 対戦ぶんの事実だけを持ち、誰が勝ったかは MatchParticipant 側で表す。
+// 進行中は status='in_progress' / result_type と finished_at が NULL。
+//
+// @migration CHECK (status <> 'finished' OR (result_type IS NOT NULL AND finished_at IS NOT NULL))
+type Match struct {
+	ID         uuid.UUID  `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()"`
+	Mode       string     `gorm:"column:mode;type:varchar(20);not null;check:mode IN ('ranked','casual','ai','friend')"`
+	Status     string     `gorm:"column:status;type:varchar(20);not null;default:in_progress;index:idx_matches_status_finished,priority:1;check:status IN ('in_progress','finished','aborted')"`
+	ResultType *string    `gorm:"column:result_type;type:varchar(20);check:result_type IS NULL OR result_type IN ('goal','resign','timeout','draw','abort')"` // 決着のつき方
+	TotalMoves int        `gorm:"column:total_moves;type:integer;not null;default:0;check:total_moves >= 0"`
+	StartedAt  time.Time  `gorm:"column:started_at;type:timestamptz;not null"`
+	FinishedAt *time.Time `gorm:"column:finished_at;type:timestamptz;index:idx_matches_status_finished,priority:2,sort:desc"`
+	CreatedAt  time.Time  `gorm:"column:created_at;type:timestamptz;not null;autoCreateTime"`
+}
+
+func (Match) TableName() string { return "matches" }
+
+// MatchParticipant - match_participants
+//
+// 1 対戦につき 2 行。統計はすべてこのテーブルの user_id で引く。
+// matches 側に player1_id / player2_id を持たせないのは、そうすると勝敗集計が
+// 「自分が player1 の場合と player2 の場合」の 2 通りに分岐してしまうため。
+//
+// rating_before / rating_after はレーティング推移のグラフに使う。users.rating は
+// 最新値しか持たないので、履歴はここに残す。
+//
+// @migration CHECK (rating_before >= 0 AND rating_after >= 0)
+type MatchParticipant struct {
+	MatchID      uuid.UUID `gorm:"column:match_id;type:uuid;primaryKey"`
+	UserID       uuid.UUID `gorm:"column:user_id;type:uuid;primaryKey;index:idx_match_participants_user,priority:1"`
+	Seat         int16     `gorm:"column:seat;type:smallint;not null;check:seat IN (0,1)"` // 0=先手 1=後手
+	Outcome      string    `gorm:"column:outcome;type:varchar(10);not null;check:outcome IN ('win','loss','draw')"`
+	RatingBefore int       `gorm:"column:rating_before;type:integer;not null"`
+	RatingAfter  int       `gorm:"column:rating_after;type:integer;not null"`
+	XPGained     int       `gorm:"column:xp_gained;type:integer;not null;default:0;check:xp_gained >= 0"`
+	CreatedAt    time.Time `gorm:"column:created_at;type:timestamptz;not null;autoCreateTime"`
+
+	Match *Match `gorm:"foreignKey:MatchID;references:ID"`
+	User  *User  `gorm:"foreignKey:UserID;references:ID"`
+}
+
+func (MatchParticipant) TableName() string { return "match_participants" }
+
+// UserAchievement - user_achievements
+//
+// 解除済みの実績だけを持つ。実績の定義（名前・説明・達成条件）は
+// domain/achievement.go 側に定数で置く。マスタを DB に入れると実績を 1 つ足すたびに
+// データ投入の migration が要るため。
+type UserAchievement struct {
+	UserID     uuid.UUID `gorm:"column:user_id;type:uuid;primaryKey"` // PK の先頭列なので単独の索引は張らない
+	Code       string    `gorm:"column:code;type:varchar(50);primaryKey"`
+	UnlockedAt time.Time `gorm:"column:unlocked_at;type:timestamptz;not null;autoCreateTime"`
+
+	User *User `gorm:"foreignKey:UserID;references:ID"`
+}
+
+func (UserAchievement) TableName() string { return "user_achievements" }
