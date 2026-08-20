@@ -123,12 +123,16 @@ migrations/*.sql                 バージョン管理された移行手順
 PostgreSQL
 ```
 
+`atlas migrate apply` は**コンテナの起動時に自動で走る**（[docker-entrypoint.sh](docker-entrypoint.sh)）。
+Atlas CLI はイメージに同梱してあるので、`make up` するだけで未適用の migration が流れる。
+下のコマンドは migration を**作る**とき、またはホストで直接動かすときに使う。
+
 ```bash
 make schema                        # DDL を表示（DB 不要）
 make migrate-diff name=add_users   # 差分から migrations/*.sql を生成
-make migrate-apply                 # DB へ適用
+make migrate-apply                 # DB へ手動適用
 
-curl -sSf https://atlasgo.sh | sh  # Atlas のインストール
+curl -sSf https://atlasgo.sh | sh  # Atlas のインストール（ホスト側）
 ```
 
 押さえておくこと:
@@ -137,6 +141,8 @@ curl -sSf https://atlasgo.sh | sh  # Atlas のインストール
 - **`make schema` の出力は完成形ではない。** partial unique index・`CREATE EXTENSION citext`・複数列 CHECK・循環 FK は GORM のタグで表現できないため、`migrations/` に手書き SQL として足す。何を足すべきかは `infrastructure/model.go` の各構造体の doc コメントに列挙してある
 - **GORM モデルは `domain` ではなく `infrastructure` に置く。** GORM のタグは DB の都合であり、`domain` に書くと「何にも依存しない」原則が崩れるため。`domain` のエンティティとは別物として扱い、変換は repository の責務
 - `cmd/migrate` は DDL を標準出力へ吐くだけの部品で、単体では何も migrate しない。設定の詳細は [atlas.hcl](atlas.hcl) の冒頭コメントを参照
+- **適用を忘れると空の DB に対してサーバだけが立つ。** `relation "oauth_accounts" does not exist (SQLSTATE 42P01)` はこれ。`make fclean` でボリュームを消した後も entrypoint が作り直すので、通常は起きない
+- entrypoint は `--env gorm` を使わない。あちらは差分生成用で scratch DB（`atlas-dev`）と `go run ./cmd/migrate` を要求するため、適用だけなら `--dir` / `--url` で足りる
 
 ## 依存管理（go.mod / go.sum）
 

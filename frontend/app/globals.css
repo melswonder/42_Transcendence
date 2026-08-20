@@ -1,26 +1,61 @@
-@import "tailwindcss";
+/* 後ろのレイヤーほど強い。この順序が Mantine と Tailwind の優先順位の正本で、
+ * mantine より utilities が後ろにあるおかげで <Paper className="p-0"> が効く。
+ */
+@layer theme, base, mantine, components, utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+/* styles.css ではなく styles.layer.css。中身が @layer mantine で包まれている。 */
+@import "@mantine/core/styles.layer.css";
+@import "tailwindcss/utilities.css" layer(utilities);
 
+/* Tailwind のクラス名から Mantine のトークンを引くための橋渡し。
+ * 色の実体は lib/theme.ts だけに置きたいので、ここに生の色を書き足さないこと。
+ */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --color-body: var(--mantine-color-body);
+  --color-text: var(--mantine-color-text);
+  --color-dimmed: var(--mantine-color-dimmed);
+  --color-default-border: var(--mantine-color-default-border);
+
+  --color-emerald-50: var(--mantine-color-emerald-0);
+  --color-emerald-100: var(--mantine-color-emerald-1);
+  --color-emerald-200: var(--mantine-color-emerald-2);
+  --color-emerald-300: var(--mantine-color-emerald-3);
+  --color-emerald-400: var(--mantine-color-emerald-4);
+  --color-emerald-500: var(--mantine-color-emerald-5);
+  --color-emerald-600: var(--mantine-color-emerald-6);
+  --color-emerald-700: var(--mantine-color-emerald-7);
+  --color-emerald-800: var(--mantine-color-emerald-8);
+  --color-emerald-900: var(--mantine-color-emerald-9);
+
+  --color-dark-50: var(--mantine-color-dark-0);
+  --color-dark-100: var(--mantine-color-dark-1);
+  --color-dark-200: var(--mantine-color-dark-2);
+  --color-dark-300: var(--mantine-color-dark-3);
+  --color-dark-400: var(--mantine-color-dark-4);
+  --color-dark-500: var(--mantine-color-dark-5);
+  --color-dark-600: var(--mantine-color-dark-6);
+  --color-dark-700: var(--mantine-color-dark-7);
+  --color-dark-800: var(--mantine-color-dark-8);
+  --color-dark-900: var(--mantine-color-dark-9);
+
+  --radius-mantine-sm: var(--mantine-radius-sm);
+  --radius-mantine-md: var(--mantine-radius-md);
+  --radius-mantine-lg: var(--mantine-radius-lg);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html,
+  body {
+    height: 100%;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }

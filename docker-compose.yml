@@ -49,9 +49,20 @@ services:
     ports:
       - "4000:4000"
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/transcendence}
+      # コンテナ内から見た DB のアドレス。ホスト名は localhost ではなく db。
+      # ルートの .env にある DATABASE_URL は「ホストから atlas / make が使う」用途で
+      # localhost:5432 を指しているため、ここでは展開しない（展開すると自分自身を指してしまう）。
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/transcendence
       # TLSの要否は接続文字列に混ぜず、この変数で切り替える。
       PGSSLMODE: ${PGSSLMODE:-disable}
+      # Google OAuth。未設定だと起動時に落ちる（.env に入れる）。
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      # Google Cloud Console に登録した値と完全一致させる必要がある。
+      # ブラウザがアクセスする URL なので db や backend ではなく localhost。
+      GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL:-http://localhost:4000/auth/google/callback}
+      # ログイン後の戻り先。
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     depends_on:
       db:
         condition: service_healthy

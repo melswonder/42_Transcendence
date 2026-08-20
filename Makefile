@@ -7,7 +7,7 @@ build:
 
 # 構築 起動
 up:
-	docker compose -f $(COMPOSE_FILE) up -d
+	docker compose -f $(COMPOSE_FILE) up
 
 # 停止 削除　ボリューム化してないものは消える
 down:

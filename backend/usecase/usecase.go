@@ -12,16 +12,21 @@
 // 「何をすべきか」という手順は知っていますが、「データがどのDB（MySQLかOracleか）に保存されるか」は知りません。
 package usecase
 
+// usecase層の受け口
 type Dependencies struct {
 	PingRepository PingRepository
+	AuthRepository AuthRepository
+	GoogleOAuth    OAuthProvider
 }
 
 type Services struct {
 	Ping *PingUsecase
+	Auth *AuthUsecase
 }
 
 func NewServices(dependencies Dependencies) Services {
 	return Services{
 		Ping: NewPingUsecase(dependencies.PingRepository),
+		Auth: NewAuthUsecase(dependencies.GoogleOAuth, dependencies.AuthRepository),
 	}
 }

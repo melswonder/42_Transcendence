@@ -15,19 +15,32 @@ import (
 	"transcendence-backend/usecase"
 )
 
-type Handlers struct {
-	Ping *PingHandler
+type Config struct {
+	Auth AuthConfig
 }
 
-func NewHandlers(services usecase.Services) Handlers {
+type Handlers struct {
+	Ping *PingHandler
+	Auth *AuthHandler
+}
+
+func NewHandlers(services usecase.Services, cfg Config) Handlers {
 	return Handlers{
 		Ping: NewPingHandler(services.Ping),
+		Auth: NewAuthHandler(services.Auth, cfg.Auth),
 	}
 }
 
 func NewRouter(handlers Handlers) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handlers.Ping.Ping)
+
+	// Go 1.22 以降の ServeMux はメソッド付きパターンを解釈し、
+	// より具体的なパターンを優先する。"/" と共存できる。
+	mux.HandleFunc("GET /auth/google", handlers.Auth.Start)
+	mux.HandleFunc("GET /auth/google/callback", handlers.Auth.Callback)
+	mux.HandleFunc("GET /auth/me", handlers.Auth.Me)
+	mux.HandleFunc("POST /auth/logout", handlers.Auth.Logout)
 
 	return mux
 }

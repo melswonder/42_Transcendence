@@ -7,8 +7,10 @@ Next.js（フロントエンド） + Go（バックエンド） + PostgreSQL の
 
 ```
 42_Transcendence/
-├── frontend/     フロントエンド : Next.js (App Router) + TailwindCSS  → :3000
-│   └── types/models.ts           DB スキーマに対応する型定義
+├── frontend/     フロントエンド : Next.js (App Router) + Tailwind + Mantine → :3000
+│   ├── app/          ルーティングと画面
+│   ├── components/   複数の画面から使う UI 部品
+│   └── lib/          テーマ・API 呼び出しなどの共通ロジック
 ├── backend/      バックエンド   : Go (net/http)                        → :4000
 │   ├── cmd/migrate/  GORM の構造体から DDL を生成（Atlas 用）
 │   ├── atlas.hcl     マイグレーション設定
@@ -22,7 +24,7 @@ Next.js（フロントエンド） + Go（バックエンド） + PostgreSQL の
 
 各ディレクトリの詳細はそれぞれの README を参照:
 
-- [frontend/README.md](frontend/README.md) — App Router、Server/Client Component、Feature-Sliced Design、型定義の同期、Tailwind、Lint/Format
+- [frontend/README.md](frontend/README.md) — App Router、Server/Client Component、ディレクトリ構成、Tailwind + Mantine、Lint/Format
 - [backend/README.md](backend/README.md) — Clean Architecture の考え方、層の追加方法、DB マイグレーション、Lint/Format
 
 ## ドキュメント
@@ -32,7 +34,6 @@ Next.js（フロントエンド） + Go（バックエンド） + PostgreSQL の
 | ドキュメント | 内容 |
 | --- | --- |
 | [docs/database-design.md](docs/database-design.md) | DB 設計の正本。全テーブル・制約・インデックス・トランザクション境界・Redis キー |
-| [docs/FSD.md](docs/FSD.md) | フロントエンドの Feature-Sliced Design |
 
 ## 技術スタック
 
@@ -42,7 +43,7 @@ Next.js（フロントエンド） + Go（バックエンド） + PostgreSQL の
 | --- | --- | --- |
 | フロントエンド | **Next.js** (App Router) + TypeScript | 課題が求めるフレームワーク要件を満たす。SSR とファイルベースルーティングでページ追加のコストが低い |
 | スタイリング | **TailwindCSS** | 盤面 UI をレスポンシブに組むのに、独自 CSS を書かずクラスだけで完結できる |
-| フロント設計 | **Feature-Sliced Design** | 層ごとの依存方向が決まっているため、機能追加で構造が壊れにくい（[docs/FSD.md](docs/FSD.md)） |
+| UI コンポーネント | **Mantine** | ボタン・フォーム・モーダルを自作せずに済み、ui.mantine.dev の既製ブロックをそのまま持ってこられる。カスケードレイヤーで Tailwind と共存させている |
 | バックエンド | **Go** + `net/http` | 標準ライブラリだけで HTTP と goroutine による並行処理が完結する。WebSocket の多重接続を捌く用途に向く |
 | バックエンド設計 | **Clean Architecture** | ゲームルール（domain）を HTTP・DB・WebSocket から独立させ、単体テストできる状態に保つ |
 | データベース | **PostgreSQL 16** | 後述 |
@@ -131,11 +132,17 @@ Go / Node のツールチェーンをホストに入れる:
 
 スキーマの正本は [docs/database-design.md](docs/database-design.md)。それを GORM の構造体へ写したものが `backend/infrastructure/model.go`。
 
+migration の**適用は backend コンテナの起動時に自動で走る**（`backend/docker-entrypoint.sh`）。
+`make up` すれば `migrations/*.sql` が未適用のぶんだけ流れるので、手で叩く必要はない。
+適用済みなら `No migration files to execute` と出て、そのままサーバが立ち上がる。
+
+新しい migration を**作る**ときだけホストで作業する:
+
 ```bash
 cd backend
 make schema         # GORM の構造体から DDL を生成して表示（確認用）
 make migrate-diff name=add_users   # 差分から migration ファイルを生成
-make migrate-apply  # DB へ適用
+make migrate-apply  # DB へ手動適用（コンテナを再起動できないときの逃げ道）
 ```
 
 **注意: 生成された DDL は完成形ではない。** partial unique index、`CREATE EXTENSION citext`、循環外部キーは GORM のタグでは表現できないため、手書きの SQL migration で補う必要がある。何を補うべきかは `backend/infrastructure/model.go` の各構造体のコメントに書いてある。

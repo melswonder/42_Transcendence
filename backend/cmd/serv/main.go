@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"gorm.io/gorm"
 
@@ -39,14 +40,54 @@ func cors(next http.Handler) http.Handler {
 	})
 }
 
-// newApplicationHandler は composition root。
-// 具体的な infrastructure の実装を選び、内側の層へ繋ぐのはここだけ。
-func newApplicationHandler(db *gorm.DB) http.Handler {
-	repositories := infrastructure.NewRepositories(db)
-	services := usecase.NewServices(repositories.Dependencies())
-	handlers := handler.NewHandlers(services)
+// 必要な環境変数を入れる
+type config struct {
+	infrastructure infrastructure.Config
+	handler        handler.Config
+	port           string
+}
 
-	return cors(handler.NewRouter(handlers))
+// 環境変数から値を取り込むヘルパー関数
+func mustEnv(key string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		log.Fatalf("%s is not set", key)
+	}
+
+	return v
+}
+
+// 環境変数が存在しない場合は fallbackを入れる
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+
+	return fallback
+}
+
+// loadConfig は環境変数を読む、値が欠けていた場合にエラーにすることができる
+// 　リクエストが来てエラーになるより、サーバーを構築する前にエラーにしたほうが安全
+func loadConfig() config {
+	frontendURL := envOr("FRONTEND_URL", "http://localhost:3000")
+
+	return config{
+		infrastructure: infrastructure.Config{
+			Google: infrastructure.GoogleOAuthConfig{
+				ClientID:     mustEnv("GOOGLE_CLIENT_ID"),
+				ClientSecret: mustEnv("GOOGLE_CLIENT_SECRET"),
+				RedirectURL:  mustEnv("GOOGLE_REDIRECT_URL"),
+			},
+		},
+		handler: handler.Config{
+			Auth: handler.AuthConfig{
+				FrontendURL: frontendURL,
+				// http:// のローカル開発では Secure を付けると Cookie が保存されない。
+				SecureCookie: strings.HasPrefix(frontendURL, "https://"),
+			},
+		},
+		port: envOr("PORT", "4000"),
+	}
 }
 
 // dbの接続
@@ -65,17 +106,23 @@ func mustConnectDB() *gorm.DB {
 	return db
 }
 
+// newApplicationHandler は composition root。
+// 具体的な infrastructure の実装を選び、内側の層へ繋ぐのはここだけ。
+func newApplicationHandler(db *gorm.DB, cfg config) http.Handler {
+	repositories := infrastructure.NewRepositories(db, cfg.infrastructure)
+	services := usecase.NewServices(repositories.Dependencies())
+	handlers := handler.NewHandlers(services, cfg.handler)
+
+	return cors(handler.NewRouter(handlers))
+}
+
 func main() {
+	cfg := loadConfig()
 	db := mustConnectDB()
-	root := newApplicationHandler(db)
+	root := newApplicationHandler(db, cfg)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "4000"
-	}
-
-	log.Printf("server listening on :%s", port)
-	if err := http.ListenAndServe(":"+port, root); err != nil {
+	log.Printf("server listening on :%s", cfg.port)
+	if err := http.ListenAndServe(":"+cfg.port, root); err != nil {
 		log.Fatal(err)
 	}
 }
