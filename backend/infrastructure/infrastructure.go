@@ -25,6 +25,7 @@ type Repositories struct {
 	Ping        usecase.PingRepository
 	Auth        usecase.AuthRepository
 	Match       usecase.MatchRepository
+	Stats       usecase.StatsRepository
 	GoogleOAuth usecase.OAuthProvider
 }
 
@@ -34,6 +35,7 @@ func NewRepositories(db *gorm.DB, cfg Config) Repositories {
 		Ping:        NewPingRepo(),
 		Auth:        NewAuthRepo(db),
 		Match:       NewMatchRepo(db),
+		Stats:       NewStatsRepo(db),
 		GoogleOAuth: NewGoogleOAuth(cfg.Google),
 	}
 }
@@ -44,6 +46,7 @@ func (r Repositories) Dependencies() usecase.Dependencies {
 		PingRepository:  r.Ping,
 		AuthRepository:  r.Auth,
 		MatchRepository: r.Match,
+		StatsRepository: r.Stats,
 		GoogleOAuth:     r.GoogleOAuth,
 	}
 }
