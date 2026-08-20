@@ -14,19 +14,23 @@ package usecase
 
 // usecase層の受け口
 type Dependencies struct {
-	PingRepository PingRepository
-	AuthRepository AuthRepository
-	GoogleOAuth    OAuthProvider
+	PingRepository  PingRepository
+	AuthRepository  AuthRepository
+	MatchRepository MatchRepository
+	GoogleOAuth     OAuthProvider
+	MatchNotifier   MatchNotifier
 }
 
 type Services struct {
-	Ping *PingUsecase
-	Auth *AuthUsecase
+	Ping  *PingUsecase
+	Auth  *AuthUsecase
+	Match *MatchUsecase
 }
 
 func NewServices(dependencies Dependencies) Services {
 	return Services{
-		Ping: NewPingUsecase(dependencies.PingRepository),
-		Auth: NewAuthUsecase(dependencies.GoogleOAuth, dependencies.AuthRepository),
+		Ping:  NewPingUsecase(dependencies.PingRepository),
+		Auth:  NewAuthUsecase(dependencies.GoogleOAuth, dependencies.AuthRepository),
+		Match: NewMatchUsecase(dependencies.MatchRepository, dependencies.MatchNotifier),
 	}
 }
