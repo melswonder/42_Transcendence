@@ -18,6 +18,37 @@
     "host": "localhost:4000",
     "basePath": "/api/v1",
     "paths": {
+        "/achievements/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "解除済み・未解除をまとめて返す。未解除のものには現在の進捗が入る。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "achievements"
+                ],
+                "summary": "自分の実績",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.AchievementListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "認証に成功するとセッションを 1 件作り、Bearer トークンを返す。",
@@ -866,6 +897,286 @@
                 }
             }
         },
+        "/leaderboard": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "レーティングの高い順に返す。自分の順位は items の外でも me に入る。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "leaderboard"
+                ],
+                "summary": "ランキング",
+                "parameters": [
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "取得件数 (1-100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "取得開始位置",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.LeaderboardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/matches": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "自分が参加した決着済みの対戦を新しい順に返す。日付範囲とモード・勝敗で絞り込める。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "matches"
+                ],
+                "summary": "対戦履歴",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "この日時以降に終了した対戦",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "この日時以前に終了した対戦",
+                        "name": "to",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "ranked",
+                            "casual",
+                            "ai",
+                            "friend"
+                        ],
+                        "type": "string",
+                        "description": "対戦モード",
+                        "name": "mode",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "win",
+                            "loss",
+                            "draw"
+                        ],
+                        "type": "string",
+                        "description": "自分から見た勝敗",
+                        "name": "outcome",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "取得件数 (1-100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "取得開始位置",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.MatchListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "from \u003e to、または範囲外の値",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "ゲーム側が決着時に呼ぶ入口。レーティング・XP・レベルの更新と実績の判定を行い、\n参加者に対して SSE で更新を通知する。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "matches"
+                ],
+                "summary": "対戦結果を記録する",
+                "parameters": [
+                    {
+                        "description": "決着した対戦",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apispec.MatchCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "呼び出したユーザーから見た結果",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.MatchResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参加者が 2 人でない、勝敗の組み合わせが矛盾している、終了が開始より前",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "参加者が存在しない",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/matches/export.csv": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "ListMatches と同じ絞り込みで、ページングだけ無視して全件を返す。\n集計クエリの結果をそのまま流すのでサーバー側で生成する。",
+                "produces": [
+                    "text/csv"
+                ],
+                "tags": [
+                    "matches"
+                ],
+                "summary": "対戦履歴を CSV で書き出す",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "この日時以降に終了した対戦",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "この日時以前に終了した対戦",
+                        "name": "to",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "ranked",
+                            "casual",
+                            "ai",
+                            "friend"
+                        ],
+                        "type": "string",
+                        "description": "対戦モード",
+                        "name": "mode",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "win",
+                            "loss",
+                            "draw"
+                        ],
+                        "type": "string",
+                        "description": "自分から見た勝敗",
+                        "name": "outcome",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "CSV 本文",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/media": {
             "get": {
                 "security": [
@@ -1067,6 +1378,231 @@
                     },
                     "404": {
                         "description": "自分のアセットに存在しない",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "勝敗・勝率・連勝・レーティング・順位・レベル・XP をまとめて返す。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "自分の統計サマリ",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "集計対象の開始日時",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "集計対象の終了日時",
+                        "name": "to",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "ranked",
+                            "casual",
+                            "ai",
+                            "friend"
+                        ],
+                        "type": "string",
+                        "description": "対戦モード",
+                        "name": "mode",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.StatsSummary"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/me/breakdown": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "結果種別・モード・勝敗ごとの件数。円グラフに使う。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "自分の統計の内訳",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "集計対象の開始日時",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "集計対象の終了日時",
+                        "name": "to",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.BreakdownResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/me/timeseries": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "レーティングの推移（折れ線）と日別の対戦数（棒）に使う。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "自分の統計の推移",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "集計対象の開始日時",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "集計対象の終了日時",
+                        "name": "to",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "ranked",
+                            "casual",
+                            "ai",
+                            "friend"
+                        ],
+                        "type": "string",
+                        "description": "対戦モード",
+                        "name": "mode",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "day",
+                            "week"
+                        ],
+                        "type": "string",
+                        "default": "day",
+                        "description": "刻み幅",
+                        "name": "interval",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.TimeseriesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/stream": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "自分が参加した対戦が記録されるたびに 1 イベント流す。\n接続は開きっぱなしになり、切断はクライアント側が閉じるか\nサーバーが落ちるまで続く。ブラウザの EventSource は自動で再接続する。",
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "統計の更新通知 (SSE)",
+                "responses": {
+                    "200": {
+                        "description": "data: に JSON が 1 行ずつ流れる",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.StatsUpdatedEvent"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/apispec.ErrorResponse"
                         }
@@ -1310,6 +1846,69 @@
         }
     },
     "definitions": {
+        "apispec.Achievement": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "enum": [
+                        "wins",
+                        "streak",
+                        "matches",
+                        "rating"
+                    ],
+                    "example": "wins"
+                },
+                "code": {
+                    "type": "string",
+                    "example": "first_win"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "はじめて対戦に勝つ"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "初勝利"
+                },
+                "progress": {
+                    "description": "Progress / Target は未解除の実績でも「10 戦中 7 戦」を出せるように常に入れる。",
+                    "type": "integer",
+                    "example": 7
+                },
+                "target": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "unlocked": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "unlocked_at": {
+                    "description": "未解除なら null",
+                    "type": "string"
+                }
+            }
+        },
+        "apispec.AchievementListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.Achievement"
+                    }
+                },
+                "total_count": {
+                    "type": "integer",
+                    "example": 12
+                },
+                "unlocked_count": {
+                    "type": "integer",
+                    "example": 4
+                }
+            }
+        },
         "apispec.BlockCreateRequest": {
             "type": "object",
             "required": [
@@ -1364,6 +1963,42 @@
                             "$ref": "#/definitions/apispec.UserPublic"
                         }
                     ]
+                }
+            }
+        },
+        "apispec.BreakdownResponse": {
+            "type": "object",
+            "properties": {
+                "by_mode": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.BreakdownSlice"
+                    }
+                },
+                "by_outcome": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.BreakdownSlice"
+                    }
+                },
+                "by_result_type": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.BreakdownSlice"
+                    }
+                }
+            }
+        },
+        "apispec.BreakdownSlice": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "example": 28
+                },
+                "key": {
+                    "type": "string",
+                    "example": "goal"
                 }
             }
         },
@@ -1475,6 +2110,67 @@
                 }
             }
         },
+        "apispec.LeaderboardEntry": {
+            "type": "object",
+            "properties": {
+                "losses": {
+                    "type": "integer",
+                    "example": 40
+                },
+                "rank": {
+                    "description": "同率は同順位（1,1,3 の付き方）",
+                    "type": "integer",
+                    "example": 1
+                },
+                "rating": {
+                    "type": "integer",
+                    "example": 1830
+                },
+                "user": {
+                    "$ref": "#/definitions/apispec.UserPublic"
+                },
+                "win_rate": {
+                    "type": "number",
+                    "example": 0.75
+                },
+                "wins": {
+                    "type": "integer",
+                    "example": 120
+                }
+            }
+        },
+        "apispec.LeaderboardResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.LeaderboardEntry"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 20
+                },
+                "me": {
+                    "description": "Me は自分が表示範囲の外にいても順位を出せるように別枠で返す。\n未対戦などで順位が付かない場合は null。",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/apispec.LeaderboardEntry"
+                        }
+                    ]
+                },
+                "offset": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "total": {
+                    "description": "条件に合致する総件数",
+                    "type": "integer",
+                    "example": 128
+                }
+            }
+        },
         "apispec.LoginRequest": {
             "type": "object",
             "required": [
@@ -1490,6 +2186,190 @@
                 "password": {
                     "type": "string",
                     "example": "correct horse battery staple"
+                }
+            }
+        },
+        "apispec.MatchCreateRequest": {
+            "type": "object",
+            "required": [
+                "finished_at",
+                "mode",
+                "participants",
+                "result_type",
+                "started_at"
+            ],
+            "properties": {
+                "finished_at": {
+                    "type": "string"
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "ranked",
+                        "casual",
+                        "ai",
+                        "friend"
+                    ],
+                    "example": "ranked"
+                },
+                "participants": {
+                    "description": "ちょうど 2 件",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.MatchParticipantInput"
+                    }
+                },
+                "result_type": {
+                    "type": "string",
+                    "enum": [
+                        "goal",
+                        "resign",
+                        "timeout",
+                        "draw",
+                        "abort"
+                    ],
+                    "example": "goal"
+                },
+                "started_at": {
+                    "type": "string"
+                },
+                "total_moves": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "example": 42
+                }
+            }
+        },
+        "apispec.MatchListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.MatchResponse"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 20
+                },
+                "offset": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "total": {
+                    "description": "条件に合致する総件数",
+                    "type": "integer",
+                    "example": 128
+                }
+            }
+        },
+        "apispec.MatchParticipantInput": {
+            "type": "object",
+            "required": [
+                "outcome",
+                "seat",
+                "user_id"
+            ],
+            "properties": {
+                "outcome": {
+                    "type": "string",
+                    "enum": [
+                        "win",
+                        "loss",
+                        "draw"
+                    ],
+                    "example": "win"
+                },
+                "seat": {
+                    "description": "0=先手 1=後手",
+                    "type": "integer",
+                    "enum": [
+                        0,
+                        1
+                    ],
+                    "example": 0
+                },
+                "user_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "3f0c1a2e-9a5b-4c7d-8e1f-2b3c4d5e6f70"
+                }
+            }
+        },
+        "apispec.MatchResponse": {
+            "type": "object",
+            "properties": {
+                "finished_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "ranked",
+                        "casual",
+                        "ai",
+                        "friend"
+                    ],
+                    "example": "ranked"
+                },
+                "opponent": {
+                    "description": "AI 戦では handle が \"bot\" のダミーを返す",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/apispec.UserPublic"
+                        }
+                    ]
+                },
+                "outcome": {
+                    "description": "自分から見た勝敗",
+                    "type": "string",
+                    "enum": [
+                        "win",
+                        "loss",
+                        "draw"
+                    ],
+                    "example": "win"
+                },
+                "rating_after": {
+                    "type": "integer",
+                    "example": 1444
+                },
+                "rating_before": {
+                    "type": "integer",
+                    "example": 1432
+                },
+                "rating_diff": {
+                    "description": "rating_after - rating_before。クライアントで引き算させない",
+                    "type": "integer",
+                    "example": 12
+                },
+                "result_type": {
+                    "description": "決着のつき方",
+                    "type": "string",
+                    "enum": [
+                        "goal",
+                        "resign",
+                        "timeout",
+                        "draw",
+                        "abort"
+                    ],
+                    "example": "goal"
+                },
+                "started_at": {
+                    "type": "string"
+                },
+                "total_moves": {
+                    "type": "integer",
+                    "example": 42
+                },
+                "xp_gained": {
+                    "type": "integer",
+                    "example": 50
                 }
             }
         },
@@ -1703,6 +2583,142 @@
                 },
                 "last_seen_at": {
                     "type": "string"
+                }
+            }
+        },
+        "apispec.StatsSummary": {
+            "type": "object",
+            "properties": {
+                "best_streak": {
+                    "type": "integer",
+                    "example": 7
+                },
+                "current_streak": {
+                    "description": "連勝は正、連敗は負",
+                    "type": "integer",
+                    "example": 3
+                },
+                "draws": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "level": {
+                    "type": "integer",
+                    "example": 7
+                },
+                "losses": {
+                    "type": "integer",
+                    "example": 18
+                },
+                "ranking": {
+                    "description": "rating の降順順位。同率は同順位",
+                    "type": "integer",
+                    "example": 12
+                },
+                "rating": {
+                    "type": "integer",
+                    "example": 1444
+                },
+                "total_matches": {
+                    "type": "integer",
+                    "example": 63
+                },
+                "total_players": {
+                    "description": "「250 人中 12 位」を作るため",
+                    "type": "integer",
+                    "example": 250
+                },
+                "win_rate": {
+                    "description": "0.0-1.0。引き分けは母数に含む",
+                    "type": "number",
+                    "example": 0.667
+                },
+                "wins": {
+                    "type": "integer",
+                    "example": 42
+                },
+                "xp": {
+                    "type": "integer",
+                    "example": 1420
+                },
+                "xp_for_next_level": {
+                    "description": "このレベルの上限。進捗バーの分母",
+                    "type": "integer",
+                    "example": 1600
+                }
+            }
+        },
+        "apispec.StatsUpdatedEvent": {
+            "type": "object",
+            "properties": {
+                "match_id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "occurred_at": {
+                    "type": "string"
+                },
+                "outcome": {
+                    "type": "string",
+                    "enum": [
+                        "win",
+                        "loss",
+                        "draw"
+                    ]
+                },
+                "rating": {
+                    "type": "integer",
+                    "example": 1444
+                }
+            }
+        },
+        "apispec.TimeseriesPoint": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "description": "interval=week のときは週の開始日",
+                    "type": "string",
+                    "example": "2026-08-20"
+                },
+                "draws": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "losses": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "matches": {
+                    "type": "integer",
+                    "example": 4
+                },
+                "rating": {
+                    "description": "そのコマの最後の対戦後のレーティング",
+                    "type": "integer",
+                    "example": 1444
+                },
+                "wins": {
+                    "type": "integer",
+                    "example": 3
+                }
+            }
+        },
+        "apispec.TimeseriesResponse": {
+            "type": "object",
+            "properties": {
+                "interval": {
+                    "type": "string",
+                    "enum": [
+                        "day",
+                        "week"
+                    ],
+                    "example": "day"
+                },
+                "points": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.TimeseriesPoint"
+                    }
                 }
             }
         },
