@@ -153,3 +153,16 @@ func isValidOutcome(v string) bool {
 
 	return false
 }
+
+// MatchEvent は対戦が記録されたことを知らせる 1 件。
+//
+// 統計そのものは載せない。載せると「イベントで運ばれた値」と
+// 「API で取り直した値」の 2 経路ができて食い違うため、更新の合図だけを送り、
+// 受け取った側が改めて取得する。
+type MatchEvent struct {
+	MatchID    uuid.UUID
+	UserID     uuid.UUID
+	Outcome    string
+	Rating     int
+	OccurredAt time.Time
+}
