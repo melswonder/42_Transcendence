@@ -1,2 +1,41 @@
-// ルーティングの宣言だけを担う層。画面の中身は src/views 以下に置く（FSD）。
-export { HomePage as default } from "@/views/home";
+import { Container, Stack, Text, ThemeIcon, Title } from "@mantine/core";
+import { IconArrowRight } from "@tabler/icons-react";
+
+import { LinkButton } from "@/components/link-button";
+import { QuoridorMark } from "@/components/quoridor-mark";
+
+export default function HomePage() {
+  return (
+    <main className="flex min-h-dvh items-center justify-center bg-body p-6">
+      <Container size="sm">
+        <Stack align="center" gap="xl">
+          <ThemeIcon size={80} radius="lg" variant="light">
+            <QuoridorMark size={44} />
+          </ThemeIcon>
+
+          <Stack align="center" gap="sm">
+            {/* 字送りとレスポンシブなサイズだけ Tailwind で足す。
+                utilities レイヤーが mantine より後ろなので !important は要らない。 */}
+            <Title
+              order={1}
+              className="text-center text-4xl tracking-[0.2em] sm:text-5xl"
+            >
+              TRANSCENDENCE
+            </Title>
+            <Text size="lg" c="dimmed" ta="center" maw={420}>
+              ブラウザで対戦できるコリドール。ログインしてゲームを始めましょう。
+            </Text>
+          </Stack>
+
+          <LinkButton
+            href="/login"
+            size="lg"
+            rightSection={<IconArrowRight size={18} />}
+          >
+            ログインして始める
+          </LinkButton>
+        </Stack>
+      </Container>
+    </main>
+  );
+}

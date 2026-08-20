@@ -1,14 +1,19 @@
-import { cn } from "@/shared/lib/utils";
+import { rem } from "@mantine/core";
+
+interface GoogleMarkProps {
+  size?: number | string;
+}
 
 /** Google ブランドの G マーク（公式の 4 色）。
- * ブランドカラーの指定なので、テーマトークンではなく固定色で持つのが正しい。
+ * ブランドカラーの指定なので、theme の色ではなく固定値で持つのが正しい。
  */
-export function GoogleMark({ className }: { className?: string }) {
+export function GoogleMark({ size = 20 }: GoogleMarkProps) {
   return (
     <svg
       viewBox="0 0 48 48"
+      width={rem(size)}
+      height={rem(size)}
       aria-hidden="true"
-      className={cn("size-5", className)}
     >
       <path
         fill="#4285F4"
