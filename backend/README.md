@@ -24,6 +24,46 @@ air のインストール:
 go install github.com/air-verse/air@latest
 ```
 
+## 公開 API の仕様（Swagger）
+
+外部クライアントから叩ける API の**仕様だけ**を先に決めてある。ベースパスは `/api/v1`、認証は Bearer トークン。
+エンドポイントの実装（ルーティング・handler・usecase）はまだ無く、これから入る。
+
+```bash
+make swagger          # apispec と cmd/swaggo/main.go から spec を生成
+make swagger-serve    # 生成して Swagger UI を起動
+open http://localhost:4000/swagger/index.html
+```
+
+| もの                    | 場所                                               |
+| ----------------------- | -------------------------------------------------- |
+| 仕様の元（手書き）      | `apispec/*.go`                                     |
+| 一般情報・UI サーバー   | `cmd/swaggo/main.go`                               |
+| 生成物（触らない）      | `docs/swagger/{docs.go,swagger.json,swagger.yaml}` |
+| spec (OpenAPI 2.0)      | `http://localhost:4000/swagger/doc.json`           |
+
+### リソースと対応テーブル
+
+| タグ      | 主なエンドポイント                                                                      | テーブル                    |
+| --------- | --------------------------------------------------------------------------------------- | --------------------------- |
+| `auth`    | `/auth/register` `/auth/login` `/auth/refresh` `/auth/sessions` `/auth/oauth/{provider}` | `sessions` `oauth_accounts` |
+| `users`   | `/users` `/users/me` `/users/{userId}`                                                  | `users`                     |
+| `media`   | `/media` `/media/avatars`                                                               | `media_assets`              |
+| `friends` | `/friends` `/friends/requests`                                                          | `friendships`               |
+| `blocks`  | `/blocks`                                                                               | `blocks`                    |
+
+### 決めごと
+
+- リクエスト / レスポンスの型は `apispec` にあるものを使い、`infrastructure` のモデルをそのまま返さない。
+  `password_hash` `token_hash` `storage_key` を外に出さないため。
+- `UserPublic`（他人向け）と `UserPrivate`（本人向け）は別の型。email は本人にしか返さない。
+- 一覧系は `limit` / `offset` と `total` を共通で持つ（`Pagination`）。
+- 失敗時は全て `ErrorResponse`（`code` / `message`）。
+- アノテーションを変えたら `make swagger` で生成し直してコミットする。
+
+実装する人へ: 型とアノテーションを `handler` 層へ移して実際のハンドラーに付け直し、
+`apispec` を消す形にしてもよい。その場合は `Makefile` の `swagger` の `-g` を実装側の main に向け直す。
+
 ## アーキテクチャ
 
 ### 大原則: 依存は内側にだけ流れる

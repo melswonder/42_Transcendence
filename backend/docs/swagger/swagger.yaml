@@ -1,26 +1,1271 @@
 basePath: /api/v1
+definitions:
+  apispec.BlockCreateRequest:
+    properties:
+      user_id:
+        example: 3f0c1a2e-9a5b-4c7d-8e1f-2b3c4d5e6f70
+        format: uuid
+        type: string
+    required:
+    - user_id
+    type: object
+  apispec.BlockListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/apispec.BlockResponse'
+        type: array
+      limit:
+        example: 20
+        type: integer
+      offset:
+        example: 0
+        type: integer
+      total:
+        description: 条件に合致する総件数
+        example: 128
+        type: integer
+    type: object
+  apispec.BlockResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        format: uuid
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/apispec.UserPublic'
+        description: ブロックされている側
+    type: object
+  apispec.DeleteMeRequest:
+    properties:
+      password:
+        example: correct horse battery staple
+        type: string
+    type: object
+  apispec.ErrorResponse:
+    properties:
+      code:
+        example: unauthorized
+        type: string
+      message:
+        example: 認証が必要です
+        type: string
+    type: object
+  apispec.FriendRequestCreateRequest:
+    properties:
+      user_id:
+        example: 3f0c1a2e-9a5b-4c7d-8e1f-2b3c4d5e6f70
+        format: uuid
+        type: string
+    required:
+    - user_id
+    type: object
+  apispec.FriendRequestDecisionRequest:
+    properties:
+      action:
+        enum:
+        - accept
+        - reject
+        example: accept
+        type: string
+    required:
+    - action
+    type: object
+  apispec.FriendshipListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/apispec.FriendshipResponse'
+        type: array
+      limit:
+        example: 20
+        type: integer
+      offset:
+        example: 0
+        type: integer
+      total:
+        description: 条件に合致する総件数
+        example: 128
+        type: integer
+    type: object
+  apispec.FriendshipResponse:
+    properties:
+      created_at:
+        type: string
+      requested_by_me:
+        description: requested_by_user_id が自分か
+        example: true
+        type: boolean
+      status:
+        enum:
+        - pending
+        - accepted
+        - rejected
+        example: accepted
+        type: string
+      updated_at:
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/apispec.UserPublic'
+        description: 相手
+    type: object
+  apispec.LoginRequest:
+    properties:
+      email:
+        example: user@example.com
+        format: email
+        type: string
+      password:
+        example: correct horse battery staple
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  apispec.MediaAssetListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/apispec.MediaAssetResponse'
+        type: array
+      limit:
+        example: 20
+        type: integer
+      offset:
+        example: 0
+        type: integer
+      total:
+        description: 条件に合致する総件数
+        example: 128
+        type: integer
+    type: object
+  apispec.MediaAssetResponse:
+    properties:
+      checksum_sha256:
+        example: 9f2b7c1e4a5d6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8
+        type: string
+      created_at:
+        type: string
+      height:
+        example: 512
+        type: integer
+      id:
+        format: uuid
+        type: string
+      mime_type:
+        enum:
+        - image/png
+        - image/jpeg
+        - image/webp
+        example: image/png
+        type: string
+      original_filename:
+        example: icon.png
+        type: string
+      purpose:
+        enum:
+        - avatar
+        example: avatar
+        type: string
+      size_bytes:
+        example: 48219
+        type: integer
+      status:
+        enum:
+        - active
+        - deleted
+        example: active
+        type: string
+      url:
+        example: https://cdn.example.com/avatars/9b7f2c11.png
+        type: string
+      width:
+        example: 512
+        type: integer
+    type: object
+  apispec.OAuthAccountListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/apispec.OAuthAccountResponse'
+        type: array
+    type: object
+  apispec.OAuthAccountResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        format: uuid
+        type: string
+      provider:
+        enum:
+        - google
+        - github
+        - "42"
+        example: google
+        type: string
+      provider_account_id:
+        example: "117452839201847362514"
+        type: string
+      provider_email:
+        example: user@gmail.com
+        format: email
+        type: string
+    type: object
+  apispec.OAuthAuthorizeResponse:
+    properties:
+      authorization_url:
+        example: https://accounts.google.com/o/oauth2/v2/auth?...
+        type: string
+      state:
+        example: 9f8e7d6c5b4a
+        type: string
+    type: object
+  apispec.RegisterRequest:
+    properties:
+      display_name:
+        example: melswonder
+        maxLength: 50
+        type: string
+      email:
+        example: user@example.com
+        format: email
+        type: string
+      handle:
+        example: mels
+        maxLength: 30
+        type: string
+      password:
+        example: correct horse battery staple
+        minLength: 8
+        type: string
+      preferred_locale:
+        enum:
+        - ja
+        - en
+        - fr
+        example: ja
+        type: string
+    required:
+    - display_name
+    - email
+    - handle
+    - password
+    type: object
+  apispec.SessionListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/apispec.SessionResponse'
+        type: array
+    type: object
+  apispec.SessionResponse:
+    properties:
+      created_at:
+        type: string
+      current:
+        description: このリクエストに使われているセッションか
+        example: true
+        type: boolean
+      expires_at:
+        type: string
+      id:
+        example: c1a2b3d4-5e6f-4071-8293-a4b5c6d7e8f9
+        format: uuid
+        type: string
+      last_seen_at:
+        type: string
+    type: object
+  apispec.TokenResponse:
+    properties:
+      access_token:
+        example: v1.f7a1c0b9d2e34f56a7b8c9d0e1f23456
+        type: string
+      expires_at:
+        type: string
+      token_type:
+        example: Bearer
+        type: string
+      user:
+        $ref: '#/definitions/apispec.UserPrivate'
+    type: object
+  apispec.UpdateMeRequest:
+    properties:
+      avatar_asset_id:
+        description: null を渡すとアバターを外す
+        example: 9b7f2c11-33aa-4d0e-9f21-77c1b0a5e123
+        format: uuid
+        type: string
+      display_name:
+        example: melswonder
+        type: string
+      handle:
+        example: mels
+        type: string
+      preferred_locale:
+        enum:
+        - ja
+        - en
+        - fr
+        example: ja
+        type: string
+    type: object
+  apispec.UserListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/apispec.UserPublic'
+        type: array
+      limit:
+        example: 20
+        type: integer
+      offset:
+        example: 0
+        type: integer
+      total:
+        description: 条件に合致する総件数
+        example: 128
+        type: integer
+    type: object
+  apispec.UserPrivate:
+    properties:
+      avatar_url:
+        description: 未設定ならデフォルト画像の URL
+        example: https://cdn.example.com/avatars/default.png
+        type: string
+      created_at:
+        type: string
+      display_name:
+        example: melswonder
+        type: string
+      email:
+        example: user@example.com
+        format: email
+        type: string
+      experience_points:
+        example: 1420
+        type: integer
+      handle:
+        example: mels
+        type: string
+      has_password:
+        description: password_hash の有無だけを公開する
+        example: true
+        type: boolean
+      id:
+        example: 3f0c1a2e-9a5b-4c7d-8e1f-2b3c4d5e6f70
+        format: uuid
+        type: string
+      level:
+        example: 7
+        type: integer
+      linked_providers:
+        description: oauth_accounts から導出
+        example:
+        - google
+        - "42"
+        items:
+          type: string
+        type: array
+      preferred_locale:
+        example: ja
+        type: string
+      status:
+        enum:
+        - active
+        - suspended
+        - deleted
+        example: active
+        type: string
+      updated_at:
+        type: string
+    type: object
+  apispec.UserPublic:
+    properties:
+      avatar_url:
+        description: 未設定ならデフォルト画像の URL
+        example: https://cdn.example.com/avatars/default.png
+        type: string
+      created_at:
+        type: string
+      display_name:
+        example: melswonder
+        type: string
+      experience_points:
+        example: 1420
+        type: integer
+      handle:
+        example: mels
+        type: string
+      id:
+        example: 3f0c1a2e-9a5b-4c7d-8e1f-2b3c4d5e6f70
+        format: uuid
+        type: string
+      level:
+        example: 7
+        type: integer
+      status:
+        enum:
+        - active
+        - suspended
+        - deleted
+        example: active
+        type: string
+    type: object
 host: localhost:4000
 info:
-  contact: {}
-  description: swaggoの動作確認用APIです。
-  title: Sample API
+  contact:
+    name: 42 Transcendence
+  description: |-
+    ユーザー・認証・フレンド・ブロック・アバターを扱う公開 API の仕様。
+    外部クライアントから叩けるよう、認証は Cookie ではなく Bearer トークンで行う。
+    現時点では仕様のみで、エンドポイントの実装はこれから追加される。
+  license:
+    name: MIT
+  title: ft_transcendence API
   version: "1.0"
 paths:
-  /hello:
-    get:
+  /auth/login:
+    post:
       consumes:
       - application/json
-      description: Simple hello world endpoint
+      description: 認証に成功するとセッションを 1 件作り、Bearer トークンを返す。
+      parameters:
+      - description: 認証情報
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apispec.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: 挨拶を取得
+            $ref: '#/definitions/apispec.TokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: メールまたはパスワードが違う
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "403":
+          description: アカウントが停止されている
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      summary: ログイン
       tags:
-      - example
+      - auth
+  /auth/logout:
+    post:
+      description: リクエストに使われたセッションを失効させる（sessions.revoked_at）。
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: 失効完了
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: ログアウト
+      tags:
+      - auth
+  /auth/oauth/{provider}:
+    get:
+      description: 'プロバイダの認可 URL を返す。Accept: text/html のブラウザからは 302 でリダイレクトする。'
+      parameters:
+      - description: プロバイダ
+        enum:
+        - google
+        - github
+        - "42"
+        in: path
+        name: provider
+        required: true
+        type: string
+      - description: 認可後に戻すフロントエンドの URL（許可リスト内のみ）
+        in: query
+        name: redirect_uri
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.OAuthAuthorizeResponse'
+        "400":
+          description: 未対応のプロバイダ
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      summary: OAuth 認可を開始
+      tags:
+      - auth
+  /auth/oauth/{provider}/callback:
+    get:
+      description: 認可コードを検証し、oauth_accounts に紐づくユーザーでセッションを発行する。未登録なら新規作成する。
+      parameters:
+      - description: プロバイダ
+        enum:
+        - google
+        - github
+        - "42"
+        in: path
+        name: provider
+        required: true
+        type: string
+      - description: 認可コード
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: CSRF 対策の state
+        in: query
+        name: state
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.TokenResponse'
+        "400":
+          description: code / state が不正
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "409":
+          description: 同じプロバイダアカウントが別ユーザーに紐づいている
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      summary: OAuth コールバック
+      tags:
+      - auth
+  /auth/oauth/accounts:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.OAuthAccountListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 連携済み OAuth アカウント一覧
+      tags:
+      - auth
+  /auth/oauth/accounts/{accountId}:
+    delete:
+      description: 解除するとログイン手段が無くなる場合（パスワード未設定で連携が 1 件だけ）は 409 を返す。
+      parameters:
+      - description: oauth_accounts の ID
+        format: uuid
+        in: path
+        name: accountId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: 解除完了
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "409":
+          description: 最後のログイン手段は解除できない
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: OAuth 連携を解除
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      description: 有効期限を延長した新しいトークンを発行し、古いトークンは失効させる。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.TokenResponse'
+        "401":
+          description: トークンが無効・期限切れ・失効済み
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: セッションを更新
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: メールとパスワードでユーザーを作り、そのままセッションを発行する。
+      parameters:
+      - description: 登録内容
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apispec.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apispec.TokenResponse'
+        "400":
+          description: バリデーションエラー
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "409":
+          description: email または handle が既に使われている
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      summary: 新規登録
+      tags:
+      - auth
+  /auth/sessions:
+    get:
+      description: 有効なセッション（未失効かつ期限内）を返す。他端末のログイン状況の確認に使う。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.SessionListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 自分のセッション一覧
+      tags:
+      - auth
+  /auth/sessions/{sessionId}:
+    delete:
+      description: 指定した端末のセッションだけを切る。自分のセッションのみ操作できる。
+      parameters:
+      - description: セッション ID
+        format: uuid
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: 失効完了
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "404":
+          description: 自分のセッションに存在しない
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: セッションを失効させる
+      tags:
+      - auth
+  /blocks:
+    get:
+      description: 自分がブロックしている相手を返す。自分をブロックしている相手は取得できない。
+      parameters:
+      - default: 20
+        description: 取得件数 (1-100)
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: 取得開始位置
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.BlockListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: ブロック一覧
+      tags:
+      - blocks
+    post:
+      consumes:
+      - application/json
+      description: 既存の友達関係があれば同時に解除する。同じ相手を二重にブロックはできない。
+      parameters:
+      - description: ブロックする相手
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apispec.BlockCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apispec.BlockResponse'
+        "400":
+          description: 自分自身は指定できない
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "404":
+          description: 相手が存在しない
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "409":
+          description: 既にブロック済み
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: ユーザーをブロック
+      tags:
+      - blocks
+  /blocks/{userId}:
+    delete:
+      parameters:
+      - description: ブロックを解除する相手のユーザー ID
+        format: uuid
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: 解除完了
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "404":
+          description: ブロックしていない
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: ブロックを解除
+      tags:
+      - blocks
+  /friends:
+    get:
+      description: status=accepted の関係を返す。status を指定すると申請中なども取得できる。
+      parameters:
+      - default: accepted
+        description: 絞り込む状態
+        enum:
+        - pending
+        - accepted
+        - rejected
+        in: query
+        name: status
+        type: string
+      - default: 20
+        description: 取得件数 (1-100)
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: 取得開始位置
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.FriendshipListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 友達一覧
+      tags:
+      - friends
+  /friends/{userId}:
+    delete:
+      description: 関係を削除する。accepted なら友達解除、pending なら申請の取り消しになる。
+      parameters:
+      - description: 相手のユーザー ID
+        format: uuid
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: 削除完了
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "404":
+          description: 関係が無い
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 友達を解除／申請を取り消す
+      tags:
+      - friends
+  /friends/requests:
+    get:
+      description: direction=incoming で自分宛て、outgoing で自分が出した申請を返す。
+      parameters:
+      - default: incoming
+        description: 申請の向き
+        enum:
+        - incoming
+        - outgoing
+        in: query
+        name: direction
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.FriendshipListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 友達申請の一覧
+      tags:
+      - friends
+    post:
+      consumes:
+      - application/json
+      description: pending の関係を作る。相手が既に自分へ申請していれば、その場で accepted になる。
+      parameters:
+      - description: 申請先
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apispec.FriendRequestCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apispec.FriendshipResponse'
+        "400":
+          description: 自分自身は指定できない
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "403":
+          description: どちらかがブロックしている
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "404":
+          description: 相手が存在しない
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "409":
+          description: 既に申請済み、または友達
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 友達申請を送る
+      tags:
+      - friends
+  /friends/requests/{userId}:
+    patch:
+      consumes:
+      - application/json
+      description: 自分宛ての pending な申請を accepted / rejected にする。
+      parameters:
+      - description: 申請してきたユーザーの ID
+        format: uuid
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: 返答
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apispec.FriendRequestDecisionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.FriendshipResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "404":
+          description: 自分宛ての申請が無い
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 友達申請に返答する
+      tags:
+      - friends
+  /media:
+    get:
+      description: status=active のアセットを新しい順に返す。
+      parameters:
+      - description: 用途で絞り込む
+        enum:
+        - avatar
+        in: query
+        name: purpose
+        type: string
+      - default: 20
+        description: 取得件数 (1-100)
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: 取得開始位置
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.MediaAssetListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 自分のアセット一覧
+      tags:
+      - media
+  /media/{assetId}:
+    delete:
+      description: 論理削除（status=deleted, deleted_at）。使用中のアバターを消すとデフォルト画像に戻る。
+      parameters:
+      - description: アセット ID
+        format: uuid
+        in: path
+        name: assetId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: 削除完了
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "404":
+          description: 自分のアセットに存在しない
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: アセットを削除
+      tags:
+      - media
+    get:
+      parameters:
+      - description: アセット ID
+        format: uuid
+        in: path
+        name: assetId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.MediaAssetResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: アセットのメタ情報を取得
+      tags:
+      - media
+  /media/avatars:
+    post:
+      consumes:
+      - multipart/form-data
+      description: multipart/form-data で画像を送る。アップロードしただけでは適用されず、PATCH /users/me の
+        avatar_asset_id で設定する。
+      parameters:
+      - description: 画像ファイル（png / jpeg / webp、最大 5MB）
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apispec.MediaAssetResponse'
+        "400":
+          description: ファイルが無い、または壊れている
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "413":
+          description: サイズ上限を超えている
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "415":
+          description: 未対応の形式
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: アバター画像をアップロード
+      tags:
+      - media
+  /users:
+    get:
+      description: handle / 表示名の部分一致で検索する。退会済みとブロック関係にあるユーザーは含めない。
+      parameters:
+      - description: handle または表示名の部分一致
+        example: mels
+        in: query
+        name: q
+        type: string
+      - description: handle の完全一致
+        in: query
+        name: handle
+        type: string
+      - default: 20
+        description: 取得件数 (1-100)
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: 取得開始位置
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.UserListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: ユーザーを検索
+      tags:
+      - users
+  /users/{userId}:
+    get:
+      parameters:
+      - description: ユーザー ID
+        format: uuid
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.UserPublic'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "404":
+          description: 存在しない、または退会済み
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: ユーザーの公開プロフィールを取得
+      tags:
+      - users
+  /users/me:
+    delete:
+      consumes:
+      - application/json
+      description: users.anonymized_at を立てて個人情報を落とす。handle と email は他ユーザーが再利用できるようになる。
+      parameters:
+      - description: パスワードを持つユーザーは必須
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/apispec.DeleteMeRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: 退会完了。全セッションが失効する
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 退会する（匿名化）
+      tags:
+      - users
+    get:
+      description: アクセストークンの持ち主のプロフィールを返す。email や連携済み OAuth プロバイダを含む。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.UserPrivate'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 自分のプロフィールを取得
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      description: 表示名・handle・言語・アバターを部分更新する。handle は退会者を除いて一意。
+      parameters:
+      - description: 更新する項目だけを含める
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apispec.UpdateMeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.UserPrivate'
+        "400":
+          description: バリデーションエラー
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "409":
+          description: handle が既に使われている
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 自分のプロフィールを更新
+      tags:
+      - users
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: '`Bearer {access_token}` 形式で指定する。トークンは POST /auth/login などで発行する。'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

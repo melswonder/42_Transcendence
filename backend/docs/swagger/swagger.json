@@ -1,17 +1,26 @@
 {
+    "schemes": [
+        "http",
+        "https"
+    ],
     "swagger": "2.0",
     "info": {
-        "description": "swaggoの動作確認用APIです。",
-        "title": "Sample API",
-        "contact": {},
+        "description": "ユーザー・認証・フレンド・ブロック・アバターを扱う公開 API の仕様。\n外部クライアントから叩けるよう、認証は Cookie ではなく Bearer トークンで行う。\n現時点では仕様のみで、エンドポイントの実装はこれから追加される。",
+        "title": "ft_transcendence API",
+        "contact": {
+            "name": "42 Transcendence"
+        },
+        "license": {
+            "name": "MIT"
+        },
         "version": "1.0"
     },
     "host": "localhost:4000",
     "basePath": "/api/v1",
     "paths": {
-        "/hello": {
-            "get": {
-                "description": "Simple hello world endpoint",
+        "/auth/login": {
+            "post": {
+                "description": "認証に成功するとセッションを 1 件作り、Bearer トークンを返す。",
                 "consumes": [
                     "application/json"
                 ],
@@ -19,21 +28,1876 @@
                     "application/json"
                 ],
                 "tags": [
-                    "example"
+                    "auth"
                 ],
-                "summary": "挨拶を取得",
+                "summary": "ログイン",
+                "parameters": [
+                    {
+                        "description": "認証情報",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apispec.LoginRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/apispec.TokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "メールまたはパスワードが違う",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "アカウントが停止されている",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
                         }
                     }
                 }
             }
+        },
+        "/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "リクエストに使われたセッションを失効させる（sessions.revoked_at）。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "ログアウト",
+                "responses": {
+                    "204": {
+                        "description": "失効完了"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/oauth/accounts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "連携済み OAuth アカウント一覧",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.OAuthAccountListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/oauth/accounts/{accountId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "解除するとログイン手段が無くなる場合（パスワード未設定で連携が 1 件だけ）は 409 を返す。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "OAuth 連携を解除",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "oauth_accounts の ID",
+                        "name": "accountId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "解除完了"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "最後のログイン手段は解除できない",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/oauth/{provider}": {
+            "get": {
+                "description": "プロバイダの認可 URL を返す。Accept: text/html のブラウザからは 302 でリダイレクトする。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "OAuth 認可を開始",
+                "parameters": [
+                    {
+                        "enum": [
+                            "google",
+                            "github",
+                            "42"
+                        ],
+                        "type": "string",
+                        "description": "プロバイダ",
+                        "name": "provider",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "認可後に戻すフロントエンドの URL（許可リスト内のみ）",
+                        "name": "redirect_uri",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.OAuthAuthorizeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "未対応のプロバイダ",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/oauth/{provider}/callback": {
+            "get": {
+                "description": "認可コードを検証し、oauth_accounts に紐づくユーザーでセッションを発行する。未登録なら新規作成する。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "OAuth コールバック",
+                "parameters": [
+                    {
+                        "enum": [
+                            "google",
+                            "github",
+                            "42"
+                        ],
+                        "type": "string",
+                        "description": "プロバイダ",
+                        "name": "provider",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "認可コード",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF 対策の state",
+                        "name": "state",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.TokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "code / state が不正",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "同じプロバイダアカウントが別ユーザーに紐づいている",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "有効期限を延長した新しいトークンを発行し、古いトークンは失効させる。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "セッションを更新",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.TokenResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "トークンが無効・期限切れ・失効済み",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "メールとパスワードでユーザーを作り、そのままセッションを発行する。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "新規登録",
+                "parameters": [
+                    {
+                        "description": "登録内容",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apispec.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.TokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "バリデーションエラー",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "email または handle が既に使われている",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/sessions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "有効なセッション（未失効かつ期限内）を返す。他端末のログイン状況の確認に使う。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "自分のセッション一覧",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.SessionListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/sessions/{sessionId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "指定した端末のセッションだけを切る。自分のセッションのみ操作できる。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "セッションを失効させる",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "セッション ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "失効完了"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "自分のセッションに存在しない",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/blocks": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "自分がブロックしている相手を返す。自分をブロックしている相手は取得できない。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "blocks"
+                ],
+                "summary": "ブロック一覧",
+                "parameters": [
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "取得件数 (1-100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "取得開始位置",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.BlockListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "既存の友達関係があれば同時に解除する。同じ相手を二重にブロックはできない。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "blocks"
+                ],
+                "summary": "ユーザーをブロック",
+                "parameters": [
+                    {
+                        "description": "ブロックする相手",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apispec.BlockCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.BlockResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "自分自身は指定できない",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "相手が存在しない",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "既にブロック済み",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/blocks/{userId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "blocks"
+                ],
+                "summary": "ブロックを解除",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ブロックを解除する相手のユーザー ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "解除完了"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "ブロックしていない",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/friends": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "status=accepted の関係を返す。status を指定すると申請中なども取得できる。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "friends"
+                ],
+                "summary": "友達一覧",
+                "parameters": [
+                    {
+                        "enum": [
+                            "pending",
+                            "accepted",
+                            "rejected"
+                        ],
+                        "type": "string",
+                        "default": "accepted",
+                        "description": "絞り込む状態",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "取得件数 (1-100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "取得開始位置",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.FriendshipListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/friends/requests": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "direction=incoming で自分宛て、outgoing で自分が出した申請を返す。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "friends"
+                ],
+                "summary": "友達申請の一覧",
+                "parameters": [
+                    {
+                        "enum": [
+                            "incoming",
+                            "outgoing"
+                        ],
+                        "type": "string",
+                        "default": "incoming",
+                        "description": "申請の向き",
+                        "name": "direction",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.FriendshipListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "pending の関係を作る。相手が既に自分へ申請していれば、その場で accepted になる。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "friends"
+                ],
+                "summary": "友達申請を送る",
+                "parameters": [
+                    {
+                        "description": "申請先",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apispec.FriendRequestCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.FriendshipResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "自分自身は指定できない",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "どちらかがブロックしている",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "相手が存在しない",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "既に申請済み、または友達",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/friends/requests/{userId}": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "自分宛ての pending な申請を accepted / rejected にする。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "friends"
+                ],
+                "summary": "友達申請に返答する",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "申請してきたユーザーの ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "返答",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apispec.FriendRequestDecisionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.FriendshipResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "自分宛ての申請が無い",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/friends/{userId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "関係を削除する。accepted なら友達解除、pending なら申請の取り消しになる。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "friends"
+                ],
+                "summary": "友達を解除／申請を取り消す",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "相手のユーザー ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "削除完了"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "関係が無い",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/media": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "status=active のアセットを新しい順に返す。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media"
+                ],
+                "summary": "自分のアセット一覧",
+                "parameters": [
+                    {
+                        "enum": [
+                            "avatar"
+                        ],
+                        "type": "string",
+                        "description": "用途で絞り込む",
+                        "name": "purpose",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "取得件数 (1-100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "取得開始位置",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.MediaAssetListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/media/avatars": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "multipart/form-data で画像を送る。アップロードしただけでは適用されず、PATCH /users/me の avatar_asset_id で設定する。",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media"
+                ],
+                "summary": "アバター画像をアップロード",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "画像ファイル（png / jpeg / webp、最大 5MB）",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.MediaAssetResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "ファイルが無い、または壊れている",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "413": {
+                        "description": "サイズ上限を超えている",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "415": {
+                        "description": "未対応の形式",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/media/{assetId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media"
+                ],
+                "summary": "アセットのメタ情報を取得",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "アセット ID",
+                        "name": "assetId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.MediaAssetResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "論理削除（status=deleted, deleted_at）。使用中のアバターを消すとデフォルト画像に戻る。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media"
+                ],
+                "summary": "アセットを削除",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "アセット ID",
+                        "name": "assetId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "削除完了"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "自分のアセットに存在しない",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "handle / 表示名の部分一致で検索する。退会済みとブロック関係にあるユーザーは含めない。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "ユーザーを検索",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "mels",
+                        "description": "handle または表示名の部分一致",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "handle の完全一致",
+                        "name": "handle",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "取得件数 (1-100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "取得開始位置",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.UserListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "アクセストークンの持ち主のプロフィールを返す。email や連携済み OAuth プロバイダを含む。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "自分のプロフィールを取得",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.UserPrivate"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "users.anonymized_at を立てて個人情報を落とす。handle と email は他ユーザーが再利用できるようになる。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "退会する（匿名化）",
+                "parameters": [
+                    {
+                        "description": "パスワードを持つユーザーは必須",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.DeleteMeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "退会完了。全セッションが失効する"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "表示名・handle・言語・アバターを部分更新する。handle は退会者を除いて一意。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "自分のプロフィールを更新",
+                "parameters": [
+                    {
+                        "description": "更新する項目だけを含める",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apispec.UpdateMeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.UserPrivate"
+                        }
+                    },
+                    "400": {
+                        "description": "バリデーションエラー",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "handle が既に使われている",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{userId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "ユーザーの公開プロフィールを取得",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ユーザー ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.UserPublic"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "存在しない、または退会済み",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "apispec.BlockCreateRequest": {
+            "type": "object",
+            "required": [
+                "user_id"
+            ],
+            "properties": {
+                "user_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "3f0c1a2e-9a5b-4c7d-8e1f-2b3c4d5e6f70"
+                }
+            }
+        },
+        "apispec.BlockListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.BlockResponse"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 20
+                },
+                "offset": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "total": {
+                    "description": "条件に合致する総件数",
+                    "type": "integer",
+                    "example": 128
+                }
+            }
+        },
+        "apispec.BlockResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "user": {
+                    "description": "ブロックされている側",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/apispec.UserPublic"
+                        }
+                    ]
+                }
+            }
+        },
+        "apispec.DeleteMeRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "example": "correct horse battery staple"
+                }
+            }
+        },
+        "apispec.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "unauthorized"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "認証が必要です"
+                }
+            }
+        },
+        "apispec.FriendRequestCreateRequest": {
+            "type": "object",
+            "required": [
+                "user_id"
+            ],
+            "properties": {
+                "user_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "3f0c1a2e-9a5b-4c7d-8e1f-2b3c4d5e6f70"
+                }
+            }
+        },
+        "apispec.FriendRequestDecisionRequest": {
+            "type": "object",
+            "required": [
+                "action"
+            ],
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": [
+                        "accept",
+                        "reject"
+                    ],
+                    "example": "accept"
+                }
+            }
+        },
+        "apispec.FriendshipListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.FriendshipResponse"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 20
+                },
+                "offset": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "total": {
+                    "description": "条件に合致する総件数",
+                    "type": "integer",
+                    "example": 128
+                }
+            }
+        },
+        "apispec.FriendshipResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "requested_by_me": {
+                    "description": "requested_by_user_id が自分か",
+                    "type": "boolean",
+                    "example": true
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "accepted",
+                        "rejected"
+                    ],
+                    "example": "accepted"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user": {
+                    "description": "相手",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/apispec.UserPublic"
+                        }
+                    ]
+                }
+            }
+        },
+        "apispec.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "correct horse battery staple"
+                }
+            }
+        },
+        "apispec.MediaAssetListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.MediaAssetResponse"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 20
+                },
+                "offset": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "total": {
+                    "description": "条件に合致する総件数",
+                    "type": "integer",
+                    "example": 128
+                }
+            }
+        },
+        "apispec.MediaAssetResponse": {
+            "type": "object",
+            "properties": {
+                "checksum_sha256": {
+                    "type": "string",
+                    "example": "9f2b7c1e4a5d6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "height": {
+                    "type": "integer",
+                    "example": 512
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "mime_type": {
+                    "type": "string",
+                    "enum": [
+                        "image/png",
+                        "image/jpeg",
+                        "image/webp"
+                    ],
+                    "example": "image/png"
+                },
+                "original_filename": {
+                    "type": "string",
+                    "example": "icon.png"
+                },
+                "purpose": {
+                    "type": "string",
+                    "enum": [
+                        "avatar"
+                    ],
+                    "example": "avatar"
+                },
+                "size_bytes": {
+                    "type": "integer",
+                    "example": 48219
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "deleted"
+                    ],
+                    "example": "active"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://cdn.example.com/avatars/9b7f2c11.png"
+                },
+                "width": {
+                    "type": "integer",
+                    "example": 512
+                }
+            }
+        },
+        "apispec.OAuthAccountListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.OAuthAccountResponse"
+                    }
+                }
+            }
+        },
+        "apispec.OAuthAccountResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "provider": {
+                    "type": "string",
+                    "enum": [
+                        "google",
+                        "github",
+                        "42"
+                    ],
+                    "example": "google"
+                },
+                "provider_account_id": {
+                    "type": "string",
+                    "example": "117452839201847362514"
+                },
+                "provider_email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@gmail.com"
+                }
+            }
+        },
+        "apispec.OAuthAuthorizeResponse": {
+            "type": "object",
+            "properties": {
+                "authorization_url": {
+                    "type": "string",
+                    "example": "https://accounts.google.com/o/oauth2/v2/auth?..."
+                },
+                "state": {
+                    "type": "string",
+                    "example": "9f8e7d6c5b4a"
+                }
+            }
+        },
+        "apispec.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "display_name",
+                "email",
+                "handle",
+                "password"
+            ],
+            "properties": {
+                "display_name": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "example": "melswonder"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                },
+                "handle": {
+                    "type": "string",
+                    "maxLength": 30,
+                    "example": "mels"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "example": "correct horse battery staple"
+                },
+                "preferred_locale": {
+                    "type": "string",
+                    "enum": [
+                        "ja",
+                        "en",
+                        "fr"
+                    ],
+                    "example": "ja"
+                }
+            }
+        },
+        "apispec.SessionListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.SessionResponse"
+                    }
+                }
+            }
+        },
+        "apispec.SessionResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "current": {
+                    "description": "このリクエストに使われているセッションか",
+                    "type": "boolean",
+                    "example": true
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "c1a2b3d4-5e6f-4071-8293-a4b5c6d7e8f9"
+                },
+                "last_seen_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "apispec.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string",
+                    "example": "v1.f7a1c0b9d2e34f56a7b8c9d0e1f23456"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "token_type": {
+                    "type": "string",
+                    "example": "Bearer"
+                },
+                "user": {
+                    "$ref": "#/definitions/apispec.UserPrivate"
+                }
+            }
+        },
+        "apispec.UpdateMeRequest": {
+            "type": "object",
+            "properties": {
+                "avatar_asset_id": {
+                    "description": "null を渡すとアバターを外す",
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "9b7f2c11-33aa-4d0e-9f21-77c1b0a5e123"
+                },
+                "display_name": {
+                    "type": "string",
+                    "example": "melswonder"
+                },
+                "handle": {
+                    "type": "string",
+                    "example": "mels"
+                },
+                "preferred_locale": {
+                    "type": "string",
+                    "enum": [
+                        "ja",
+                        "en",
+                        "fr"
+                    ],
+                    "example": "ja"
+                }
+            }
+        },
+        "apispec.UserListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.UserPublic"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 20
+                },
+                "offset": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "total": {
+                    "description": "条件に合致する総件数",
+                    "type": "integer",
+                    "example": 128
+                }
+            }
+        },
+        "apispec.UserPrivate": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "description": "未設定ならデフォルト画像の URL",
+                    "type": "string",
+                    "example": "https://cdn.example.com/avatars/default.png"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string",
+                    "example": "melswonder"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                },
+                "experience_points": {
+                    "type": "integer",
+                    "example": 1420
+                },
+                "handle": {
+                    "type": "string",
+                    "example": "mels"
+                },
+                "has_password": {
+                    "description": "password_hash の有無だけを公開する",
+                    "type": "boolean",
+                    "example": true
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "3f0c1a2e-9a5b-4c7d-8e1f-2b3c4d5e6f70"
+                },
+                "level": {
+                    "type": "integer",
+                    "example": 7
+                },
+                "linked_providers": {
+                    "description": "oauth_accounts から導出",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "google",
+                        "42"
+                    ]
+                },
+                "preferred_locale": {
+                    "type": "string",
+                    "example": "ja"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "suspended",
+                        "deleted"
+                    ],
+                    "example": "active"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "apispec.UserPublic": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "description": "未設定ならデフォルト画像の URL",
+                    "type": "string",
+                    "example": "https://cdn.example.com/avatars/default.png"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string",
+                    "example": "melswonder"
+                },
+                "experience_points": {
+                    "type": "integer",
+                    "example": 1420
+                },
+                "handle": {
+                    "type": "string",
+                    "example": "mels"
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "3f0c1a2e-9a5b-4c7d-8e1f-2b3c4d5e6f70"
+                },
+                "level": {
+                    "type": "integer",
+                    "example": 7
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "suspended",
+                        "deleted"
+                    ],
+                    "example": "active"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "`Bearer {access_token}` 形式で指定する。トークンは POST /auth/login などで発行する。",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }
