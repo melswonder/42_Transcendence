@@ -1,38 +1,49 @@
-import { Container, Stack, Text, ThemeIcon, Title } from "@mantine/core";
-import { IconArrowRight } from "@tabler/icons-react";
+import { redirect } from "next/navigation";
+import {
+  Avatar,
+  Container,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 
-import { LinkButton } from "@/components/link-button";
-import { QuoridorMark } from "@/components/quoridor-mark";
+import { LogoutButton } from "@/components/logout-button";
+import { getCurrentUser } from "@/lib/auth";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
   return (
     <main className="flex min-h-dvh items-center justify-center bg-body p-6">
-      <Container size="sm">
-        <Stack align="center" gap="xl">
-          <ThemeIcon size={80} radius="lg" variant="light">
-            <QuoridorMark size={44} />
-          </ThemeIcon>
+      <Container size="sm" w="100%">
+        <Paper p="xl" shadow="md">
+          <Stack gap="lg">
+            <Group justify="space-between">
+              <Title order={1} className="text-2xl tracking-[0.15em]">
+                TRANSCENDENCE
+              </Title>
+              <LogoutButton />
+            </Group>
 
-          <Stack align="center" gap="sm">
-            <Title
-              order={1}
-              className="text-center text-4xl tracking-[0.2em] sm:text-5xl"
-            >
-              TRANSCENDENCE
-            </Title>
-            <Text size="lg" c="dimmed" ta="center" maw={420}>
-              ブラウザで対戦できるコリドール。ログインしてゲームを始めましょう。
-            </Text>
+            <Group gap="md">
+              <Avatar size={56} radius="xl" color="emerald" variant="filled">
+                {user.display_name.charAt(0).toUpperCase()}
+              </Avatar>
+              <Stack gap={2}>
+                <Text fw={600}>{user.display_name}</Text>
+                <Text size="sm" c="dimmed">
+                  @{user.handle}
+                </Text>
+                <Text size="sm" c="emerald">
+                  Lv.{user.level}
+                </Text>
+              </Stack>
+            </Group>
           </Stack>
-
-          <LinkButton
-            href="/login"
-            size="lg"
-            rightSection={<IconArrowRight size={18} />}
-          >
-            ログインして始める
-          </LinkButton>
-        </Stack>
+        </Paper>
       </Container>
     </main>
   );
