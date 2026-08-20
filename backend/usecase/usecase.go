@@ -17,6 +17,7 @@ type Dependencies struct {
 	PingRepository  PingRepository
 	AuthRepository  AuthRepository
 	MatchRepository MatchRepository
+	StatsRepository StatsRepository
 	GoogleOAuth     OAuthProvider
 	MatchNotifier   MatchNotifier
 }
@@ -25,6 +26,7 @@ type Services struct {
 	Ping  *PingUsecase
 	Auth  *AuthUsecase
 	Match *MatchUsecase
+	Stats *StatsUsecase
 }
 
 func NewServices(dependencies Dependencies) Services {
@@ -32,5 +34,6 @@ func NewServices(dependencies Dependencies) Services {
 		Ping:  NewPingUsecase(dependencies.PingRepository),
 		Auth:  NewAuthUsecase(dependencies.GoogleOAuth, dependencies.AuthRepository),
 		Match: NewMatchUsecase(dependencies.MatchRepository, dependencies.MatchNotifier),
+		Stats: NewStatsUsecase(dependencies.StatsRepository),
 	}
 }
