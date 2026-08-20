@@ -1,12 +1,10 @@
 # public.users
 
-## Description
-
 ## Columns
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | gen_random_uuid() | false | [public.blocks](public.blocks.md) [public.friendships](public.friendships.md) [public.media_assets](public.media_assets.md) [public.oauth_accounts](public.oauth_accounts.md) [public.sessions](public.sessions.md) |  |  |
+| id | uuid | gen_random_uuid() | false | [public.blocks](public.blocks.md) [public.friendships](public.friendships.md) [public.media_assets](public.media_assets.md) [public.oauth_accounts](public.oauth_accounts.md) [public.sessions](public.sessions.md) [public.match_participants](public.match_participants.md) [public.user_achievements](public.user_achievements.md) |  |  |
 | email | citext |  | true |  |  |  |
 | password_hash | text |  | true |  |  |  |
 | display_name | varchar(50) |  | false |  |  |  |
@@ -19,6 +17,7 @@
 | created_at | timestamp with time zone |  | false |  |  |  |
 | updated_at | timestamp with time zone |  | false |  |  |  |
 | anonymized_at | timestamp with time zone |  | true |  |  |  |
+| rating | integer | 1200 | false |  |  |  |
 
 ## Constraints
 
@@ -34,6 +33,9 @@
 | Name | Definition |
 | ---- | ---------- |
 | users_pkey | CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id) |
+| ux_users_email | CREATE UNIQUE INDEX ux_users_email ON public.users USING btree (email) WHERE ((email IS NOT NULL) AND (anonymized_at IS NULL)) |
+| ux_users_handle | CREATE UNIQUE INDEX ux_users_handle ON public.users USING btree (handle) WHERE (anonymized_at IS NULL) |
+| idx_users_rating | CREATE INDEX idx_users_rating ON public.users USING btree (rating DESC) |
 
 ## Relations
 

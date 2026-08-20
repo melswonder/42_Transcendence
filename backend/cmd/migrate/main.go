@@ -30,6 +30,9 @@ func main() {
 		&infrastructure.Session{},
 		&infrastructure.Friendship{},
 		&infrastructure.Block{},
+		&infrastructure.Match{},
+		&infrastructure.MatchParticipant{},
+		&infrastructure.UserAchievement{},
 	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to load gorm schema: %v\n", err)

@@ -1,7 +1,5 @@
 # atlas_schema_revisions.atlas_schema_revisions
 
-## Description
-
 ## Columns
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
