@@ -17,6 +17,7 @@ type User struct {
 	Handle      string
 	Status      string
 	Level       int
+	Rating      int
 	CreatedAt   time.Time
 }
 
