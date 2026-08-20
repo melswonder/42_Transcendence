@@ -83,6 +83,9 @@ services:
       # クライアントサイド（ブラウザ）からのアクセス用
       # ブラウザから実行されるため、localhost を使用
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+      # Server Component から呼ぶとき用。コンテナ内では localhost は
+      # frontend 自身を指すので、サービス名で backend を呼ぶ。
+      API_URL: http://backend:4000
     depends_on:
       - backend
     volumes:
