@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Button, type ButtonProps } from "@mantine/core";
+import { ActionIcon, Button } from "@mantine/core";
 import { IconLogout } from "@tabler/icons-react";
 
 import { apiUrl } from "@/lib/api";
 
 /** セッションを失効させてログイン画面へ戻す。 */
-export function LogoutButton(props: ButtonProps) {
+export function LogoutButton({ iconOnly = false }: { iconOnly?: boolean }) {
   const [loading, setLoading] = useState(false);
 
   const logout = async () => {
@@ -26,6 +26,20 @@ export function LogoutButton(props: ButtonProps) {
     }
   };
 
+  if (iconOnly) {
+    return (
+      <ActionIcon
+        onClick={logout}
+        loading={loading}
+        variant="subtle"
+        color="gray"
+        aria-label="ログアウト"
+      >
+        <IconLogout size={18} />
+      </ActionIcon>
+    );
+  }
+
   return (
     <Button
       onClick={logout}
@@ -33,7 +47,6 @@ export function LogoutButton(props: ButtonProps) {
       variant="subtle"
       color="gray"
       leftSection={<IconLogout size={18} />}
-      {...props}
     >
       ログアウト
     </Button>
