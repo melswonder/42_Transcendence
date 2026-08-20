@@ -1,6 +1,4 @@
-/** バックエンドがログイン失敗時に付けてくるクエリ。
- * 値は handler/auth.go の redirectWithError が渡す文字列と一対一で対応する。
- */
+/** キーは backend の handler/auth.go redirectWithError が渡す値と一対一。 */
 const ERROR_MESSAGES: Record<string, string> = {
   access_denied: "Google の同意画面でキャンセルされました。",
   invalid_state:
@@ -9,9 +7,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   login_failed: "ログイン処理に失敗しました。しばらくしてからお試しください。",
 };
 
-/** エラーコードを画面に出す日本語に変換する。
- * 未知の値が来ても素性を晒さず、一般的な文言に丸める。
- */
+/** 未知の値が来ても素性を晒さず、一般的な文言に丸める。 */
 export function resolveLoginError(code: string | undefined): string | null {
   if (!code) return null;
   return ERROR_MESSAGES[code] ?? "ログインできませんでした。";

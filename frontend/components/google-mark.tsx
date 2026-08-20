@@ -4,9 +4,7 @@ interface GoogleMarkProps {
   size?: number | string;
 }
 
-/** Google ブランドの G マーク（公式の 4 色）。
- * ブランドカラーの指定なので、theme の色ではなく固定値で持つのが正しい。
- */
+/** Google の G マーク。ブランド指定なので theme ではなく公式の 4 色を直接持つ。 */
 export function GoogleMark({ size = 20 }: GoogleMarkProps) {
   return (
     <svg

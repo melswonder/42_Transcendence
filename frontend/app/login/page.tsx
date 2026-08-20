@@ -5,7 +5,6 @@ import { GoogleLoginButton } from "@/components/google-login-button";
 import { QuoridorMark } from "@/components/quoridor-mark";
 import { resolveLoginError } from "@/lib/login-error";
 
-// searchParams は App Router では Promise で渡ってくるので await して取り出す。
 export default async function LoginPage({
   searchParams,
 }: {
@@ -29,7 +28,6 @@ export default async function LoginPage({
           </Stack>
 
           {message && (
-            // Alert は既定で role="alert" を持つので、ここで付け直す必要はない。
             <Alert color="red" variant="light" icon={<IconAlertCircle />}>
               {message}
             </Alert>

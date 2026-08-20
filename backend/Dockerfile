@@ -7,9 +7,8 @@ WORKDIR /app
 # ホットリロード用ツール air をインストール
 RUN go install github.com/air-verse/air@latest
 
-# migration を適用するために入れる
-# alpine の apk には無いのでリリースバイナリを直接取得する。
-# バージョンは開発者のローカル（make migrate-diff を叩く側）と揃えること。
+# migration を適用するために入れる。apk には無いのでリリースバイナリを直接取得する。
+# バージョンは make migrate-diff を叩くローカル側と揃えること。
 ARG ATLAS_VERSION=v0.38.0
 RUN apk add --no-cache curl \
 	&& case "$(uname -m)" in \
@@ -33,8 +32,7 @@ COPY . .
 # ポートを公開
 EXPOSE 4000
 
-# entrypoint は /app の外に置く。/app は docker-compose でホストの ./backend を
-# マウントして上書きされるため、そこに置くとイメージ内の実体が隠れてしまう。
+# /app は compose でホストの ./backend にマウント上書きされるので、その外に置く。
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["docker-entrypoint.sh"]
 

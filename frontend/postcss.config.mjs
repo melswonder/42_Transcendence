@@ -1,10 +1,5 @@
-// Mantine と Tailwind を併用する。プラグインの順序は
-// 「Mantine の関数を展開してから Tailwind に渡す」ため、この並びを崩さないこと。
-//
-// - postcss-preset-mantine : light-dark() / rem() / em() などの Mantine 専用関数を展開する
-// - postcss-simple-vars    : CSS モジュール内で $mantine-breakpoint-* を使えるようにする
-//   （値は Mantine のデフォルトブレークポイントと必ず一致させること）
-// - @tailwindcss/postcss   : Tailwind v4 本体
+// Mantine の rem() / light-dark() を展開してから Tailwind に渡すので、この並びは崩さない。
+// breakpoint の値は Mantine のデフォルトと一致させること。
 const config = {
   plugins: {
     "postcss-preset-mantine": {},

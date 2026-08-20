@@ -14,8 +14,6 @@ export default function HomePage() {
           </ThemeIcon>
 
           <Stack align="center" gap="sm">
-            {/* 字送りとレスポンシブなサイズだけ Tailwind で足す。
-                utilities レイヤーが mantine より後ろなので !important は要らない。 */}
             <Title
               order={1}
               className="text-center text-4xl tracking-[0.2em] sm:text-5xl"

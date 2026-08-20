@@ -9,9 +9,8 @@ import { apiUrl } from "@/lib/api";
 export function GoogleLoginButton() {
   const [loading, setLoading] = useState(false);
 
-  // fetch ではなく location で飛ばす。
-  // OAuth は「ブラウザごと Google の同意画面へ遷移する」流れなので、
-  // fetch で叩くと 302 の Location を辿るだけで同意画面を表示できない（CORS の対象にもなる）。
+  // fetch にしないこと。OAuth はブラウザごと同意画面へ遷移する流れなので、
+  // fetch だと 302 の Location を辿るだけで同意画面を出せない。
   const start = () => {
     setLoading(true);
     window.location.href = apiUrl("/auth/google");
@@ -25,8 +24,7 @@ export function GoogleLoginButton() {
       loaderProps={{ type: "dots" }}
       fullWidth
       size="lg"
-      // Google のボタンは白地が要件。theme の primaryColor ではなく
-      // variant="white" を使い、文字色だけ dark に寄せる。
+      // 白地は Google のブランド要件。theme の primaryColor は使わない。
       variant="white"
       color="dark.7"
       leftSection={<GoogleMark />}
