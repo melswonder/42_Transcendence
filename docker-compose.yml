@@ -66,6 +66,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # air が go build を終えて :4000 を listen するまでは通らない。
+    # frontend はこれが通るまで起動を待つ（起動直後の ECONNREFUSED を防ぐ）。
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4000/"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      # migration の適用と初回ビルドで時間がかかる。その間の失敗は回数に数えない。
+      start_period: 90s
     volumes:
       - ./backend:/app
     networks:
@@ -87,7 +96,8 @@ services:
       # frontend 自身を指すので、サービス名で backend を呼ぶ。
       API_URL: http://backend:4000
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     volumes:
       - ./frontend:/app
       - /app/node_modules
