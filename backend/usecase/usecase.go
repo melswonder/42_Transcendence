@@ -14,26 +14,33 @@ package usecase
 
 // usecase層の受け口
 type Dependencies struct {
-	PingRepository  PingRepository
-	AuthRepository  AuthRepository
-	MatchRepository MatchRepository
-	StatsRepository StatsRepository
-	GoogleOAuth     OAuthProvider
-	MatchNotifier   MatchNotifier
+	PingRepository        PingRepository
+	AuthRepository        AuthRepository
+	MatchRepository       MatchRepository
+	StatsRepository       StatsRepository
+	AchievementRepository AchievementRepository
+	GoogleOAuth           OAuthProvider
+	MatchNotifier         MatchNotifier
 }
 
 type Services struct {
-	Ping  *PingUsecase
-	Auth  *AuthUsecase
-	Match *MatchUsecase
-	Stats *StatsUsecase
+	Ping         *PingUsecase
+	Auth         *AuthUsecase
+	Match        *MatchUsecase
+	Stats        *StatsUsecase
+	Achievements *AchievementUsecase
 }
 
 func NewServices(dependencies Dependencies) Services {
+	// 実績の判定は統計の集計に乗るので、先に Stats を組んでから渡す。
+	stats := NewStatsUsecase(dependencies.StatsRepository)
+	achievements := NewAchievementUsecase(dependencies.AchievementRepository, stats)
+
 	return Services{
-		Ping:  NewPingUsecase(dependencies.PingRepository),
-		Auth:  NewAuthUsecase(dependencies.GoogleOAuth, dependencies.AuthRepository),
-		Match: NewMatchUsecase(dependencies.MatchRepository, dependencies.MatchNotifier),
-		Stats: NewStatsUsecase(dependencies.StatsRepository),
+		Ping:         NewPingUsecase(dependencies.PingRepository),
+		Auth:         NewAuthUsecase(dependencies.GoogleOAuth, dependencies.AuthRepository),
+		Match:        NewMatchUsecase(dependencies.MatchRepository, dependencies.MatchNotifier, achievements),
+		Stats:        stats,
+		Achievements: achievements,
 	}
 }
