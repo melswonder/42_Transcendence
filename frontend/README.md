@@ -1,7 +1,6 @@
 # フロントエンド 言語TypeScript
 
-Next.js 16（App Router）/ React 19 / TailwindCSS v4。パッケージマネージャは pnpm。
-設計は**Feature-Sliced Design**。
+Next.js 16（App Router）/ React 19 / TailwindCSS v4 + Mantine v9。パッケージマネージャは pnpm。
 
 ## 起動する
 
@@ -101,89 +100,156 @@ export default function Counter() {
 
 ## ディレクトリ構成
 
+**`app/` `components/` `lib/` の 3 つだけ。** 迷ったら「URL になるか / 複数の画面から使うか」で決まる。
+
 ```
 frontend/
 ├── app/                  ルーティングと画面（App Router）
 │   ├── layout.tsx        ルートレイアウト
-│   ├── page.tsx          トップページ
-│   └── globals.css       Tailwind の読み込みとテーマ定義
-├── types/                DB スキーマに対応する型定義
+│   ├── globals.css       Tailwind と Mantine の読み込み・レイヤー順・トークン橋渡し
+│   ├── page.tsx          /
+│   └── login/page.tsx    /login
+├── components/           複数の画面から使う UI 部品
+│   ├── google-login-button.tsx
+│   ├── link-button.tsx
+│   └── quoridor-mark.tsx
+├── lib/                  UI ではない共通ロジック
+│   ├── theme.ts          Mantine のテーマ（配色・フォント・既定値）
+│   ├── api.ts            バックエンドの URL 組み立て
+│   └── login-error.ts    エラーコード → 表示文言
 ├── public/               静的ファイル（/next.svg のように参照）
 ├── eslint.config.mjs     ESLint 設定（Flat Config）
 ├── .prettierrc.json      Prettier 設定
 ├── next.config.ts        Next.js 設定
-├── postcss.config.mjs    TailwindCSS を PostCSS プラグインとして登録
+├── postcss.config.mjs    Mantine プリセットと TailwindCSS を登録
 └── tsconfig.json         TypeScript 設定（strict / パスエイリアス）
 ```
+
+置き場所の決め方:
+
+| 書きたいもの                | 置き場所                             |
+| --------------------------- | ------------------------------------ |
+| 画面そのもの（URL を持つ）  | `app/<パス>/page.tsx` に**直接書く** |
+| その画面でしか使わない部品  | 同じ `page.tsx` の中、または隣に置く |
+| 2 つ以上の画面から使う部品  | `components/`                        |
+| UI を持たない処理・定数・型 | `lib/`                               |
+
+- **画面を `app/` の外に出さない。** `page.tsx` は「呼ぶだけの薄い入口」にせず、画面の中身をそこに書く。
+  どこに何が描かれているかを URL から 1 ホップで辿れる状態を保つため
+- **`components/` は最初から入れない。** 2 つ目の画面で使うことになった時点で移す。
+  先回りして共通化すると、実際には共通でなかった部品が溜まる
+- ファイル名は kebab-case、export は名前付き（`page.tsx` の default export だけ例外）
+- 機能が増えて `components/` が平らなまま辛くなったら、その時に
+  `components/game/` のようなサブディレクトリで切る。空のディレクトリを先に作らない
 
 `tsconfig.json` の `paths` で `@/*` がプロジェクトルートを指すので、`../../` を書かずに済む:
 
 ```tsx
-import type { User } from "@/types/models";
+import { apiUrl } from "@/lib/api";
+import { QuoridorMark } from "@/components/quoridor-mark";
 ```
-
-### 設計の方向: Feature-Sliced Design
-
-バックエンドの Clean Architecture と同じく、**依存は一方向にだけ流れる**。
-FSD では層に序列があり、**上の層は下の層を import してよいが、逆は禁止**。
-
-```
-app        アプリの起動点。ルーティング、テーマ、i18n などの設定まわり
-   │
-widgets    ユースケース単位の UI。Card・Table・Form を組み合わせた部品の集合体
-   │
-features   振る舞い単位の処理。ログイン、マッチメイキング、駒を動かす
-   │
-entities   ドメインモデル。User・Match といった名詞ごとの型とロジック
-   │
-shared     どこからでも使える汎用部品。UI・hooks・lib・types
-```
-
-同じ層の中では**スライス同士を直接 import しない**（`features/login` から `features/matchmaking` を呼ばない）。
-共有したくなったら一段下の層へ下ろす。これを守ると、機能を消すときにディレクトリごと消せる。
-
-現状は `app/` と `types/`（将来 `shared/types` に相当）だけ。画面が増えるタイミングで上記の層を切っていく。
-層の定義・スライスとセグメントの切り方・Next.js App Router との噛み合わせは [docs/FSD.md](../docs/FSD.md)、
-原典は [公式ドキュメント](https://feature-sliced.github.io/documentation/)。
 
 ## 型定義とスキーマの同期
 
-`types/models.ts` は DB スキーマの TypeScript 版で、**手作業で同期させる必要がある**。
+DB スキーマの TypeScript 版は `lib/types.ts` に置き、**手作業で同期させる必要がある**
+（フロントから DB を触るようになった時点で作る。現状は未作成）。
 
 ```
 docs/database-design.md          設計の正本（人が読む）
         │  写す
         ├──────────────────────────────┐
         ▼                              ▼
-backend/infrastructure/model.go  frontend/types/models.ts
+backend/infrastructure/model.go  frontend/lib/types.ts
    GORM の構造体（→ Atlas）         フロントの型
 ```
 
 押さえておくこと:
 
 - **スキーマを変えたら 3 箇所すべてを直す。** 自動生成は無いので、ここだけは仕組みで守られていない
-- **`types/models.ts` は「テーブル定義」であって「API のレスポンス形」ではない。** `passwordHash` や `tokenHash` のようにクライアントへ絶対に送ってはいけない項目を含む。API のレスポンス型はこれを直接使わず、必要な項目だけを選んだ別の型を定義する
+- **これは「テーブル定義」であって「API のレスポンス形」ではない。** `passwordHash` や `tokenHash` のようにクライアントへ絶対に送ってはいけない項目を含む。API のレスポンス型はこれを直接使わず、必要な項目だけを選んだ別の型を定義する
 - `Timestamp` は `string`。Go 側は `time.Time`（`timestamptz`）だが JSON を経由すると文字列になるため、`Date` として扱いたい場合は受け取り側で変換する
 - `owner?` `user?` のような省略可能プロパティは **JOIN して取得したときだけ入る**。存在を前提にしない
 
-## TailwindCSS v4
+## TailwindCSS v4 + Mantine v9
 
-v3 までと違い **`tailwind.config.js` は無い**。設定は CSS に直接書く。
+**スタイリングの土台は Tailwind、コンポーネントは Mantine** の二段構え。
+ボタン・カード・アラート・モーダルのようなプリミティブは自作せず
+[@mantine/core](https://mantine.dev/) から import し、既製のブロックは
+[ui.mantine.dev](https://ui.mantine.dev/) からコピーして `app/` や `components/` に置く。
+そこへの微調整（余白・レイアウト・字送り）を Tailwind のユーティリティで当てる。
 
-- [postcss.config.mjs](postcss.config.mjs) … `@tailwindcss/postcss` を登録するだけ
-- [app/globals.css](app/globals.css) … `@import "tailwindcss";` で本体を読み込み、`@theme inline { ... }` でデザイントークン（色・フォント）を定義
+### レイヤー順がすべて
+
+同居の要は [app/globals.css](app/globals.css) 冒頭の 1 行。
+**後ろのレイヤーほど強い**ので、この順序が優先順位の正本になる。
 
 ```css
-@import "tailwindcss";
+@layer theme, base, mantine, components, utilities;
 
-@theme inline {
-  --color-background: var(--background); /* bg-background が使えるようになる */
-  --font-sans: var(--font-geist-sans); /* font-sans が Geist になる */
-}
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "@mantine/core/styles.layer.css"; /* 中身が @layer mantine で包まれている */
+@import "tailwindcss/utilities.css" layer(utilities);
 ```
 
-`@theme` に定義した変数はそのままユーティリティクラス名になる。
-ダークモードは `prefers-color-scheme` で CSS 変数を差し替えつつ、クラス側は `dark:bg-black` のように書く。
+- `base`（Tailwind の reset）より `mantine` が後ろ → preflight が Mantine の見た目を壊さない
+- `mantine` より `utilities` が後ろ → **`<Paper className="p-0">` のように Tailwind で上書きできる。`!important` は不要**
+- `@mantine/core/styles.css` ではなく **`styles.layer.css`** を読むこと。前者はレイヤーに入っておらず、順序制御が効かない
+- `@import "tailwindcss"` の一括読み込みも使わない。Mantine を base と utilities の**間**に挟めなくなる
+
+### 色とトークン
+
+配色の実体は [lib/theme.ts](lib/theme.ts)（`createTheme`）にしかない。
+Tailwind 側へは `globals.css` の `@theme inline` で橋渡ししてあるので、
+**Tailwind のクラスからも同じ色を引ける**。
+
+```tsx
+<main className="bg-body">        {/* → var(--mantine-color-body) */}
+<p className="text-dimmed">       {/* → var(--mantine-color-dimmed) */}
+<span className="bg-emerald-500"> {/* → var(--mantine-color-emerald-5) */}
+```
+
+- **生の色を書かないこと。** `bg-[#0f172a]` や `text-slate-400` は禁止。
+  配色を変えたい時に `theme.ts` 一箇所で終わらせるため
+- 色を足したい時は `theme.ts` に 10 段のタプルで追加し、`globals.css` の
+  `@theme inline` に対応行を足す
+- 配色は dark 基調に固定（`layout.tsx` の `forceColorScheme="dark"`）。
+  切り替えを入れるならそれを外して `useMantineColorScheme` を使う
+
+### どちらで書くかの目安
+
+| やりたいこと                              | 使うもの                                   |
+| ----------------------------------------- | ------------------------------------------ |
+| ボタン・入力・カード・モーダル・通知      | Mantine のコンポーネント                   |
+| 余白・整列・グリッド・レスポンシブ        | Tailwind のユーティリティ                  |
+| Mantine コンポーネントの props で足りる分 | Mantine の props（`gap` `c` `maw` `size`） |
+| props にも Tailwind にも無い複雑な指定    | 隣に置く `*.module.css`（最後の手段）      |
+
+`*.module.css` では `rem()` と `$mantine-breakpoint-*` が使える
+（[postcss.config.mjs](postcss.config.mjs) の `postcss-preset-mantine` /
+`postcss-simple-vars`）。素の `px` は書かず `rem()` を通すこと。
+
+### アイコン
+
+Mantine が公式に前提としている [@tabler/icons-react](https://tabler.io/icons) を使う。
+
+```tsx
+import { IconArrowRight } from "@tabler/icons-react";
+
+<Button rightSection={<IconArrowRight size={18} />}>始める</Button>;
+```
+
+プロダクト固有の意匠（ロゴ、Google の G マーク）だけ `components/*-mark.tsx` に置く。
+
+### Server Component との噛み合わせ
+
+Mantine のコンポーネントは `"use client"` 付きで配布されているので、
+**Server Component からそのまま import してよい**。ただし RSC 境界を関数は越えられないため、
+次の 2 つは Client Component 側に閉じ込める必要がある。
+
+- `lib/theme.ts` … `Button.extend()` を使うので先頭に `"use client"` が必要
+- `component={Link}` … 関数を props で渡すことになるので不可。
+  [components/link-button.tsx](components/link-button.tsx) のような小さなラッパーを挟む
 
 ## バックエンドを呼ぶ
 

@@ -26,9 +26,10 @@ jobs:
             このプルリクエストをレビューし、プロジェクトの規約に沿った包括的なフィードバックを提供してください。
 
             ## プロジェクト構成
-            - `frontend/` : フロントエンド。Next.js (App Router) + TailwindCSS。
-              パッケージマネージャは pnpm。アーキテクチャは FSD (Feature-Sliced Design) を採用し、
-              ESLint で層の依存ルールを強制、Prettier で整形している。
+            - `frontend/` : フロントエンド。Next.js (App Router) + TailwindCSS + Mantine。
+              パッケージマネージャは pnpm。構成は `app/`（ルーティングと画面）/
+              `components/`（共有 UI）/ `lib/`（共通ロジック）の 3 つ。
+              ESLint と Prettier で整形・静的解析している。
             - `backend/` : バックエンド。Go 標準ライブラリ (net/http) を使用。
               Clean Architecture を採用（依存の向きは内側へ: infrastructure → handler → usecase → domain。
               domain は何にも依存しない）。
@@ -45,9 +46,10 @@ jobs:
             - 必要に応じたドキュメント更新
 
             ## フロントエンド (`frontend/`) の観点
-            - FSD の層構造と依存方向の遵守（上位層から下位層への一方向依存になっているか）
+            - 画面の中身が `app/**/page.tsx` に置かれているか（薄い入口にして別ファイルへ逃がしていないか）
+            - `components/` へ切り出すのが 2 画面目からになっているか（先回りした共通化になっていないか）
             - Next.js App Router の適切な利用（Server / Client Components の使い分け、データ取得）
-            - TailwindCSS の一貫した使い方
+            - Tailwind と Mantine の使い分け（コンポーネントは Mantine / 調整は Tailwind、生の色を書いていないか）
             - 型安全性（any の乱用がないか、適切な型付けがされているか）
 
             ## バックエンド (`backend/`) の観点
