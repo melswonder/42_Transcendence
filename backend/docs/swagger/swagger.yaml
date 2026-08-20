@@ -1,5 +1,51 @@
 basePath: /api/v1
 definitions:
+  apispec.Achievement:
+    properties:
+      category:
+        enum:
+        - wins
+        - streak
+        - matches
+        - rating
+        example: wins
+        type: string
+      code:
+        example: first_win
+        type: string
+      description:
+        example: はじめて対戦に勝つ
+        type: string
+      name:
+        example: 初勝利
+        type: string
+      progress:
+        description: Progress / Target は未解除の実績でも「10 戦中 7 戦」を出せるように常に入れる。
+        example: 7
+        type: integer
+      target:
+        example: 10
+        type: integer
+      unlocked:
+        example: false
+        type: boolean
+      unlocked_at:
+        description: 未解除なら null
+        type: string
+    type: object
+  apispec.AchievementListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/apispec.Achievement'
+        type: array
+      total_count:
+        example: 12
+        type: integer
+      unlocked_count:
+        example: 4
+        type: integer
+    type: object
   apispec.BlockCreateRequest:
     properties:
       user_id:
@@ -37,6 +83,30 @@ definitions:
         allOf:
         - $ref: '#/definitions/apispec.UserPublic'
         description: ブロックされている側
+    type: object
+  apispec.BreakdownResponse:
+    properties:
+      by_mode:
+        items:
+          $ref: '#/definitions/apispec.BreakdownSlice'
+        type: array
+      by_outcome:
+        items:
+          $ref: '#/definitions/apispec.BreakdownSlice'
+        type: array
+      by_result_type:
+        items:
+          $ref: '#/definitions/apispec.BreakdownSlice'
+        type: array
+    type: object
+  apispec.BreakdownSlice:
+    properties:
+      count:
+        example: 28
+        type: integer
+      key:
+        example: goal
+        type: string
     type: object
   apispec.DeleteMeRequest:
     properties:
@@ -112,6 +182,50 @@ definitions:
         - $ref: '#/definitions/apispec.UserPublic'
         description: 相手
     type: object
+  apispec.LeaderboardEntry:
+    properties:
+      losses:
+        example: 40
+        type: integer
+      rank:
+        description: 同率は同順位（1,1,3 の付き方）
+        example: 1
+        type: integer
+      rating:
+        example: 1830
+        type: integer
+      user:
+        $ref: '#/definitions/apispec.UserPublic'
+      win_rate:
+        example: 0.75
+        type: number
+      wins:
+        example: 120
+        type: integer
+    type: object
+  apispec.LeaderboardResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/apispec.LeaderboardEntry'
+        type: array
+      limit:
+        example: 20
+        type: integer
+      me:
+        allOf:
+        - $ref: '#/definitions/apispec.LeaderboardEntry'
+        description: |-
+          Me は自分が表示範囲の外にいても順位を出せるように別枠で返す。
+          未対戦などで順位が付かない場合は null。
+      offset:
+        example: 0
+        type: integer
+      total:
+        description: 条件に合致する総件数
+        example: 128
+        type: integer
+    type: object
   apispec.LoginRequest:
     properties:
       email:
@@ -124,6 +238,143 @@ definitions:
     required:
     - email
     - password
+    type: object
+  apispec.MatchCreateRequest:
+    properties:
+      finished_at:
+        type: string
+      mode:
+        enum:
+        - ranked
+        - casual
+        - ai
+        - friend
+        example: ranked
+        type: string
+      participants:
+        description: ちょうど 2 件
+        items:
+          $ref: '#/definitions/apispec.MatchParticipantInput'
+        type: array
+      result_type:
+        enum:
+        - goal
+        - resign
+        - timeout
+        - draw
+        - abort
+        example: goal
+        type: string
+      started_at:
+        type: string
+      total_moves:
+        example: 42
+        minimum: 0
+        type: integer
+    required:
+    - finished_at
+    - mode
+    - participants
+    - result_type
+    - started_at
+    type: object
+  apispec.MatchListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/apispec.MatchResponse'
+        type: array
+      limit:
+        example: 20
+        type: integer
+      offset:
+        example: 0
+        type: integer
+      total:
+        description: 条件に合致する総件数
+        example: 128
+        type: integer
+    type: object
+  apispec.MatchParticipantInput:
+    properties:
+      outcome:
+        enum:
+        - win
+        - loss
+        - draw
+        example: win
+        type: string
+      seat:
+        description: 0=先手 1=後手
+        enum:
+        - 0
+        - 1
+        example: 0
+        type: integer
+      user_id:
+        example: 3f0c1a2e-9a5b-4c7d-8e1f-2b3c4d5e6f70
+        format: uuid
+        type: string
+    required:
+    - outcome
+    - seat
+    - user_id
+    type: object
+  apispec.MatchResponse:
+    properties:
+      finished_at:
+        type: string
+      id:
+        format: uuid
+        type: string
+      mode:
+        enum:
+        - ranked
+        - casual
+        - ai
+        - friend
+        example: ranked
+        type: string
+      opponent:
+        allOf:
+        - $ref: '#/definitions/apispec.UserPublic'
+        description: AI 戦では handle が "bot" のダミーを返す
+      outcome:
+        description: 自分から見た勝敗
+        enum:
+        - win
+        - loss
+        - draw
+        example: win
+        type: string
+      rating_after:
+        example: 1444
+        type: integer
+      rating_before:
+        example: 1432
+        type: integer
+      rating_diff:
+        description: rating_after - rating_before。クライアントで引き算させない
+        example: 12
+        type: integer
+      result_type:
+        description: 決着のつき方
+        enum:
+        - goal
+        - resign
+        - timeout
+        - draw
+        - abort
+        example: goal
+        type: string
+      started_at:
+        type: string
+      total_moves:
+        example: 42
+        type: integer
+      xp_gained:
+        example: 50
+        type: integer
     type: object
   apispec.MediaAssetListResponse:
     properties:
@@ -279,6 +530,106 @@ definitions:
       last_seen_at:
         type: string
     type: object
+  apispec.StatsSummary:
+    properties:
+      best_streak:
+        example: 7
+        type: integer
+      current_streak:
+        description: 連勝は正、連敗は負
+        example: 3
+        type: integer
+      draws:
+        example: 3
+        type: integer
+      level:
+        example: 7
+        type: integer
+      losses:
+        example: 18
+        type: integer
+      ranking:
+        description: rating の降順順位。同率は同順位
+        example: 12
+        type: integer
+      rating:
+        example: 1444
+        type: integer
+      total_matches:
+        example: 63
+        type: integer
+      total_players:
+        description: 「250 人中 12 位」を作るため
+        example: 250
+        type: integer
+      win_rate:
+        description: 0.0-1.0。引き分けは母数に含む
+        example: 0.667
+        type: number
+      wins:
+        example: 42
+        type: integer
+      xp:
+        example: 1420
+        type: integer
+      xp_for_next_level:
+        description: このレベルの上限。進捗バーの分母
+        example: 1600
+        type: integer
+    type: object
+  apispec.StatsUpdatedEvent:
+    properties:
+      match_id:
+        format: uuid
+        type: string
+      occurred_at:
+        type: string
+      outcome:
+        enum:
+        - win
+        - loss
+        - draw
+        type: string
+      rating:
+        example: 1444
+        type: integer
+    type: object
+  apispec.TimeseriesPoint:
+    properties:
+      date:
+        description: interval=week のときは週の開始日
+        example: "2026-08-20"
+        type: string
+      draws:
+        example: 0
+        type: integer
+      losses:
+        example: 1
+        type: integer
+      matches:
+        example: 4
+        type: integer
+      rating:
+        description: そのコマの最後の対戦後のレーティング
+        example: 1444
+        type: integer
+      wins:
+        example: 3
+        type: integer
+    type: object
+  apispec.TimeseriesResponse:
+    properties:
+      interval:
+        enum:
+        - day
+        - week
+        example: day
+        type: string
+      points:
+        items:
+          $ref: '#/definitions/apispec.TimeseriesPoint'
+        type: array
+    type: object
   apispec.TokenResponse:
     properties:
       access_token:
@@ -428,6 +779,25 @@ info:
   title: ft_transcendence API
   version: "1.0"
 paths:
+  /achievements/me:
+    get:
+      description: 解除済み・未解除をまとめて返す。未解除のものには現在の進捗が入る。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.AchievementListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 自分の実績
+      tags:
+      - achievements
   /auth/login:
     post:
       consumes:
@@ -975,6 +1345,197 @@ paths:
       summary: 友達申請に返答する
       tags:
       - friends
+  /leaderboard:
+    get:
+      description: レーティングの高い順に返す。自分の順位は items の外でも me に入る。
+      parameters:
+      - default: 20
+        description: 取得件数 (1-100)
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: 取得開始位置
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.LeaderboardResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: ランキング
+      tags:
+      - leaderboard
+  /matches:
+    get:
+      description: 自分が参加した決着済みの対戦を新しい順に返す。日付範囲とモード・勝敗で絞り込める。
+      parameters:
+      - description: この日時以降に終了した対戦
+        format: date-time
+        in: query
+        name: from
+        type: string
+      - description: この日時以前に終了した対戦
+        format: date-time
+        in: query
+        name: to
+        type: string
+      - description: 対戦モード
+        enum:
+        - ranked
+        - casual
+        - ai
+        - friend
+        in: query
+        name: mode
+        type: string
+      - description: 自分から見た勝敗
+        enum:
+        - win
+        - loss
+        - draw
+        in: query
+        name: outcome
+        type: string
+      - default: 20
+        description: 取得件数 (1-100)
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: 取得開始位置
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.MatchListResponse'
+        "400":
+          description: from > to、または範囲外の値
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 対戦履歴
+      tags:
+      - matches
+    post:
+      consumes:
+      - application/json
+      description: |-
+        ゲーム側が決着時に呼ぶ入口。レーティング・XP・レベルの更新と実績の判定を行い、
+        参加者に対して SSE で更新を通知する。
+      parameters:
+      - description: 決着した対戦
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apispec.MatchCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 呼び出したユーザーから見た結果
+          schema:
+            $ref: '#/definitions/apispec.MatchResponse'
+        "400":
+          description: 参加者が 2 人でない、勝敗の組み合わせが矛盾している、終了が開始より前
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "404":
+          description: 参加者が存在しない
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 対戦結果を記録する
+      tags:
+      - matches
+  /matches/export.csv:
+    get:
+      description: |-
+        ListMatches と同じ絞り込みで、ページングだけ無視して全件を返す。
+        集計クエリの結果をそのまま流すのでサーバー側で生成する。
+      parameters:
+      - description: この日時以降に終了した対戦
+        format: date-time
+        in: query
+        name: from
+        type: string
+      - description: この日時以前に終了した対戦
+        format: date-time
+        in: query
+        name: to
+        type: string
+      - description: 対戦モード
+        enum:
+        - ranked
+        - casual
+        - ai
+        - friend
+        in: query
+        name: mode
+        type: string
+      - description: 自分から見た勝敗
+        enum:
+        - win
+        - loss
+        - draw
+        in: query
+        name: outcome
+        type: string
+      produces:
+      - text/csv
+      responses:
+        "200":
+          description: CSV 本文
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 対戦履歴を CSV で書き出す
+      tags:
+      - matches
   /media:
     get:
       description: status=active のアセットを新しい順に返す。
@@ -1110,6 +1671,156 @@ paths:
       summary: アバター画像をアップロード
       tags:
       - media
+  /stats/me:
+    get:
+      description: 勝敗・勝率・連勝・レーティング・順位・レベル・XP をまとめて返す。
+      parameters:
+      - description: 集計対象の開始日時
+        format: date-time
+        in: query
+        name: from
+        type: string
+      - description: 集計対象の終了日時
+        format: date-time
+        in: query
+        name: to
+        type: string
+      - description: 対戦モード
+        enum:
+        - ranked
+        - casual
+        - ai
+        - friend
+        in: query
+        name: mode
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.StatsSummary'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 自分の統計サマリ
+      tags:
+      - stats
+  /stats/me/breakdown:
+    get:
+      description: 結果種別・モード・勝敗ごとの件数。円グラフに使う。
+      parameters:
+      - description: 集計対象の開始日時
+        format: date-time
+        in: query
+        name: from
+        type: string
+      - description: 集計対象の終了日時
+        format: date-time
+        in: query
+        name: to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.BreakdownResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 自分の統計の内訳
+      tags:
+      - stats
+  /stats/me/timeseries:
+    get:
+      description: レーティングの推移（折れ線）と日別の対戦数（棒）に使う。
+      parameters:
+      - description: 集計対象の開始日時
+        format: date-time
+        in: query
+        name: from
+        type: string
+      - description: 集計対象の終了日時
+        format: date-time
+        in: query
+        name: to
+        type: string
+      - description: 対戦モード
+        enum:
+        - ranked
+        - casual
+        - ai
+        - friend
+        in: query
+        name: mode
+        type: string
+      - default: day
+        description: 刻み幅
+        enum:
+        - day
+        - week
+        in: query
+        name: interval
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.TimeseriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 自分の統計の推移
+      tags:
+      - stats
+  /stats/stream:
+    get:
+      description: |-
+        自分が参加した対戦が記録されるたびに 1 イベント流す。
+        接続は開きっぱなしになり、切断はクライアント側が閉じるか
+        サーバーが落ちるまで続く。ブラウザの EventSource は自動で再接続する。
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: 'data: に JSON が 1 行ずつ流れる'
+          schema:
+            $ref: '#/definitions/apispec.StatsUpdatedEvent'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 統計の更新通知 (SSE)
+      tags:
+      - stats
   /users:
     get:
       description: handle / 表示名の部分一致で検索する。退会済みとブロック関係にあるユーザーは含めない。
