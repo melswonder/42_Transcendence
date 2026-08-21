@@ -7,6 +7,8 @@
 @import "tailwindcss/preflight.css" layer(base);
 /* styles.css ではなく styles.layer.css。中身が @layer mantine で包まれている。 */
 @import "@mantine/core/styles.layer.css";
+@import "@mantine/charts/styles.layer.css";
+@import "@mantine/dates/styles.layer.css";
 @import "tailwindcss/utilities.css" layer(utilities);
 
 /* Tailwind のクラス名から Mantine のトークンを引くための橋渡し。
@@ -57,5 +59,20 @@
   body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* PDF はブラウザの印刷で出す。サーバーで作るとチャートを描き直すことになるため。
+ * 画面でしか意味のないもの（サイドバー・操作ボタン）を落とし、
+ * 暗い背景を白地に戻して紙のインクを無駄にしない。 */
+@media print {
+  aside,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
   }
 }
