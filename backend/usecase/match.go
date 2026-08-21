@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -33,6 +34,12 @@ type MatchRepository interface {
 	UsersByID(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID]domain.User, error)
 }
 
+// AchievementSyncer は対戦後に実績の解除を判定する。
+// 実装は AchievementUsecase。同じ層の中なので interface 越しに繋ぐ。
+type AchievementSyncer interface {
+	SyncAfterMatch(ctx context.Context, userID uuid.UUID) error
+}
+
 // MatchNotifier は対戦が記録されたことを外へ知らせる。
 // SSE の hub が実装するが、usecase は「誰かに伝わる」ことしか知らない。
 type MatchNotifier interface {
@@ -41,13 +48,16 @@ type MatchNotifier interface {
 
 // MatchUsecase は対戦結果の記録と履歴の取得を進める。
 type MatchUsecase struct {
-	repo     MatchRepository
-	notifier MatchNotifier
-	now      func() time.Time
+	repo         MatchRepository
+	notifier     MatchNotifier
+	achievements AchievementSyncer
+	now          func() time.Time
 }
 
-func NewMatchUsecase(repo MatchRepository, notifier MatchNotifier) *MatchUsecase {
-	return &MatchUsecase{repo: repo, notifier: notifier, now: time.Now}
+func NewMatchUsecase(
+	repo MatchRepository, notifier MatchNotifier, achievements AchievementSyncer,
+) *MatchUsecase {
+	return &MatchUsecase{repo: repo, notifier: notifier, achievements: achievements, now: time.Now}
 }
 
 // RecordMatch は決着した対戦を記録する。
@@ -85,7 +95,10 @@ func (u *MatchUsecase) RecordMatch(
 		return nil, nil, err
 	}
 
-	// 通知は保存が終わってから。失敗しても記録は取り消さない（SSE は補助でしかない）。
+	// 実績と通知は保存が終わってから。どちらも失敗しても記録は取り消さない。
+	// 実績は次の対戦のときに改めて判定されるので、取りこぼしても自然に追いつく。
+	u.syncAchievements(ctx, match)
+
 	if u.notifier != nil {
 		u.notifier.NotifyMatchRecorded(match)
 	}
@@ -118,6 +131,18 @@ func applyRatings(
 	}
 
 	return rated
+}
+
+func (u *MatchUsecase) syncAchievements(ctx context.Context, match domain.Match) {
+	if u.achievements == nil {
+		return
+	}
+
+	for _, p := range match.Participants {
+		if err := u.achievements.SyncAfterMatch(ctx, p.UserID); err != nil {
+			log.Printf("sync achievements for %s: %v", p.UserID, err)
+		}
+	}
 }
 
 // ListMatches は履歴とその総件数を返す。

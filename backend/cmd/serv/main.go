@@ -111,7 +111,7 @@ func mustConnectDB() *gorm.DB {
 func newApplicationHandler(db *gorm.DB, cfg config) http.Handler {
 	repositories := infrastructure.NewRepositories(db, cfg.infrastructure)
 	services := usecase.NewServices(repositories.Dependencies())
-	handlers := handler.NewHandlers(services, cfg.handler)
+	handlers := handler.NewHandlers(services, cfg.handler, repositories.Events)
 
 	return cors(handler.NewRouter(handlers))
 }
