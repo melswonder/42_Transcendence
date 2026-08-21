@@ -62,6 +62,7 @@ export default async function HomePage() {
               icon={<IconSearch size={24} />}
               title="クイックマッチ"
               description="同じくらいの実力の相手とランク戦を始めます。"
+              href="/game"
             />
             <GameModeCard
               icon={<IconRobot size={24} />}

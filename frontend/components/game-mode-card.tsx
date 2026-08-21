@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { Paper, Stack, Text, ThemeIcon } from "@mantine/core";
 
@@ -5,6 +6,8 @@ interface GameModeCardProps {
   icon: ReactNode;
   title: string;
   description: string;
+  /** 遷移先。あるモードはリンクとして描く。 */
+  href?: string;
   /** 主役のカード。1 画面に 1 枚だけ。 */
   featured?: boolean;
   /** 行き先がまだ無いモード。押せないことが見て分かる状態にする。 */
@@ -15,9 +18,38 @@ export function GameModeCard({
   icon,
   title,
   description,
+  href,
   featured = false,
   comingSoon = false,
 }: GameModeCardProps) {
+  const body = (
+    <Stack gap="sm" align="flex-start">
+      <ThemeIcon size={44} radius="md" variant={featured ? "filled" : "light"}>
+        {icon}
+      </ThemeIcon>
+      <Text fw={700} size="lg">
+        {title}
+      </Text>
+      <Text size="sm" c="dimmed">
+        {comingSoon ? "準備中" : description}
+      </Text>
+    </Stack>
+  );
+
+  if (href && !comingSoon) {
+    return (
+      <Paper
+        component={Link}
+        href={href}
+        p="lg"
+        bg={featured ? "emerald.9" : undefined}
+        className="block h-full text-left transition-colors hover:border-emerald-500"
+      >
+        {body}
+      </Paper>
+    );
+  }
+
   return (
     <Paper
       component="button"
@@ -27,21 +59,7 @@ export function GameModeCard({
       bg={featured ? "emerald.9" : undefined}
       className="h-full text-left transition-colors enabled:hover:border-emerald-500 disabled:opacity-50"
     >
-      <Stack gap="sm" align="flex-start">
-        <ThemeIcon
-          size={44}
-          radius="md"
-          variant={featured ? "filled" : "light"}
-        >
-          {icon}
-        </ThemeIcon>
-        <Text fw={700} size="lg">
-          {title}
-        </Text>
-        <Text size="sm" c="dimmed">
-          {comingSoon ? "準備中" : description}
-        </Text>
-      </Stack>
+      {body}
     </Paper>
   );
 }
