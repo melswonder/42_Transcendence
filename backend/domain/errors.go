@@ -12,4 +12,12 @@ var (
 	ErrEmailTaken        = errors.New("email already registered")
 	ErrOAuthAccountTaken = errors.New("oauth account already linked")
 	ErrHandleUnavailable = errors.New("could not allocate a unique handle")
+
+	ErrInvalidMatchMode    = errors.New("invalid match mode")
+	ErrInvalidResultType   = errors.New("invalid result type")
+	ErrInvalidMatchPeriod  = errors.New("finished_at is before started_at")
+	ErrInvalidParticipants = errors.New("a match must have exactly two distinct participants")
+	ErrInvalidOutcome      = errors.New("invalid outcome")
+	ErrInconsistentOutcome = errors.New("participants' outcomes do not add up")
+	ErrInvalidDateRange    = errors.New("to is before from")
 )
