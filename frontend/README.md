@@ -27,7 +27,15 @@ pnpm dev                        # :3000
 | `pnpm format`       | Prettier で整形                    |
 | `pnpm format:check` | 整形漏れの検出（CI と同じ）        |
 
-> Docker では `./typescript` をマウントしているのでホットリロードが効くが、`node_modules` は匿名ボリュームでマスクされている。**依存を追加したら `docker compose build frontend` でイメージを作り直す。**
+> Docker では `./frontend` をマウントしているのでホットリロードが効くが、`node_modules` は匿名ボリュームでマスクされている。**依存を追加したら、イメージを作り直したうえで匿名ボリュームも捨てる。**
+>
+> ```bash
+> docker compose build frontend
+> docker compose up -d -V frontend   # -V を付けないと古い node_modules が残る
+> ```
+>
+> `-V` を忘れると、コンテナ内の pnpm が食い違いに気付いて再インストールを試み、
+> `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY` で起動に失敗する。
 
 ## App Router の仕組み
 

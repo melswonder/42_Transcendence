@@ -18,12 +18,16 @@
     "preinstall": "npx only-allow pnpm"
   },
   "dependencies": {
+    "@mantine/charts": "9.5.1",
     "@mantine/core": "^9.5.1",
+    "@mantine/dates": "9.5.1",
     "@mantine/hooks": "^9.5.1",
     "@tabler/icons-react": "^3.46.0",
+    "dayjs": "^1.11.23",
     "next": "16.1.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
