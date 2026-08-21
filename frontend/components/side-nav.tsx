@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 import { NavLink } from "@mantine/core";
 import {
   IconActivity,
+  IconAward,
   IconChartBar,
+  IconHistory,
   IconSettings,
   IconTrophy,
 } from "@tabler/icons-react";
@@ -14,12 +16,9 @@ import {
 const items = [
   { href: "/", label: "プレイ", icon: IconActivity },
   { href: "/stats", label: "統計", icon: IconChartBar },
-  {
-    href: "/leaderboard",
-    label: "ランキング",
-    icon: IconTrophy,
-    disabled: true,
-  },
+  { href: "/matches", label: "対戦履歴", icon: IconHistory },
+  { href: "/achievements", label: "実績", icon: IconAward },
+  { href: "/leaderboard", label: "ランキング", icon: IconTrophy },
   { href: "/settings", label: "設定", icon: IconSettings, disabled: true },
 ];
 
