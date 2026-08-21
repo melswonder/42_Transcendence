@@ -32,6 +32,7 @@ func main() {
 		&infrastructure.Block{},
 		&infrastructure.Match{},
 		&infrastructure.MatchParticipant{},
+		&infrastructure.MatchAction{},
 		&infrastructure.UserAchievement{},
 	)
 	if err != nil {

@@ -17,6 +17,7 @@ import (
 
 type Config struct {
 	Auth AuthConfig
+	Game GameConfig
 }
 
 type Handlers struct {
@@ -25,6 +26,7 @@ type Handlers struct {
 	Match        *MatchHandler
 	Stats        *StatsHandler
 	Achievements *AchievementHandler
+	Game         *GameHandler
 }
 
 func NewHandlers(services usecase.Services, cfg Config, events EventSubscriber) Handlers {
@@ -37,6 +39,8 @@ func NewHandlers(services usecase.Services, cfg Config, events EventSubscriber) 
 		Match:        NewMatchHandler(services.Match, auth.currentUser),
 		Stats:        NewStatsHandler(services.Stats, auth.currentUser),
 		Achievements: NewAchievementHandler(services.Achievements, events, auth.currentUser),
+		// WebSocket のハンドシェイクも Cookie セッションで認証する。
+		Game: NewGameHandler(services.Game, auth.currentUser, cfg.Game),
 	}
 }
 
@@ -64,6 +68,8 @@ func NewRouter(handlers Handlers) http.Handler {
 
 	mux.HandleFunc("GET /achievements/me", handlers.Achievements.List)
 	mux.HandleFunc("GET /stats/stream", handlers.Achievements.Stream)
+
+	mux.HandleFunc("GET /game/ws", handlers.Game.WS)
 
 	return mux
 }

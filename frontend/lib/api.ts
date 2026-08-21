@@ -22,3 +22,8 @@ export function apiUrl(path: string): string {
 export function serverApiUrl(path: string): string {
   return `${SERVER_API_BASE}/${path.replace(/^\/+/, "")}`;
 }
+
+/** WebSocket 用。http(s) を ws(s) に読み替える。ブラウザからしか使わない。 */
+export function wsUrl(path: string): string {
+  return apiUrl(path).replace(/^http/, "ws");
+}

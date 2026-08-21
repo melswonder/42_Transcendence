@@ -14,6 +14,7 @@
 | [public.matches](public.matches.md) | 8 |  | BASE TABLE |
 | [public.match_participants](public.match_participants.md) | 8 |  | BASE TABLE |
 | [public.user_achievements](public.user_achievements.md) | 3 |  | BASE TABLE |
+| [public.match_actions](public.match_actions.md) | 7 |  | BASE TABLE |
 
 ## Stored procedures and functions
 

@@ -27,6 +27,7 @@ type Repositories struct {
 	Match        usecase.MatchRepository
 	Stats        usecase.StatsRepository
 	Achievements usecase.AchievementRepository
+	Game         usecase.GameRepository
 	GoogleOAuth  usecase.OAuthProvider
 	// Events は SSE の配信元。リポジトリではないが、組み立てる場所が同じなのでここで持つ。
 	Events *EventHub
@@ -40,6 +41,7 @@ func NewRepositories(db *gorm.DB, cfg Config) Repositories {
 		Match:        NewMatchRepo(db),
 		Stats:        NewStatsRepo(db),
 		Achievements: NewAchievementRepo(db),
+		Game:         NewGameRepo(db),
 		GoogleOAuth:  NewGoogleOAuth(cfg.Google),
 		Events:       NewEventHub(),
 	}
@@ -53,6 +55,7 @@ func (r Repositories) Dependencies() usecase.Dependencies {
 		MatchRepository:       r.Match,
 		StatsRepository:       r.Stats,
 		AchievementRepository: r.Achievements,
+		GameRepository:        r.Game,
 		GoogleOAuth:           r.GoogleOAuth,
 		MatchNotifier:         r.Events,
 	}

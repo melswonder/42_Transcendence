@@ -19,6 +19,7 @@ type Dependencies struct {
 	MatchRepository       MatchRepository
 	StatsRepository       StatsRepository
 	AchievementRepository AchievementRepository
+	GameRepository        GameRepository
 	GoogleOAuth           OAuthProvider
 	MatchNotifier         MatchNotifier
 }
@@ -29,6 +30,7 @@ type Services struct {
 	Match        *MatchUsecase
 	Stats        *StatsUsecase
 	Achievements *AchievementUsecase
+	Game         *GameUsecase
 }
 
 func NewServices(dependencies Dependencies) Services {
@@ -42,5 +44,6 @@ func NewServices(dependencies Dependencies) Services {
 		Match:        NewMatchUsecase(dependencies.MatchRepository, dependencies.MatchNotifier, achievements),
 		Stats:        stats,
 		Achievements: achievements,
+		Game:         NewGameUsecase(dependencies.GameRepository),
 	}
 }

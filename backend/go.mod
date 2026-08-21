@@ -4,6 +4,7 @@ go 1.26
 
 require (
 	ariga.io/atlas-provider-gorm v0.6.1
+	github.com/coder/websocket v1.8.15
 	github.com/gin-gonic/gin v1.12.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0

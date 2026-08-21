@@ -80,6 +80,14 @@ func NewQuoridor() *Quoridor {
 	}
 }
 
+// Clone は局面の複製を返す。
+// 「先に複製へ適用し、永続化に成功してから差し替える」使い方のためにある。
+func (q *Quoridor) Clone() *Quoridor {
+	c := *q
+	c.Walls = slices.Clone(q.Walls)
+	return &c
+}
+
 // GoalRow は seat が到達すべき行。
 func GoalRow(seat int) int {
 	if seat == 0 {
