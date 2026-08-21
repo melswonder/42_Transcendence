@@ -107,12 +107,13 @@ func (r *MatchRepo) RecordMatch(ctx context.Context, match domain.Match) error {
 
 		for _, p := range match.Participants {
 			participant := MatchParticipant{
-				MatchID:      match.ID,
-				UserID:       p.UserID,
-				Seat:         int16(p.Seat),
-				Outcome:      p.Outcome,
+				MatchID: match.ID,
+				UserID:  p.UserID,
+				Seat:    int16(p.Seat),
+				// 列は進行中の対局のために NULL 許容だが、ここは決着の記録なので必ず埋める。
+				Outcome:      &p.Outcome,
 				RatingBefore: p.RatingBefore,
-				RatingAfter:  p.RatingAfter,
+				RatingAfter:  &p.RatingAfter,
 				XPGained:     p.XPGained,
 			}
 			if err := tx.Create(&participant).Error; err != nil {

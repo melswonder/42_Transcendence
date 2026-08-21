@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Group, SimpleGrid, Stack, Title } from "@mantine/core";
 import {
   IconActivity,
+  IconChevronRight,
   IconPlayerPlay,
   IconRobot,
   IconSearch,
@@ -10,43 +11,24 @@ import {
 
 import { AppShell } from "@/components/app-shell";
 import { GameModeCard } from "@/components/game-mode-card";
-import { MatchHistory, type Match } from "@/components/match-history";
+import { LinkButton } from "@/components/link-button";
+import { MatchHistory } from "@/components/match-history";
+import { StatsStream } from "@/components/use-stats-stream";
 import { getCurrentUser } from "@/lib/auth";
+import { getMatches } from "@/lib/stats";
 
-// 対戦機能がまだ無いので仮の値。API ができたら差し替える。
-const matches: Match[] = [
-  {
-    id: 1,
-    won: true,
-    opponent: "Alex99",
-    ratingDiff: 12,
-    moves: 42,
-    playedAt: "2 時間前",
-  },
-  {
-    id: 2,
-    won: false,
-    opponent: "GrandMasterQ",
-    ratingDiff: -8,
-    moves: 65,
-    playedAt: "5 時間前",
-  },
-  {
-    id: 3,
-    won: true,
-    opponent: "Rookie_1",
-    ratingDiff: 10,
-    moves: 28,
-    playedAt: "昨日",
-  },
-];
+// ホームに出す直近の対戦数。全部は /matches で見る。
+const RECENT_LIMIT = 5;
 
 export default async function HomePage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
+  const recent = await getMatches({ limit: `${RECENT_LIMIT}` });
+
   return (
     <AppShell user={user}>
+      <StatsStream />
       <Stack gap="xl" maw={900} mx="auto">
         <section>
           <Group gap="xs" mb="lg">
@@ -62,6 +44,7 @@ export default async function HomePage() {
               icon={<IconSearch size={24} />}
               title="クイックマッチ"
               description="同じくらいの実力の相手とランク戦を始めます。"
+              href="/game"
             />
             <GameModeCard
               icon={<IconRobot size={24} />}
@@ -79,14 +62,24 @@ export default async function HomePage() {
         </section>
 
         <section>
-          <Group gap="xs" mb="lg">
-            <IconActivity size={24} className="text-dimmed" />
-            <Title order={2} size="h3">
-              最近の対戦
-            </Title>
+          <Group justify="space-between" mb="lg">
+            <Group gap="xs">
+              <IconActivity size={24} className="text-dimmed" />
+              <Title order={2} size="h3">
+                最近の対戦
+              </Title>
+            </Group>
+            <LinkButton
+              href="/matches"
+              variant="subtle"
+              size="xs"
+              rightSection={<IconChevronRight size={16} />}
+            >
+              すべて見る
+            </LinkButton>
           </Group>
 
-          <MatchHistory matches={matches} />
+          <MatchHistory matches={recent.items} />
         </section>
       </Stack>
     </AppShell>

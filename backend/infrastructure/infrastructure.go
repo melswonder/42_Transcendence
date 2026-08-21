@@ -21,32 +21,42 @@ type Config struct {
 }
 
 type Repositories struct {
-	db          *gorm.DB
-	Ping        usecase.PingRepository
-	Auth        usecase.AuthRepository
-	Match       usecase.MatchRepository
-	Stats       usecase.StatsRepository
-	GoogleOAuth usecase.OAuthProvider
+	db           *gorm.DB
+	Ping         usecase.PingRepository
+	Auth         usecase.AuthRepository
+	Match        usecase.MatchRepository
+	Stats        usecase.StatsRepository
+	Achievements usecase.AchievementRepository
+	Game         usecase.GameRepository
+	GoogleOAuth  usecase.OAuthProvider
+	// Events は SSE の配信元。リポジトリではないが、組み立てる場所が同じなのでここで持つ。
+	Events *EventHub
 }
 
 func NewRepositories(db *gorm.DB, cfg Config) Repositories {
 	return Repositories{
-		db:          db,
-		Ping:        NewPingRepo(),
-		Auth:        NewAuthRepo(db),
-		Match:       NewMatchRepo(db),
-		Stats:       NewStatsRepo(db),
-		GoogleOAuth: NewGoogleOAuth(cfg.Google),
+		db:           db,
+		Ping:         NewPingRepo(),
+		Auth:         NewAuthRepo(db),
+		Match:        NewMatchRepo(db),
+		Stats:        NewStatsRepo(db),
+		Achievements: NewAchievementRepo(db),
+		Game:         NewGameRepo(db),
+		GoogleOAuth:  NewGoogleOAuth(cfg.Google),
+		Events:       NewEventHub(),
 	}
 }
 
 // Dependencies は各リポジトリを usecase 側の受け口へ詰め替える。
 func (r Repositories) Dependencies() usecase.Dependencies {
 	return usecase.Dependencies{
-		PingRepository:  r.Ping,
-		AuthRepository:  r.Auth,
-		MatchRepository: r.Match,
-		StatsRepository: r.Stats,
-		GoogleOAuth:     r.GoogleOAuth,
+		PingRepository:        r.Ping,
+		AuthRepository:        r.Auth,
+		MatchRepository:       r.Match,
+		StatsRepository:       r.Stats,
+		AchievementRepository: r.Achievements,
+		GameRepository:        r.Game,
+		GoogleOAuth:           r.GoogleOAuth,
+		MatchNotifier:         r.Events,
 	}
 }

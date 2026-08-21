@@ -4,7 +4,7 @@
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | gen_random_uuid() | false | [public.match_participants](public.match_participants.md) |  |  |
+| id | uuid | gen_random_uuid() | false | [public.match_participants](public.match_participants.md) [public.match_actions](public.match_actions.md) |  |  |
 | mode | varchar(20) |  | false |  |  |  |
 | status | varchar(20) | 'in_progress'::character varying | false |  |  |  |
 | result_type | varchar(20) |  | true |  |  |  |

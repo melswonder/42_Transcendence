@@ -19,6 +19,13 @@ var allowedOrigins = map[string]bool{
 	"http://frontend:3000":  true, // Dockerコンテナ間通信
 }
 
+// WebSocket のハンドシェイクを許可する Origin のホスト。
+// WebSocket は CORS の対象外なので、上とは別に upgrade 時へ渡して検証する。
+var allowedWSOrigins = []string{
+	"localhost:3000",
+	"frontend:3000",
+}
+
 // CORSミドルウェア
 func cors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -85,6 +92,9 @@ func loadConfig() config {
 				// http:// のローカル開発では Secure を付けると Cookie が保存されない。
 				SecureCookie: strings.HasPrefix(frontendURL, "https://"),
 			},
+			Game: handler.GameConfig{
+				AllowedOrigins: allowedWSOrigins,
+			},
 		},
 		port: envOr("PORT", "4000"),
 	}
@@ -111,7 +121,7 @@ func mustConnectDB() *gorm.DB {
 func newApplicationHandler(db *gorm.DB, cfg config) http.Handler {
 	repositories := infrastructure.NewRepositories(db, cfg.infrastructure)
 	services := usecase.NewServices(repositories.Dependencies())
-	handlers := handler.NewHandlers(services, cfg.handler)
+	handlers := handler.NewHandlers(services, cfg.handler, repositories.Events)
 
 	return cors(handler.NewRouter(handlers))
 }
