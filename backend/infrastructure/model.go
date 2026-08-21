@@ -143,17 +143,20 @@ func (Match) TableName() string { return "matches" }
 // matches 側に player1_id / player2_id を持たせないのは、そうすると勝敗集計が
 // 「自分が player1 の場合と player2 の場合」の 2 通りに分岐してしまうため。
 //
+// 対局開始時に outcome / rating_after を NULL のまま挿入し、決着時に埋める。
+// 進行中の対局へ再接続するとき、この 2 行から座席と参加者を復元する。
+//
 // rating_before / rating_after はレーティング推移のグラフに使う。users.rating は
 // 最新値しか持たないので、履歴はここに残す。
 //
-// @migration CHECK (rating_before >= 0 AND rating_after >= 0)
+// @migration CHECK (rating_before >= 0 AND (rating_after IS NULL OR rating_after >= 0))
 type MatchParticipant struct {
 	MatchID      uuid.UUID `gorm:"column:match_id;type:uuid;primaryKey"`
 	UserID       uuid.UUID `gorm:"column:user_id;type:uuid;primaryKey;index:idx_match_participants_user,priority:1"`
-	Seat         int16     `gorm:"column:seat;type:smallint;not null;check:seat IN (0,1)"` // 0=先手 1=後手
-	Outcome      string    `gorm:"column:outcome;type:varchar(10);not null;check:outcome IN ('win','loss','draw')"`
+	Seat         int16     `gorm:"column:seat;type:smallint;not null;check:seat IN (0,1)"`                                    // 0=先手 1=後手
+	Outcome      *string   `gorm:"column:outcome;type:varchar(10);check:outcome IS NULL OR outcome IN ('win','loss','draw')"` // 進行中は NULL
 	RatingBefore int       `gorm:"column:rating_before;type:integer;not null"`
-	RatingAfter  int       `gorm:"column:rating_after;type:integer;not null"`
+	RatingAfter  *int      `gorm:"column:rating_after;type:integer"` // 進行中は NULL
 	XPGained     int       `gorm:"column:xp_gained;type:integer;not null;default:0;check:xp_gained >= 0"`
 	CreatedAt    time.Time `gorm:"column:created_at;type:timestamptz;not null;autoCreateTime"`
 
@@ -162,6 +165,31 @@ type MatchParticipant struct {
 }
 
 func (MatchParticipant) TableName() string { return "match_participants" }
+
+// MatchAction - match_actions
+//
+// 進行中の対局の 1 手（駒移動・壁配置・投了など）を順番に積む追記専用ログ。
+// 盤面そのものは保存せず、NewQuoridor() にこのログを順に適用して復元する。
+//
+// action_seq は 1 から始まる連番で、そのままゲームの版数（gameVersion）になる。
+// クライアントは「いま自分が見ている版数」を添えて操作を送り、
+// 合わなければ古い操作として拒否する（楽観ロック）。
+//
+// action_id はクライアントが生成する冪等キー。再送で同じ操作が 2 回届いても
+// (match_id, action_id) のユニーク制約で 2 回目を検出し、適用済みとして扱う。
+type MatchAction struct {
+	MatchID    uuid.UUID `gorm:"column:match_id;type:uuid;primaryKey;uniqueIndex:ux_match_actions_action_id,priority:1"`
+	ActionSeq  int       `gorm:"column:action_seq;type:integer;primaryKey;check:action_seq >= 1"`
+	ActionID   uuid.UUID `gorm:"column:action_id;type:uuid;not null;uniqueIndex:ux_match_actions_action_id,priority:2"`
+	ActorSeat  int16     `gorm:"column:actor_seat;type:smallint;not null;check:actor_seat IN (0,1)"`
+	ActionType string    `gorm:"column:action_type;type:varchar(20);not null;check:action_type IN ('move','wall','resign','timeout','abort')"`
+	Payload    string    `gorm:"column:payload;type:jsonb;not null;default:'{}'"` // 座標などの中身。形は domain 側の型で決める
+	CreatedAt  time.Time `gorm:"column:created_at;type:timestamptz;not null;autoCreateTime"`
+
+	Match *Match `gorm:"foreignKey:MatchID;references:ID"`
+}
+
+func (MatchAction) TableName() string { return "match_actions" }
 
 // UserAchievement - user_achievements
 //
