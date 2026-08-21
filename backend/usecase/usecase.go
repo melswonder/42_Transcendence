@@ -16,17 +16,20 @@ package usecase
 type Dependencies struct {
 	PingRepository PingRepository
 	AuthRepository AuthRepository
+	GameRepository GameRepository
 	GoogleOAuth    OAuthProvider
 }
 
 type Services struct {
 	Ping *PingUsecase
 	Auth *AuthUsecase
+	Game *GameUsecase
 }
 
 func NewServices(dependencies Dependencies) Services {
 	return Services{
 		Ping: NewPingUsecase(dependencies.PingRepository),
 		Auth: NewAuthUsecase(dependencies.GoogleOAuth, dependencies.AuthRepository),
+		Game: NewGameUsecase(dependencies.GameRepository),
 	}
 }
