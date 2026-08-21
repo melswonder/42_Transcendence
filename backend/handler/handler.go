@@ -20,14 +20,21 @@ type Config struct {
 }
 
 type Handlers struct {
-	Ping *PingHandler
-	Auth *AuthHandler
+	Ping  *PingHandler
+	Auth  *AuthHandler
+	Match *MatchHandler
+	Stats *StatsHandler
 }
 
 func NewHandlers(services usecase.Services, cfg Config) Handlers {
+	auth := NewAuthHandler(services.Auth, cfg.Auth)
+
 	return Handlers{
 		Ping: NewPingHandler(services.Ping),
-		Auth: NewAuthHandler(services.Auth, cfg.Auth),
+		Auth: auth,
+		// 認証は AuthHandler の実装をそのまま借りる。Cookie の読み方を 2 箇所に書かないため。
+		Match: NewMatchHandler(services.Match, auth.currentUser),
+		Stats: NewStatsHandler(services.Stats, auth.currentUser),
 	}
 }
 
@@ -41,6 +48,17 @@ func NewRouter(handlers Handlers) http.Handler {
 	mux.HandleFunc("GET /auth/google/callback", handlers.Auth.Callback)
 	mux.HandleFunc("GET /auth/me", handlers.Auth.Me)
 	mux.HandleFunc("POST /auth/logout", handlers.Auth.Logout)
+
+	// export.csv は "/matches/" 配下ではなく完全一致で登録する。
+	// より具体的なパターンが優先されるので "GET /matches" と共存できる。
+	mux.HandleFunc("POST /matches", handlers.Match.Create)
+	mux.HandleFunc("GET /matches", handlers.Match.List)
+	mux.HandleFunc("GET /matches/export.csv", handlers.Match.ExportCSV)
+
+	mux.HandleFunc("GET /stats/me", handlers.Stats.Summary)
+	mux.HandleFunc("GET /stats/me/timeseries", handlers.Stats.Timeseries)
+	mux.HandleFunc("GET /stats/me/breakdown", handlers.Stats.Breakdown)
+	mux.HandleFunc("GET /leaderboard", handlers.Stats.Leaderboard)
 
 	return mux
 }

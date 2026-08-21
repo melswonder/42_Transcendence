@@ -318,6 +318,7 @@ func toDomainUser(u *User) *domain.User {
 		Handle:      u.Handle,
 		Status:      u.Status,
 		Level:       u.Level,
+		Rating:      u.Rating,
 		CreatedAt:   u.CreatedAt,
 	}
 }
