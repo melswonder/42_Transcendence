@@ -17,17 +17,22 @@ import (
 
 type Config struct {
 	Auth AuthConfig
+	Game GameConfig
 }
 
 type Handlers struct {
 	Ping *PingHandler
 	Auth *AuthHandler
+	Game *GameHandler
 }
 
 func NewHandlers(services usecase.Services, cfg Config) Handlers {
+	auth := NewAuthHandler(services.Auth, cfg.Auth)
 	return Handlers{
 		Ping: NewPingHandler(services.Ping),
-		Auth: NewAuthHandler(services.Auth, cfg.Auth),
+		Auth: auth,
+		// WebSocket のハンドシェイクも Cookie セッションで認証する。
+		Game: NewGameHandler(services.Game, auth.currentUser, cfg.Game),
 	}
 }
 
@@ -41,6 +46,8 @@ func NewRouter(handlers Handlers) http.Handler {
 	mux.HandleFunc("GET /auth/google/callback", handlers.Auth.Callback)
 	mux.HandleFunc("GET /auth/me", handlers.Auth.Me)
 	mux.HandleFunc("POST /auth/logout", handlers.Auth.Logout)
+
+	mux.HandleFunc("GET /game/ws", handlers.Game.WS)
 
 	return mux
 }
