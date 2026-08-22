@@ -138,6 +138,39 @@ func claimBool(claims map[string]any, key string) bool {
 // AuthRepo は usecase.AuthRepository の実装。GORM 経由で Postgres を読み書きする。
 // FindUserByOAuth は oauth_accounts から (provider, sub) でユーザーを引く。退会済みは「いない」扱い。
 // CreateUserWithOAuth は users と oauth_accounts を 1 トランザクションで作る。
+// CreateUserWithPassword はメール登録のユーザーを作る。
+// メール・handle の一意性は部分ユニークインデックスが守り、衝突は domain のエラーに翻訳する。
+func (r *AuthRepo) CreateUserWithPassword(
+	ctx context.Context, email, passwordHash, displayName, handle, locale string,
+) (*domain.User, error) {
+	user := User{
+		ID:              uuid.New(),
+		Email:           &email,
+		PasswordHash:    &passwordHash,
+		DisplayName:     displayName,
+		Handle:          handle,
+		PreferredLocale: locale,
+	}
+	if err := r.db.WithContext(ctx).Create(&user).Error; err != nil {
+		return nil, translateUniqueViolation(err)
+	}
+	return toDomainUser(&user), nil
+}
+
+// FindUserWithPasswordByEmail はメールからユーザーとパスワードハッシュを引く。
+func (r *AuthRepo) FindUserWithPasswordByEmail(ctx context.Context, email string) (*domain.User, *string, error) {
+	var user User
+	err := r.db.WithContext(ctx).
+		First(&user, "email = ? AND anonymized_at IS NULL AND status = 'active'", email).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil, domain.ErrUserNotFound
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("find user by email: %w", err)
+	}
+	return toDomainUser(&user), user.PasswordHash, nil
+}
+
 // CreateSession は sessions に 1 行入れる。
 // FindUserBySessionToken は有効なセッションのユーザーを返し、最終アクセス時刻を更新する。
 // RevokeSession は revoked_at を埋めて失効させる。
