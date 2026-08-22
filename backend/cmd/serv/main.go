@@ -18,13 +18,15 @@ import (
 
 // CORSを許可するオリジン
 var allowedOrigins = map[string]bool{
-	"http://localhost:3000": true, // ローカル開発環境
+	"https://localhost":     true, // Caddy 経由の本来の入口
+	"http://localhost:3000": true, // ローカル開発環境（Caddy を通さない直アクセス）
 	"http://frontend:3000":  true, // Dockerコンテナ間通信
 }
 
 // WebSocket のハンドシェイクを許可する Origin のホスト。
 // WebSocket は CORS の対象外なので、上とは別に upgrade 時へ渡して検証する。
 var allowedWSOrigins = []string{
+	"localhost", // https://localhost（Caddy 経由）
 	"localhost:3000",
 	"frontend:3000",
 }

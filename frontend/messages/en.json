@@ -168,7 +168,11 @@
     "already_friends": "You are already friends.",
     "friend_not_found": "Request not found.",
     "user_not_found": "User not found.",
-    "media_not_found": "Image not found."
+    "media_not_found": "Image not found.",
+    "email_taken": "That email address is already registered.",
+    "invalid_email": "Please enter a valid email address.",
+    "weak_password": "Password must be 8–72 characters.",
+    "invalid_credentials": "Incorrect email or password."
   },
   "stats": {
     "title": "Stats",
@@ -377,5 +381,25 @@
         "body": "Changes will be announced on this page. Continued use after a change constitutes acceptance of the updated terms."
       }
     }
+  },
+  "profile": {
+    "title": "Profile",
+    "memberSince": "Joined {date}",
+    "level": "Level",
+    "xp": "XP"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "passwordConfirm": "Confirm password",
+    "passwordHint": "At least 8 characters",
+    "displayName": "Display name",
+    "handle": "Handle",
+    "handleHint": "Lowercase letters, digits and underscores, 3–30 characters",
+    "signupSubmit": "Create account",
+    "loginSubmit": "Log in",
+    "passwordMismatch": "Passwords do not match.",
+    "failed": "Something went wrong.",
+    "or": "or"
   }
 }
