@@ -44,6 +44,6 @@ func NewServices(dependencies Dependencies) Services {
 		Match:        NewMatchUsecase(dependencies.MatchRepository, dependencies.MatchNotifier, achievements),
 		Stats:        stats,
 		Achievements: achievements,
-		Game:         NewGameUsecase(dependencies.GameRepository),
+		Game:         NewGameUsecase(dependencies.GameRepository, dependencies.MatchNotifier, achievements),
 	}
 }

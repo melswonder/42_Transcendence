@@ -246,6 +246,23 @@ export function GameScreen() {
                   <Text size="sm" c="dimmed">
                     総手数 {state.moveCount}
                   </Text>
+                  {state.ratingAfter && (
+                    <Text size="sm">
+                      レート {state.players[mySeat].rating} →{" "}
+                      <Text
+                        span
+                        fw={700}
+                        c={
+                          state.ratingAfter[mySeat] >=
+                          state.players[mySeat].rating
+                            ? "emerald"
+                            : "red"
+                        }
+                      >
+                        {state.ratingAfter[mySeat]}
+                      </Text>
+                    </Text>
+                  )}
                   <Button component={Link} href="/">
                     ホームへ戻る
                   </Button>

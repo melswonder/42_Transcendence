@@ -37,6 +37,8 @@ export interface GameState {
   finished: boolean;
   winner?: number;
   resultType?: string;
+  /** 決着後の新レーティング。中断では付かない。 */
+  ratingAfter?: [number, number];
   turnDeadline: string;
   players: [GamePlayer, GamePlayer];
   connected: [boolean, boolean];

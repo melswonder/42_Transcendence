@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -31,16 +32,8 @@ const (
 	repoTimeout = 5 * time.Second
 
 	// gameModeQuickMatch はクイックマッチで作る対戦のモード。
-	// レーティング計算は統計モジュール側の仕事なので、当面 casual で記録する。
-	gameModeQuickMatch = "casual"
-)
-
-// 決着のつき方。matches.result_type の CHECK 制約と同じ値にする。
-const (
-	gameResultGoal    = "goal"
-	gameResultResign  = "resign"
-	gameResultTimeout = "timeout"
-	gameResultAbort   = "abort"
+	// ランク戦なので決着時に Elo と XP が動く。
+	gameModeQuickMatch = domain.ModeRanked
 )
 
 // GamePlayer は対局に参加している 1 人。盤面と一緒にクライアントへ返す表示用の情報。
@@ -86,8 +79,9 @@ type GameRepository interface {
 	// AppendAction は 1 手を追記する。同じ (match_id, action_id) なら
 	// domain.ErrDuplicateGameAction、同じ (match_id, seq) なら domain.ErrStaleGameVersion。
 	AppendAction(ctx context.Context, record MatchActionRecord) error
-	// FinishMatch は対局を決着させる。winnerSeat が負なら中断（aborted）。
-	FinishMatch(ctx context.Context, matchID uuid.UUID, resultType string, totalMoves, winnerSeat int) error
+	// FinishMatch は対局を決着させ、participants の勝敗・レーティング・XP と
+	// users の進捗を反映する。participants が空なら中断（aborted）として勝敗は付けない。
+	FinishMatch(ctx context.Context, matchID uuid.UUID, resultType string, totalMoves int, participants []domain.MatchParticipant) error
 	// FindActiveMatch は user が参加している進行中の対局を返す。無ければ domain.ErrMatchNotFound。
 	FindActiveMatch(ctx context.Context, userID uuid.UUID) (*StoredGame, error)
 }
@@ -131,8 +125,9 @@ type GameStateView struct {
 	MoveCount    int
 	LegalMoves   []domain.Cell // 手番側の駒が動ける先
 	Finished     bool
-	Winner       int    // 未決着なら -1
-	ResultType   string // 決着後のみ
+	Winner       int     // 未決着なら -1
+	ResultType   string  // 決着後のみ
+	RatingAfter  *[2]int // 決着後のレーティング。中断なら nil
 	TurnDeadline time.Time
 	Players      [2]GamePlayer
 	Connected    [2]bool
@@ -152,7 +147,9 @@ type wallPayload struct {
 
 // GameUsecase は進行中の対局と待機キューを束ねる。サーバー権威型の本体。
 type GameUsecase struct {
-	repo GameRepository
+	repo         GameRepository
+	notifier     MatchNotifier
+	achievements AchievementSyncer
 
 	mu       sync.Mutex
 	sessions map[uuid.UUID]*gameSession // matchID → セッション
@@ -160,11 +157,36 @@ type GameUsecase struct {
 	waiting  []*GameClient              // クイックマッチの待機列
 }
 
-func NewGameUsecase(repo GameRepository) *GameUsecase {
+func NewGameUsecase(
+	repo GameRepository, notifier MatchNotifier, achievements AchievementSyncer,
+) *GameUsecase {
 	return &GameUsecase{
-		repo:     repo,
-		sessions: make(map[uuid.UUID]*gameSession),
-		byUser:   make(map[uuid.UUID]*gameSession),
+		repo:         repo,
+		notifier:     notifier,
+		achievements: achievements,
+		sessions:     make(map[uuid.UUID]*gameSession),
+		byUser:       make(map[uuid.UUID]*gameSession),
+	}
+}
+
+// afterFinish は決着の後処理。実績の判定と SSE 通知は、
+// 失敗しても対局の記録を取り消さない（RecordMatch と同じ方針）。
+func (u *GameUsecase) afterFinish(match *domain.Match) {
+	if match == nil || len(match.Participants) == 0 {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), repoTimeout)
+	defer cancel()
+
+	if u.achievements != nil {
+		for _, p := range match.Participants {
+			if err := u.achievements.SyncAfterMatch(ctx, p.UserID); err != nil {
+				log.Printf("sync achievements for %s: %v", p.UserID, err)
+			}
+		}
+	}
+	if u.notifier != nil {
+		u.notifier.NotifyMatchRecorded(*match)
 	}
 }
 
@@ -245,6 +267,7 @@ func (u *GameUsecase) buildSession(stored *StoredGame) (*gameSession, error) {
 		u:            u,
 		matchID:      stored.MatchID,
 		mode:         stored.Mode,
+		startedAt:    stored.StartedAt,
 		players:      stored.Players,
 		game:         game,
 		version:      len(stored.Actions),
@@ -453,11 +476,13 @@ type gameSession struct {
 	mu           sync.Mutex
 	matchID      uuid.UUID
 	mode         string
+	startedAt    time.Time
 	players      [2]GamePlayer
 	game         *domain.Quoridor
 	version      int
 	applied      map[uuid.UUID]int // actionID → 適用済み seq（冪等処理）
 	resultType   string
+	ratingAfter  *[2]int // 決着後のレーティング。中断や未決着なら nil
 	subs         map[*GameClient]struct{}
 	conns        [2]int // 座席ごとの接続数
 	turnTimer    *time.Timer
@@ -613,17 +638,19 @@ func (s *gameSession) act(ctx context.Context, from *GameClient, seat int, in Ga
 	s.applied[in.ActionID] = s.version
 
 	if s.game.Finished() {
-		result := gameResultGoal
+		result := domain.ResultGoal
 		if in.Kind == domain.GameActionResign {
-			result = gameResultResign
+			result = domain.ResultResign
 		}
-		if err := s.finishLocked(ctx, result, s.game.Winner); err != nil {
+		match, err := s.finishLocked(ctx, result, s.game.Winner)
+		if err != nil {
 			s.mu.Unlock()
 			return false, err
 		}
 		view := s.viewLocked()
 		s.mu.Unlock()
 		s.broadcastExcept(nil, GameEvent{Type: GameEventState, State: view})
+		s.u.afterFinish(match)
 		return true, nil
 	}
 
@@ -637,7 +664,7 @@ func (s *gameSession) act(ctx context.Context, from *GameClient, seat int, in Ga
 // onTurnTimeout は持ち時間切れ。手番側の負けで決着させる。
 func (s *gameSession) onTurnTimeout() {
 	s.forceFinish(func(s *gameSession) (loserSeat int, actionType, resultType string, skip bool) {
-		return s.game.Turn, domain.GameActionTimeout, gameResultTimeout, false
+		return s.game.Turn, domain.GameActionTimeout, domain.ResultTimeout, false
 	})
 }
 
@@ -649,9 +676,9 @@ func (s *gameSession) onGraceExpired(seat int) {
 			return 0, "", "", true // 猶予内に戻ってきた
 		}
 		if s.conns[1-seat] == 0 {
-			return seat, domain.GameActionAbort, gameResultAbort, false
+			return seat, domain.GameActionAbort, domain.ResultAbort, false
 		}
-		return seat, domain.GameActionTimeout, gameResultTimeout, false
+		return seat, domain.GameActionTimeout, domain.ResultTimeout, false
 	})
 }
 
@@ -690,10 +717,11 @@ func (s *gameSession) forceFinish(decide func(*gameSession) (loserSeat int, acti
 	s.applied[actionID] = s.version
 
 	winner := s.game.Winner
-	if resultType == gameResultAbort {
+	if resultType == domain.ResultAbort {
 		winner = -1
 	}
-	if err := s.finishLocked(ctx, resultType, winner); err != nil {
+	match, err := s.finishLocked(ctx, resultType, winner)
+	if err != nil {
 		s.mu.Unlock()
 		return
 	}
@@ -701,18 +729,63 @@ func (s *gameSession) forceFinish(decide func(*gameSession) (loserSeat int, acti
 	s.mu.Unlock()
 
 	s.broadcastExcept(nil, GameEvent{Type: GameEventState, State: view})
+	s.u.afterFinish(match)
 	s.u.evict(s)
 }
 
 // finishLocked は決着の永続化とタイマー停止。s.mu を握って呼ぶ。
-// ロックは解放しないので、呼び出し側が viewLocked → Unlock → broadcast の順で締める。
-func (s *gameSession) finishLocked(ctx context.Context, resultType string, winnerSeat int) error {
-	if err := s.u.repo.FinishMatch(ctx, s.matchID, resultType, s.game.MoveCount, winnerSeat); err != nil {
-		return err
+// ロックは解放しないので、呼び出し側が viewLocked → Unlock → broadcast の順で締め、
+// 返ってきた match を u.afterFinish へ渡す（実績判定と SSE 通知）。
+func (s *gameSession) finishLocked(ctx context.Context, resultType string, winnerSeat int) (*domain.Match, error) {
+	participants := s.settleLocked(winnerSeat)
+	if err := s.u.repo.FinishMatch(ctx, s.matchID, resultType, s.game.MoveCount, participants); err != nil {
+		return nil, err
 	}
 	s.resultType = resultType
+	if winnerSeat >= 0 {
+		s.ratingAfter = &[2]int{participants[0].RatingAfter, participants[1].RatingAfter}
+	}
 	s.stopTimersLocked()
-	return nil
+
+	return &domain.Match{
+		ID:           s.matchID,
+		Mode:         s.mode,
+		ResultType:   resultType,
+		TotalMoves:   s.game.MoveCount,
+		StartedAt:    s.startedAt,
+		FinishedAt:   time.Now(),
+		Participants: participants,
+	}, nil
+}
+
+// settleLocked は勝敗から各座席のレーティングと XP を確定する。
+// 中断（winnerSeat < 0）なら勝敗を付けないので nil。
+// Elo は対局開始時点のレーティング（participants.rating_before）で計算する。
+func (s *gameSession) settleLocked(winnerSeat int) []domain.MatchParticipant {
+	if winnerSeat < 0 {
+		return nil
+	}
+	participants := make([]domain.MatchParticipant, 2)
+	for seat := range participants {
+		outcome := domain.OutcomeLoss
+		if seat == winnerSeat {
+			outcome = domain.OutcomeWin
+		}
+		before := s.players[seat].Rating
+		after := before
+		if s.mode == domain.ModeRanked {
+			after = domain.NextRating(before, s.players[1-seat].Rating, domain.OutcomeScore(outcome))
+		}
+		participants[seat] = domain.MatchParticipant{
+			UserID:       s.players[seat].UserID,
+			Seat:         seat,
+			Outcome:      outcome,
+			RatingBefore: before,
+			RatingAfter:  after,
+			XPGained:     domain.XPForOutcome(outcome),
+		}
+	}
+	return participants
 }
 
 func (s *gameSession) armTurnTimer() {
@@ -770,6 +843,7 @@ func (s *gameSession) viewLocked() *GameStateView {
 		Finished:     s.game.Finished(),
 		Winner:       s.game.Winner,
 		ResultType:   s.resultType,
+		RatingAfter:  s.ratingAfter,
 		TurnDeadline: s.turnDeadline,
 		Players:      s.players,
 		Connected:    [2]bool{s.conns[0] > 0, s.conns[1] > 0},

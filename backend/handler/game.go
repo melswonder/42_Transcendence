@@ -77,6 +77,7 @@ type wsGameState struct {
 	Finished     bool        `json:"finished"`
 	Winner       *int        `json:"winner,omitempty"`
 	ResultType   string      `json:"resultType,omitempty"`
+	RatingAfter  *[2]int     `json:"ratingAfter,omitempty"` // 決着後の新レーティング
 	TurnDeadline time.Time   `json:"turnDeadline"`
 	Players      [2]wsPlayer `json:"players"`
 	Connected    [2]bool     `json:"connected"`
@@ -233,6 +234,7 @@ func toWSGameState(v *usecase.GameStateView, seat int) *wsGameState {
 		LegalMoves:   make([]wsCell, 0, len(v.LegalMoves)),
 		Finished:     v.Finished,
 		ResultType:   v.ResultType,
+		RatingAfter:  v.RatingAfter,
 		TurnDeadline: v.TurnDeadline,
 		Connected:    v.Connected,
 	}

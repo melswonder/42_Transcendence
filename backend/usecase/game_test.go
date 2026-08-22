@@ -19,6 +19,7 @@ type fakeGameRepo struct {
 	users    map[uuid.UUID]GamePlayer
 	finished map[uuid.UUID]string // matchID → resultType
 	winners  map[uuid.UUID]int
+	settled  map[uuid.UUID][]domain.MatchParticipant
 }
 
 func newFakeGameRepo(users ...GamePlayer) *fakeGameRepo {
@@ -27,6 +28,7 @@ func newFakeGameRepo(users ...GamePlayer) *fakeGameRepo {
 		users:    make(map[uuid.UUID]GamePlayer),
 		finished: make(map[uuid.UUID]string),
 		winners:  make(map[uuid.UUID]int),
+		settled:  make(map[uuid.UUID][]domain.MatchParticipant),
 	}
 	for _, u := range users {
 		r.users[u.UserID] = u
@@ -72,14 +74,20 @@ func (r *fakeGameRepo) AppendAction(_ context.Context, record MatchActionRecord)
 	return nil
 }
 
-func (r *fakeGameRepo) FinishMatch(_ context.Context, matchID uuid.UUID, resultType string, _ int, winnerSeat int) error {
+func (r *fakeGameRepo) FinishMatch(_ context.Context, matchID uuid.UUID, resultType string, _ int, participants []domain.MatchParticipant) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, ok := r.finished[matchID]; ok {
 		return domain.ErrMatchNotFound
 	}
 	r.finished[matchID] = resultType
-	r.winners[matchID] = winnerSeat
+	r.winners[matchID] = -1
+	for _, p := range participants {
+		if p.Outcome == domain.OutcomeWin {
+			r.winners[matchID] = p.Seat
+		}
+	}
+	r.settled[matchID] = participants
 	return nil
 }
 
@@ -103,6 +111,12 @@ func (r *fakeGameRepo) result(matchID uuid.UUID) (string, int, bool) {
 	defer r.mu.Unlock()
 	rt, ok := r.finished[matchID]
 	return rt, r.winners[matchID], ok
+}
+
+func (r *fakeGameRepo) settledOf(matchID uuid.UUID) []domain.MatchParticipant {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.settled[matchID]
 }
 
 func testUser(name string) *domain.User {
@@ -135,7 +149,7 @@ func startTestMatch(t *testing.T) (*fakeGameRepo, *GameUsecase, *GameClient, *Ga
 	ctx := context.Background()
 	u1, u2 := testUser("alice"), testUser("bob")
 	repo := newFakeGameRepo(asPlayer(u1), asPlayer(u2))
-	uc := NewGameUsecase(repo)
+	uc := NewGameUsecase(repo, nil, nil)
 
 	c1, err := uc.Connect(ctx, u1)
 	if err != nil {
@@ -275,6 +289,36 @@ func TestResignFinishesMatch(t *testing.T) {
 	}
 }
 
+// ランク戦なので決着で Elo と XP が動く。同レート同士は ±16（K=32）。
+func TestRankedFinishSettlesRatings(t *testing.T) {
+	t.Parallel()
+
+	repo, _, c1, c2, state := startTestMatch(t)
+	err := c2.Act(context.Background(), GameActionInput{
+		ActionID: uuid.New(),
+		Kind:     domain.GameActionResign,
+	})
+	if err != nil {
+		t.Fatalf("投了できない: %v", err)
+	}
+	st := waitEvent(t, c1, GameEventState)
+
+	settled := repo.settledOf(state.MatchID)
+	if len(settled) != 2 {
+		t.Fatalf("参加者 2 人ぶんが清算されるはず: %+v", settled)
+	}
+	if settled[0].RatingAfter != 1216 || settled[1].RatingAfter != 1184 {
+		t.Errorf("同レートの勝敗は ±16 のはず: %d, %d", settled[0].RatingAfter, settled[1].RatingAfter)
+	}
+	if settled[0].XPGained != domain.XPForOutcome(domain.OutcomeWin) ||
+		settled[1].XPGained != domain.XPForOutcome(domain.OutcomeLoss) {
+		t.Errorf("XP が勝敗に応じて入るはず: %+v", settled)
+	}
+	if st.State.RatingAfter == nil || st.State.RatingAfter[0] != 1216 {
+		t.Errorf("決着の state に新レーティングが載るはず: %+v", st.State.RatingAfter)
+	}
+}
+
 func TestReconnectRestoresLatestState(t *testing.T) {
 	t.Parallel()
 
@@ -313,7 +357,7 @@ func TestRestoreFromRepositoryAfterRestart(t *testing.T) {
 	waitEvent(t, c2, GameEventState)
 
 	// サーバー再起動を模して、同じ repo から新しい usecase を作る。
-	uc2 := NewGameUsecase(repo)
+	uc2 := NewGameUsecase(repo, nil, nil)
 	c1b, err := uc2.Connect(context.Background(), c1.user)
 	if err != nil {
 		t.Fatalf("復元: %v", err)
