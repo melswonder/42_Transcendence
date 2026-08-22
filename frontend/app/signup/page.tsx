@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Anchor, Text } from "@mantine/core";
+import { Text } from "@mantine/core";
 import { getTranslations } from "next-intl/server";
 
 import { AuthCard } from "@/components/auth-card";
+import { AuthLink } from "@/components/auth-link";
 import { GoogleLoginButton } from "@/components/google-login-button";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -26,10 +26,7 @@ export default async function SignupPage() {
       </Text>
 
       <Text size="sm" ta="center">
-        {t("haveAccount")}{" "}
-        <Anchor component={Link} href="/login" size="sm">
-          {t("loginLink")}
-        </Anchor>
+        {t("haveAccount")} <AuthLink href="/login">{t("loginLink")}</AuthLink>
       </Text>
     </AuthCard>
   );
