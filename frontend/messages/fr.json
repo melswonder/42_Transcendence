@@ -195,7 +195,8 @@
       "mode": "Mode",
       "result": "Résultat",
       "daily": "Par jour",
-      "weekly": "Par semaine"
+      "weekly": "Par semaine",
+      "opponent": "Adversaire"
     },
     "outcomes": {
       "win": "Victoire",
@@ -256,9 +257,18 @@
         "name": "Inébranlable",
         "description": "Gagnez 10 parties d'affilée"
       },
-      "played_10": { "name": "Habitué", "description": "Jouez 10 parties" },
-      "played_50": { "name": "Aguerri", "description": "Jouez 50 parties" },
-      "played_100": { "name": "Passionné", "description": "Jouez 100 parties" },
+      "played_10": {
+        "name": "Habitué",
+        "description": "Jouez 10 parties"
+      },
+      "played_50": {
+        "name": "Aguerri",
+        "description": "Jouez 50 parties"
+      },
+      "played_100": {
+        "name": "Passionné",
+        "description": "Jouez 100 parties"
+      },
       "rating_1300": {
         "name": "Avancé",
         "description": "Atteignez un classement de 1300"

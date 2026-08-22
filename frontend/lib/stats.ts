@@ -112,6 +112,7 @@ export interface StatsFilters {
   from?: string;
   to?: string;
   mode?: string;
+  opponent?: string;
   outcome?: string;
   interval?: string;
   limit?: string;

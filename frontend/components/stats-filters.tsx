@@ -1,10 +1,19 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Group, Paper, SegmentedControl, Select } from "@mantine/core";
 import { useTranslations } from "next-intl";
 import { DatePickerInput } from "@mantine/dates";
 import { IconCalendar } from "@tabler/icons-react";
+
+import { apiUrl } from "@/lib/api";
+
+interface OpponentOption {
+  id: string;
+  display_name: string;
+  handle: string;
+}
 
 /** 絞り込みは URL のクエリに持つ。
  * Server Component が searchParams から読んでそのまま backend に渡せるので
@@ -19,6 +28,18 @@ export function StatsFilters({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  // 「相手」の選択肢は対戦したことのある相手だけ。effect 内で setState しない形で読む。
+  const [opponents, setOpponents] = useState<OpponentOption[]>([]);
+  useEffect(() => {
+    const load = () =>
+      void fetch(apiUrl("/stats/opponents"), { credentials: "include" })
+        .then((res) => (res.ok ? res.json() : { items: [] }))
+        .then((body: { items: OpponentOption[] }) => setOpponents(body.items))
+        .catch(() => {});
+    const kickoff = setTimeout(load, 0);
+    return () => clearTimeout(kickoff);
+  }, []);
 
   const update = (patch: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -66,6 +87,20 @@ export function StatsFilters({
           ]}
           clearable
           w={150}
+        />
+
+        <Select
+          label={t("filters.opponent")}
+          placeholder={t("filters.all")}
+          value={searchParams.get("opponent")}
+          onChange={(value) => update({ opponent: value })}
+          data={opponents.map((o) => ({
+            value: o.id,
+            label: `${o.display_name} (@${o.handle})`,
+          }))}
+          searchable
+          clearable
+          w={200}
         />
 
         <Select
