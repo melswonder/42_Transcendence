@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import {
   Alert,
   Badge,
@@ -15,16 +14,14 @@ import {
 } from "@mantine/core";
 import {
   IconAlertTriangle,
+  IconEye,
   IconPlugOff,
   IconSearch,
 } from "@tabler/icons-react";
 
+import { PlayerPanel, useCountdown } from "@/components/player-panel";
 import { QuoridorBoard } from "@/components/quoridor-board";
-import {
-  type GamePlayer,
-  type GameState,
-  useGameSocket,
-} from "@/components/use-game-socket";
+import { type GameState, useGameSocket } from "@/components/use-game-socket";
 
 /** 決着の見出し。自分視点の勝敗と理由を 1 行で。 */
 function resultText(state: GameState): string {
@@ -36,83 +33,6 @@ function resultText(state: GameState): string {
     timeout: "時間切れ",
   }[state.resultType ?? ""];
   return `${won ? "勝ち" : "負け"}${reason ? `（${reason}）` : ""}`;
-}
-
-/** 残り持ち時間の表示。サーバーの締切時刻から手元で数えるだけ。 */
-function useCountdown(deadline: string | undefined, running: boolean) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!running) return;
-    const timer = setInterval(() => setNow(Date.now()), 500);
-    return () => clearInterval(timer);
-  }, [running]);
-  if (!deadline || !running) return null;
-  return Math.max(0, Math.ceil((new Date(deadline).getTime() - now) / 1000));
-}
-
-/** 残り時間の表示。60 秒制なので 0:47 の形にする。 */
-function formatSeconds(total: number): string {
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
-}
-
-/** 1 人ぶんのカード。手番のプレイヤーには枠の強調と持ち時間が付く。
- * 「あなたの手番です」のような文は置かず、時計の位置で手番を伝える。
- */
-function PlayerPanel({
-  player,
-  wallsLeft,
-  isMe,
-  connected,
-  secondsLeft,
-}: {
-  player: GamePlayer;
-  wallsLeft: number;
-  isMe: boolean;
-  connected: boolean;
-  /** 手番でなければ null。 */
-  secondsLeft: number | null;
-}) {
-  const isTurn = secondsLeft !== null;
-  return (
-    <Paper p="sm" className={isTurn ? "border-emerald-500" : undefined}>
-      <Group justify="space-between" align="center">
-        <div>
-          <Group gap="xs">
-            <Text fw={600}>{player.displayName}</Text>
-            {isMe && (
-              <Badge size="xs" variant="light">
-                自分
-              </Badge>
-            )}
-            {!connected && (
-              <Badge size="xs" color="red" variant="light">
-                切断中
-              </Badge>
-            )}
-          </Group>
-          <Text size="xs" c="dimmed">
-            @{player.handle}
-          </Text>
-        </div>
-        <Group gap="sm" align="center">
-          <Text size="sm" c="dimmed">
-            壁 {wallsLeft}
-          </Text>
-          {isTurn && (
-            <Text
-              ff="monospace"
-              fw={700}
-              size="lg"
-              c={secondsLeft <= 10 ? "red" : undefined}
-              className="rounded-sm bg-dark-500 px-2 py-0.5"
-            >
-              {formatSeconds(secondsLeft)}
-            </Text>
-          )}
-        </Group>
-      </Group>
-    </Paper>
-  );
 }
 
 export function GameScreen() {
@@ -142,6 +62,11 @@ export function GameScreen() {
         <Title order={2} size="h3">
           クイックマッチ
         </Title>
+        {state !== null && state.spectators > 0 && (
+          <Badge variant="light" leftSection={<IconEye size={12} />}>
+            観戦 {state.spectators} 人
+          </Badge>
+        )}
         {status !== "online" && (
           <Badge
             color="yellow"

@@ -38,8 +38,10 @@ export function QuoridorBoard({
   // hoverWall は表示座標で持つ（描画にしか使わないため）。
   const [hoverWall, setHoverWall] = useState<GameWall | null>(null);
 
+  // 自分の座席。観戦（seat -1）は seat 0 の視点で描く。
+  const selfSeat = state.seat >= 0 ? state.seat : 0;
   // seat 0 だけ盤を 180° 回す。変換は自身が逆変換にもなっている。
-  const flipped = state.seat === 0;
+  const flipped = selfSeat === 0;
   const toModelCell = (c: GameCell): GameCell =>
     flipped ? { row: 8 - c.row, col: 8 - c.col } : c;
   const toDisplayWall = (w: GameWall): GameWall =>
@@ -50,7 +52,7 @@ export function QuoridorBoard({
   const isLegal = (cell: GameCell) =>
     legalMoves.some((c) => c.row === cell.row && c.col === cell.col);
 
-  const canPlaceWall = interactive && state.wallsLeft[state.seat] > 0;
+  const canPlaceWall = interactive && state.wallsLeft[selfSeat] > 0;
 
   // 以降のループ変数はすべて表示座標。サーバーへ返すときだけ盤座標に戻す。
   const cells = [];
@@ -78,7 +80,7 @@ export function QuoridorBoard({
           {pawnSeat >= 0 && (
             <span
               className={`block h-3/5 w-3/5 rounded-full ${
-                pawnSeat === state.seat
+                pawnSeat === selfSeat
                   ? "bg-emerald-500"
                   : "bg-[var(--mantine-color-red-6)]"
               } ${pawnSeat === state.turn && !state.finished ? "ring-2 ring-text/70" : ""}`}
