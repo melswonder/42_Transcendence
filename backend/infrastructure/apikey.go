@@ -102,11 +102,8 @@ func toDomainAPIKey(k *APIKey) *domain.APIKey {
 	}
 }
 
-// FixedWindowLimiter はキー単位の固定窓レートリミッタ。
-//
-// 窓の開始から 1 分間のリクエスト数を数え、上限を超えたら 429。
-// メモリ上なので再起動で消えるが、流量制限は揮発してよい情報。
-// 複数インスタンス構成にするときは Redis に移す（README #3）。
+// FixedWindowLimiter はキー単位の固定窓レートリミッタ（1 分窓）。
+// メモリ上で足りる揮発情報。複数インスタンス化のときに Redis へ移す（README #3）。
 type FixedWindowLimiter struct {
 	limit  int
 	window time.Duration

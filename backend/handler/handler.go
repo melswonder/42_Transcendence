@@ -76,8 +76,7 @@ func NewHandlers(services usecase.Services, cfg Config, events EventSubscriber, 
 }
 
 // wrapF は net/http のハンドラを Gin のルートに載せるアダプタ。
-// パスパラメータは Go 1.22 の r.PathValue で読めるよう Request へ詰め替えるので、
-// 各ハンドラは Gin を知らないまま今までどおり動く。
+// c.Param を r.PathValue に詰め替えるので、各ハンドラは Gin を知らずに済む。
 func wrapF(h http.HandlerFunc, params ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		for _, p := range params {
@@ -88,14 +87,13 @@ func wrapF(h http.HandlerFunc, params ...string) gin.HandlerFunc {
 }
 
 // NewRouter は全ルートを Gin で組み立てる。
-// ルーティング（パスパラメータ含む）とミドルウェアチェーンは Gin に任せ、
-// リクエストの解釈とレスポンスの組み立ては従来どおり各ハンドラが担う。
+// ルート木とミドルウェアは Gin、リクエストの解釈と応答は各ハンドラの担当。
 func NewRouter(handlers Handlers, middleware ...gin.HandlerFunc) http.Handler {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(middleware...)
 
-	// 従来の "/" キャッチオール（疎通確認）を引き継ぐ。
+	// 未マッチのパスは疎通確認の ping に落とす。
 	router.NoRoute(wrapF(handlers.Ping.Ping))
 
 	auth := router.Group("/auth")

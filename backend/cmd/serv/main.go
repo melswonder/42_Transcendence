@@ -164,7 +164,6 @@ func newApplicationHandler(db *gorm.DB, cfg config) http.Handler {
 	services := usecase.NewServices(repositories.Dependencies())
 	handlers := handler.NewHandlers(services, cfg.handler, repositories.Events, repositories.Presence)
 
-	// ミドルウェアは Gin のチェーンで通す。
 	// recovery を最初に置き、パニックでもプロセスを落とさない。
 	return handler.NewRouter(handlers, gin.Recovery(), accessLog(), corsMiddleware())
 }

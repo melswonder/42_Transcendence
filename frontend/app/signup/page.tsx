@@ -7,9 +7,7 @@ import { AuthLink } from "@/components/auth-link";
 import { GoogleLoginButton } from "@/components/google-login-button";
 import { getCurrentUser } from "@/lib/auth";
 
-/** サインアップ画面。認証は Google OAuth で、初回ログイン時に
- * アカウントが自動で作られる。ログイン画面とは文言と導線だけが違う。
- */
+/** サインアップ画面。認証は共通の Google OAuth で、初回ログイン時にアカウントが作られる。 */
 export default async function SignupPage() {
   // ログイン済みならアカウントはもうあるので、ホームへ。
   const user = await getCurrentUser();

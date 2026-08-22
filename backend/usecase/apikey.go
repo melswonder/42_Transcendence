@@ -24,7 +24,6 @@ type APIKeyRepository interface {
 // RateLimiter はキー単位の流量制限。実装はメモリ上の固定窓。
 type RateLimiter interface {
 	// Allow は 1 リクエストぶん消費を試みる。
-	// 戻り値は（許可されたか, 窓内の上限, 残り回数, 窓が開き直る時刻）。
 	Allow(keyID uuid.UUID) (allowed bool, limit, remaining int, resetAt time.Time)
 }
 
