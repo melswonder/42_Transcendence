@@ -51,6 +51,111 @@ const docTemplate = `{
                 }
             }
         },
+        "/apikeys": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "apikeys"
+                ],
+                "summary": "API キー一覧",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.APIKeyListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "raw key はこのレスポンスで一度だけ返す。DB にはハッシュしか保存しない。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "apikeys"
+                ],
+                "summary": "API キーを発行する",
+                "parameters": [
+                    {
+                        "description": "作成内容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apispec.APIKeyCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.APIKeyCreatedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "名前・スコープ・期限が不正",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未ログイン（管理は Cookie セッション）",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apikeys/{keyId}": {
+            "delete": {
+                "description": "行は消さず revoked_at を立てる。以後そのキーのリクエストは 401 になる。",
+                "tags": [
+                    "apikeys"
+                ],
+                "summary": "API キーを失効させる",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "キー ID",
+                        "name": "keyId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "自分のキーに存在しない",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "認証に成功するとセッションを 1 件作り、Bearer トークンを返す。",
@@ -1845,9 +1950,602 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/friends": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "public"
+                ],
+                "summary": "フレンド一覧（Public API）",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.FriendshipListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/friends/requests": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "public"
+                ],
+                "summary": "フレンド申請（Public API）",
+                "parameters": [
+                    {
+                        "description": "申請先",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apispec.FriendRequestCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.FriendshipResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "friend_self",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "insufficient_scope / friend_blocked",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "user_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "friend_already_requested / already_friends",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/friends/{userId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "public"
+                ],
+                "summary": "フレンド解除（Public API）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "相手のユーザー ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "friend_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/leaderboard": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "public"
+                ],
+                "summary": "ランキング（Public API）",
+                "parameters": [
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "件数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "開始位置",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.LeaderboardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/matches": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "public"
+                ],
+                "summary": "対戦履歴（Public API）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "この日時以降（RFC3339 か YYYY-MM-DD）",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "この日時まで",
+                        "name": "to",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "ranked",
+                            "casual",
+                            "ai",
+                            "friend"
+                        ],
+                        "type": "string",
+                        "description": "モード",
+                        "name": "mode",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "win",
+                            "loss",
+                            "draw"
+                        ],
+                        "type": "string",
+                        "description": "勝敗",
+                        "name": "outcome",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "件数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "開始位置",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.MatchListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "public"
+                ],
+                "summary": "自分のプロフィール（Public API）",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.UserPrivate"
+                        }
+                    },
+                    "401": {
+                        "description": "invalid_api_key / api_key_expired / api_key_revoked",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "insufficient_scope（read が必要）",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "rate_limited",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "public"
+                ],
+                "summary": "プロフィール編集（Public API）",
+                "parameters": [
+                    {
+                        "description": "変更内容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apispec.PublicProfileUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.UserPrivate"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "insufficient_scope（write が必要）",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "handle_taken",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "rate_limited",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "public"
+                ],
+                "summary": "統計サマリー（Public API）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "この日時以降",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "この日時まで",
+                        "name": "to",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "ranked",
+                            "casual",
+                            "ai",
+                            "friend"
+                        ],
+                        "type": "string",
+                        "description": "モード",
+                        "name": "mode",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.StatsSummary"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/apispec.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "apispec.APIKeyCreateRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "scopes"
+            ],
+            "properties": {
+                "expires_at": {
+                    "description": "省略で無期限",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "my analytics bot"
+                },
+                "scopes": {
+                    "description": "read / write",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "read"
+                    ]
+                }
+            }
+        },
+        "apispec.APIKeyCreatedResponse": {
+            "type": "object",
+            "properties": {
+                "api_key": {
+                    "type": "string",
+                    "example": "tsc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                },
+                "key": {
+                    "$ref": "#/definitions/apispec.APIKeyResponse"
+                }
+            }
+        },
+        "apispec.APIKeyListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apispec.APIKeyResponse"
+                    }
+                }
+            }
+        },
+        "apispec.APIKeyResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "description": "null なら無期限",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string",
+                    "format": "uuid"
+                },
+                "key_prefix": {
+                    "description": "どのキーか見分ける用。認証には使えない",
+                    "type": "string",
+                    "example": "tsc_a1b2c3"
+                },
+                "last_used_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "my analytics bot"
+                },
+                "revoked_at": {
+                    "type": "string"
+                },
+                "scopes": {
+                    "description": "read / write",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "read",
+                        "write"
+                    ]
+                }
+            }
+        },
         "apispec.Achievement": {
             "type": "object",
             "properties": {
@@ -2510,6 +3208,27 @@ const docTemplate = `{
                 "state": {
                     "type": "string",
                     "example": "9f8e7d6c5b4a"
+                }
+            }
+        },
+        "apispec.PublicProfileUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "display_name": {
+                    "type": "string",
+                    "example": "Alice"
+                },
+                "handle": {
+                    "type": "string",
+                    "example": "alice_42"
+                },
+                "preferred_locale": {
+                    "type": "string",
+                    "enum": [
+                        "ja",
+                        "en",
+                        "fr"
+                    ]
                 }
             }
         },

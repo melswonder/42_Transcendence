@@ -33,6 +33,7 @@ func main() {
 		&infrastructure.Match{},
 		&infrastructure.MatchParticipant{},
 		&infrastructure.MatchAction{},
+		&infrastructure.APIKey{},
 		&infrastructure.UserAchievement{},
 	)
 	if err != nil {
