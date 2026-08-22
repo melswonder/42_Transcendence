@@ -19,8 +19,6 @@ const (
 	gameStatusInProgress = "in_progress"
 	gameStatusFinished   = "finished"
 	gameStatusAborted    = "aborted"
-	gameOutcomeWin       = "win"
-	gameOutcomeLoss      = "loss"
 	gameResultTypeAbort  = "abort"
 )
 
@@ -119,14 +117,13 @@ func (r *GameRepo) AppendAction(ctx context.Context, record usecase.MatchActionR
 	return nil
 }
 
-// FinishMatch は対局を決着させる。winnerSeat が負なら中断（aborted）として、
-// 勝敗は付けずに閉じる。それ以外は勝者・敗者の outcome を埋める。
-// レーティングと XP の反映は統計モジュール側の仕事なので、ここでは据え置きの値を入れる。
-func (r *GameRepo) FinishMatch(ctx context.Context, matchID uuid.UUID, resultType string, totalMoves, winnerSeat int) error {
+// FinishMatch は対局を決着させ、勝敗・レーティング・XP を反映する。
+// participants が空なら中断（aborted）として勝敗は付けずに閉じる。
+// users の rating / XP / level の更新は RecordMatch と同じ updateUserProgress を使う。
+func (r *GameRepo) FinishMatch(ctx context.Context, matchID uuid.UUID, resultType string, totalMoves int, participants []domain.MatchParticipant) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		now := time.Now()
 		status := gameStatusFinished
-		if winnerSeat < 0 {
+		if len(participants) == 0 {
 			status = gameStatusAborted
 			resultType = gameResultTypeAbort
 		}
@@ -136,7 +133,7 @@ func (r *GameRepo) FinishMatch(ctx context.Context, matchID uuid.UUID, resultTyp
 				"status":      status,
 				"result_type": resultType,
 				"total_moves": totalMoves,
-				"finished_at": now,
+				"finished_at": time.Now(),
 			})
 		if res.Error != nil {
 			return fmt.Errorf("finish match: %w", res.Error)
@@ -144,20 +141,20 @@ func (r *GameRepo) FinishMatch(ctx context.Context, matchID uuid.UUID, resultTyp
 		if res.RowsAffected == 0 {
 			return domain.ErrMatchNotFound // 既に決着済みか、存在しない
 		}
-		if winnerSeat < 0 {
-			return nil
-		}
 
-		for seat, outcome := range map[int]string{winnerSeat: gameOutcomeWin, 1 - winnerSeat: gameOutcomeLoss} {
+		for _, p := range participants {
 			err := tx.Model(&MatchParticipant{}).
-				Where("match_id = ? AND seat = ?", matchID, seat).
+				Where("match_id = ? AND seat = ?", matchID, p.Seat).
 				Updates(map[string]any{
-					"outcome": outcome,
-					// 据え置き: rating_after = rating_before
-					"rating_after": gorm.Expr("rating_before"),
+					"outcome":      p.Outcome,
+					"rating_after": p.RatingAfter,
+					"xp_gained":    p.XPGained,
 				}).Error
 			if err != nil {
 				return fmt.Errorf("settle participant: %w", err)
+			}
+			if err := updateUserProgress(tx, p); err != nil {
+				return err
 			}
 		}
 		return nil

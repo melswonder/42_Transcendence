@@ -18,7 +18,10 @@ interface QuoridorBoardProps {
 
 /** 9x9 のマスと 8x8 の壁アンカーを 17 トラックの CSS グリッドで表す。
  * 奇数トラック（1,3,...,17）がマス、偶数トラックが壁の溝。
- * 盤の向きは固定（seat 0 が上から下へ、seat 1 が下から上へ）。
+ *
+ * 盤の座標（サーバーと同じ）と表示は分けて考える。seat 0 はそのままだと
+ * 自分の駒が上から下へ進んで分かりにくいので、盤を 180° 回して
+ * 「どちらのプレイヤーも自分が手前（下）から上へ進む」見え方に揃える。
  */
 const cellTrack = (i: number) => i * 2 + 1;
 const gutterTrack = (i: number) => i * 2 + 2;
@@ -32,28 +35,39 @@ export function QuoridorBoard({
   onMove,
   onWall,
 }: QuoridorBoardProps) {
+  // hoverWall は表示座標で持つ（描画にしか使わないため）。
   const [hoverWall, setHoverWall] = useState<GameWall | null>(null);
 
+  // seat 0 だけ盤を 180° 回す。変換は自身が逆変換にもなっている。
+  const flipped = state.seat === 0;
+  const toModelCell = (c: GameCell): GameCell =>
+    flipped ? { row: 8 - c.row, col: 8 - c.col } : c;
+  const toDisplayWall = (w: GameWall): GameWall =>
+    flipped ? { ...w, row: 7 - w.row, col: 7 - w.col } : w;
+  const toModelWall = toDisplayWall;
+
   const legalMoves = interactive ? state.legalMoves : [];
-  const isLegal = (row: number, col: number) =>
-    legalMoves.some((c) => c.row === row && c.col === col);
+  const isLegal = (cell: GameCell) =>
+    legalMoves.some((c) => c.row === cell.row && c.col === cell.col);
 
   const canPlaceWall = interactive && state.wallsLeft[state.seat] > 0;
 
+  // 以降のループ変数はすべて表示座標。サーバーへ返すときだけ盤座標に戻す。
   const cells = [];
   for (let row = 0; row < 9; row++) {
     for (let col = 0; col < 9; col++) {
+      const model = toModelCell({ row, col });
       const pawnSeat = state.pawns.findIndex(
-        (p) => p.row === row && p.col === col,
+        (p) => p.row === model.row && p.col === model.col,
       );
-      const legal = isLegal(row, col);
+      const legal = isLegal(model);
       cells.push(
         <button
           key={`cell-${row}-${col}`}
           type="button"
           disabled={!legal}
-          onClick={() => onMove({ row, col })}
-          aria-label={`マス ${row}-${col}`}
+          onClick={() => onMove(model)}
+          aria-label={`マス ${model.row}-${model.col}`}
           style={{ gridRow: cellTrack(row), gridColumn: cellTrack(col) }}
           className={`flex aspect-square items-center justify-center rounded-sm ${
             legal
@@ -76,23 +90,26 @@ export function QuoridorBoard({
   }
 
   // 置かれている壁。横壁はマス 2 つと間の溝、縦壁も同様に 3 トラックへ跨がせる。
-  const walls = state.walls.map((w) => (
-    <div
-      key={`wall-${w.orientation}-${w.row}-${w.col}`}
-      className="rounded-full bg-[var(--mantine-color-yellow-6)]"
-      style={
-        w.orientation === "h"
-          ? {
-              gridRow: gutterTrack(w.row),
-              gridColumn: `${cellTrack(w.col)} / span 3`,
-            }
-          : {
-              gridColumn: gutterTrack(w.col),
-              gridRow: `${cellTrack(w.row)} / span 3`,
-            }
-      }
-    />
-  ));
+  const walls = state.walls.map((w) => {
+    const d = toDisplayWall(w);
+    return (
+      <div
+        key={`wall-${w.orientation}-${w.row}-${w.col}`}
+        className="rounded-full bg-[var(--mantine-color-yellow-6)]"
+        style={
+          d.orientation === "h"
+            ? {
+                gridRow: gutterTrack(d.row),
+                gridColumn: `${cellTrack(d.col)} / span 3`,
+              }
+            : {
+                gridColumn: gutterTrack(d.col),
+                gridRow: `${cellTrack(d.row)} / span 3`,
+              }
+        }
+      />
+    );
+  });
 
   // 壁を置ける溝のクリック領域。ホバーで置き先のプレビューを出す。
   const gutters = [];
@@ -100,12 +117,13 @@ export function QuoridorBoard({
     for (let row = 0; row < 8; row++) {
       for (let col = 0; col < 9; col++) {
         const wall: GameWall = { orientation: "h", row, col: clampAnchor(col) };
+        const model = toModelWall(wall);
         gutters.push(
           <button
             key={`gh-${row}-${col}`}
             type="button"
-            aria-label={`横壁 ${wall.row}-${wall.col}`}
-            onClick={() => onWall(wall)}
+            aria-label={`横壁 ${model.row}-${model.col}`}
+            onClick={() => onWall(model)}
             onMouseEnter={() => setHoverWall(wall)}
             onMouseLeave={() => setHoverWall(null)}
             style={{ gridRow: gutterTrack(row), gridColumn: cellTrack(col) }}
@@ -117,12 +135,13 @@ export function QuoridorBoard({
     for (let row = 0; row < 9; row++) {
       for (let col = 0; col < 8; col++) {
         const wall: GameWall = { orientation: "v", row: clampAnchor(row), col };
+        const model = toModelWall(wall);
         gutters.push(
           <button
             key={`gv-${row}-${col}`}
             type="button"
-            aria-label={`縦壁 ${wall.row}-${wall.col}`}
-            onClick={() => onWall(wall)}
+            aria-label={`縦壁 ${model.row}-${model.col}`}
+            onClick={() => onWall(model)}
             onMouseEnter={() => setHoverWall(wall)}
             onMouseLeave={() => setHoverWall(null)}
             style={{ gridColumn: gutterTrack(col), gridRow: cellTrack(row) }}
