@@ -1,9 +1,9 @@
-import Link from "next/link";
-import { Alert, Anchor, Text } from "@mantine/core";
+import { Alert, Text } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 
 import { AuthCard } from "@/components/auth-card";
+import { AuthLink } from "@/components/auth-link";
 import { GoogleLoginButton } from "@/components/google-login-button";
 import { resolveLoginErrorKey } from "@/lib/login-error";
 
@@ -32,10 +32,7 @@ export default async function LoginPage({
       </Text>
 
       <Text size="sm" ta="center">
-        {t("noAccount")}{" "}
-        <Anchor component={Link} href="/signup" size="sm">
-          {t("signupLink")}
-        </Anchor>
+        {t("noAccount")} <AuthLink href="/signup">{t("signupLink")}</AuthLink>
       </Text>
     </AuthCard>
   );
