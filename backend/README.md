@@ -1,239 +1,250 @@
-# バックエンド 言語Go
+# Backend — Go
 
-Go 1.26 / 設計は**Clean Architecture**。
+Go 1.26 / **Clean Architecture** / Gin for routing and middleware.
 
-## 起動する
+## Running
 
 ```bash
-# Docker（ルートから）
+# Docker (from the repository root)
 make up
 make exec-backend
 
-# ホストで直接
+# Directly on the host
 make start              # :4000
 make port=5555 start
-make dev                # ホットリロード（air が必要）
+make dev                # hot reload (requires air)
 
-# 動作確認
-curl localhost:4000     # {"message":"Hello from Go!"}
+# Smoke check
+curl localhost:4000     # {"message":"pong"}
 ```
 
-air のインストール:
+Installing air:
 
 ```bash
 go install github.com/air-verse/air@latest
 ```
 
-## 公開 API の仕様（Swagger）
+## API documentation (Swagger / OpenAPI)
 
-外部クライアントから叩ける API の**仕様だけ**を先に決めてある。ベースパスは `/api/v1`、認証は Bearer トークン。
-エンドポイントの実装（ルーティング・handler・usecase）はまだ無く、これから入る。
+The HTTP surface is documented with swag annotations in `apispec/*.go` and served
+through a Swagger UI. This covers the session-cookie endpoints as well as the
+**implemented Public API** (`/v1/*`, Bearer API keys) and key management (`/apikeys`).
 
 ```bash
-make swagger          # apispec と cmd/swaggo/main.go から spec を生成
-make swagger-serve    # 生成して Swagger UI を起動
+make swagger          # regenerate the spec from apispec and cmd/swaggo/main.go
+make swagger-serve    # regenerate and start the Swagger UI
 open http://localhost:4000/swagger/index.html
 ```
 
-| もの                    | 場所                                               |
-| ----------------------- | -------------------------------------------------- |
-| 仕様の元（手書き）      | `apispec/*.go`                                     |
-| 一般情報・UI サーバー   | `cmd/swaggo/main.go`                               |
-| 生成物（触らない）      | `docs/swagger/{docs.go,swagger.json,swagger.yaml}` |
-| spec (OpenAPI 2.0)      | `http://localhost:4000/swagger/doc.json`           |
+| Thing                         | Location                                           |
+| ----------------------------- | -------------------------------------------------- |
+| Hand-written spec source      | `apispec/*.go`                                     |
+| General info + UI server      | `cmd/swaggo/main.go`                               |
+| Generated output (don't edit) | `docs/swagger/{docs.go,swagger.json,swagger.yaml}` |
+| Spec (OpenAPI 2.0)            | `http://localhost:4000/swagger/doc.json`           |
 
-### リソースと対応テーブル
+Conventions:
 
-| タグ      | 主なエンドポイント                                                                      | テーブル                    |
-| --------- | --------------------------------------------------------------------------------------- | --------------------------- |
-| `auth`    | `/auth/register` `/auth/login` `/auth/refresh` `/auth/sessions` `/auth/oauth/{provider}` | `sessions` `oauth_accounts` |
-| `users`   | `/users` `/users/me` `/users/{userId}`                                                  | `users`                     |
-| `media`   | `/media` `/media/avatars`                                                               | `media_assets`              |
-| `friends` | `/friends` `/friends/requests`                                                          | `friendships`               |
-| `blocks`  | `/blocks`                                                                               | `blocks`                    |
+- Request/response DTOs never expose `infrastructure` models directly, so
+  `password_hash`, `token_hash` and `storage_key` can never leak.
+- `UserPublic` (for others) and `UserPrivate` (for yourself) are separate types;
+  email is only returned to its owner.
+- List responses share `limit` / `offset` / `total` (`Pagination`).
+- Failures carry a machine-readable `code` where the client needs to translate
+  them (`writeJSONErrorCode`); the client renders localized text keyed by code.
+- After changing annotations, run `make swagger` and commit the regenerated files.
+- Some `apispec` entries (e.g. `/auth/refresh`, `/blocks`) are specification-first
+  and not implemented yet; the implemented routes are registered in
+  `handler/handler.go`.
 
-### 決めごと
+## Architecture
 
-- リクエスト / レスポンスの型は `apispec` にあるものを使い、`infrastructure` のモデルをそのまま返さない。
-  `password_hash` `token_hash` `storage_key` を外に出さないため。
-- `UserPublic`（他人向け）と `UserPrivate`（本人向け）は別の型。email は本人にしか返さない。
-- 一覧系は `limit` / `offset` と `total` を共通で持つ（`Pagination`）。
-- 失敗時は全て `ErrorResponse`（`code` / `message`）。
-- アノテーションを変えたら `make swagger` で生成し直してコミットする。
-
-実装する人へ: 型とアノテーションを `handler` 層へ移して実際のハンドラーに付け直し、
-`apispec` を消す形にしてもよい。その場合は `Makefile` の `swagger` の `-g` を実装側の main に向け直す。
-
-## アーキテクチャ
-
-### 大原則: 依存は内側にだけ流れる
+### The one rule: dependencies point inward
 
 ```
-外側    handler                    infrastructure
-        HTTP の入出力               DB・外部サービス
+outer   handler                    infrastructure
+        HTTP in/out (Gin routes)    DB, external services
            │                          │
-           │ 呼ぶ                      │ interface を実装する
+           │ calls                    │ implements interfaces
            ▼                          ▼
-内側    usecase   操作の流れ + repository interface の宣言
+inner   usecase   orchestration + repository interface declarations
            │
            ▼
-内側    domain    エンティティとルール。何にも依存しない
+inner   domain    entities and rules; depends on nothing
 ```
 
-外側（DB・HTTP といった技術の詳細）は内側を知ってよいが、
-**内側は外側を絶対に知ってはいけない**。`domain` は誰にも依存しない。
+The outer layers (technical detail: DB, HTTP) may know the inner ones, but the
+**inner layers must never know the outer ones**. `domain` depends on nothing.
 
-`handler` と `infrastructure` は**互いに依存しない兄弟**で、どちらも外側にいる。
-両者を繋いで組み立てるのは `main.go`（composition root）の仕事。
+`handler` and `infrastructure` are **siblings that never import each other**; the
+composition root (`cmd/serv/main.go`) wires them together.
 
-なぜそうするのか:
+Why:
 
-- DB を PostgreSQL から別のものに変えても、`domain` と `usecase` は書き換えなくていい
-- HTTP を WebSocket や gRPC に変えても、ビジネスロジックはそのまま使える
-- `usecase` のテストで本物の DB を用意しなくていい（偽物の実装を差し込めばいい）
+- Swapping PostgreSQL for something else leaves `domain` and `usecase` untouched.
+- Swapping HTTP for WebSocket/gRPC keeps the business logic as-is (our game does
+  exactly this: the same usecase serves both).
+- `usecase` tests inject in-memory fakes instead of a real database.
 
-> Clean Architecture の原典では handler の層を "interface adapters" と呼ぶが、
-> `interface` は Go のキーワードで import パスも冗長になるため、ここでは `handler/` としている。
+> The original book calls the handler layer "interface adapters"; `interface` is a
+> Go keyword and makes import paths noisy, so we use `handler/`.
 
-### 各層の責務
+Note on Gin: routes and middleware live at the edge only. Handlers keep the
+`net/http` signature and are mounted through a small `wrapF` adapter
+(`handler/handler.go`) that copies `c.Param` into `r.PathValue`, so the inner
+layers never see Gin.
 
-| 層             | ディレクトリ      | 責務                                         | 依存してよい相手 |
-| -------------- | ----------------- | -------------------------------------------- | ---------------- |
-| domain         | `domain/`         | エンティティとビジネスルール                 | なし（最も内側） |
-| usecase        | `usecase/`        | 操作の流れ。必要な依存を interface で宣言    | domain           |
-| handler        | `handler/`        | HTTP ⇔ domain の変換、ルーティング           | usecase, domain  |
-| infrastructure | `infrastructure/` | DB など技術詳細。usecase の interface を実装 | usecase, domain  |
+### Layer responsibilities
 
-### 繋ぎ目のキモ: 依存性逆転
+| Layer          | Directory         | Responsibility                                   | May depend on    |
+| -------------- | ----------------- | ------------------------------------------------ | ---------------- |
+| domain         | `domain/`         | Entities and business rules                      | nothing          |
+| usecase        | `usecase/`        | Flow of operations; declares needed interfaces   | domain           |
+| handler        | `handler/`        | HTTP ⇔ domain translation, routing               | usecase, domain  |
+| infrastructure | `infrastructure/` | Technical detail; implements usecase interfaces  | usecase, domain  |
 
-矢印は内向きなのに、実際には `usecase` が DB を使いたい。この矛盾をどう解くか。
+### The hinge: dependency inversion
 
-答えは「**usecase が必要とする機能を、usecase 側で interface として宣言する**」こと。
+The arrows point inward, yet `usecase` needs the database. The resolution:
+**usecase declares what it needs as an interface, on its own side.**
 
 ```
-      usecase パッケージ
+      usecase package
       ┌──────────────────────────────┐
-      │ type GreetingRepository      │  ← 「こういう機能が欲しい」と宣言（抽象）
-      │     interface { Get() ... }  │
+      │ type GameRepository          │  ← "this is what I need" (abstract)
+      │     interface { ... }        │
       │                              │
-      │ GreetingUsecase は上の       │
-      │ interface だけを見て動く     │
+      │ GameUsecase works against    │
+      │ that interface only          │
       └──────────────────────────────┘
                     ▲
-                    │ 実装する（依存の向きは外→内のまま）
+                    │ implements (dependency still points outer → inner)
       ┌──────────────────────────────┐
-      │ infrastructure.GreetingRepo  │  ← 実際に DB を叩く（具象）
+      │ infrastructure.GameRepo      │  ← actually talks to PostgreSQL (concrete)
       └──────────────────────────────┘
 ```
 
-`usecase` は「Get() できる何か」しか知らない。それが PostgreSQL なのかメモリなのかは知らないし、
-知る必要もない。具象を作って注入する配線は `main.go`（composition root）だけが担当する。
+`usecase` only knows "something that can persist matches". Whether that is
+PostgreSQL or an in-memory fake is decided in the composition root.
 
-4層すべてが揃った最小の実例が `*/greeting.go`（`GET /` が JSON を返すだけ）。まずこれを読むとよい。
+### Adding a feature
 
-### 機能を追加する手順
+Build **from the inside out**:
 
-**内側から外側へ**作っていく。
+1. `domain/xxx.go` — entities and rules (no HTTP, no DB)
+2. `usecase/xxx.go` — the flow; declare dependencies as `XxxRepository` interfaces
+3. `infrastructure/xxx.go` — implement the interfaces (an in-memory fake first is fine)
+4. `handler/xxx.go` — decode JSON, call the usecase, encode the result
+5. `handler/handler.go` + `cmd/serv/main.go` — register the route, inject concretes
 
-1. `domain/xxx.go` — エンティティとビジネスルール（HTTP も DB も出てこない）
-2. `usecase/xxx.go` — 操作の流れ。必要な依存を `XxxRepository` interface として宣言する
-3. `infrastructure/xxx.go` — 2 の interface を実装。最初はメモリ実装で作り、後から PostgreSQL 実装へ差し替えればいい（`usecase` 側の変更は不要）
-4. `handler/xxx.go` — JSON をデコードして `usecase` に渡し、結果をエンコードして返すだけ
-5. `main.go` — 具象を作って内側へ注入し、ルーティングに登録する
+Review checklist: [pull_request_template.md](../.github/pull_request_template.md).
 
-レビュー観点は [pull_request_template.md](../.github/pull_request_template.md) にある。
+## Database / migrations
 
-## データベース / マイグレーション
-
-スキーマの正本は [docs/database-design.md](../docs/database-design.md)。そこから下流へこう流れる。
+The authoritative, always-current schema documentation is generated with tbls into
+[docs/schema/](../docs/schema/README.md) (per-table Markdown + ER diagrams). The
+pipeline from code to database:
 
 ```
-docs/database-design.md          設計の正本（人が読む）
-        │  写す
-        ▼
-infrastructure/model.go          GORM の構造体
+infrastructure/model.go          GORM structs (annotated with invariants)
         │  go run ./cmd/migrate
         ▼
-DDL（CREATE TABLE ...）          あるべきスキーマ
+DDL (CREATE TABLE ...)           the desired schema
         │  atlas migrate diff
         ▼
-migrations/*.sql                 バージョン管理された移行手順
+migrations/*.sql                 versioned migration steps
         │  atlas migrate apply
         ▼
 PostgreSQL
 ```
 
-`atlas migrate apply` は**コンテナの起動時に自動で走る**（[docker-entrypoint.sh](docker-entrypoint.sh)）。
-Atlas CLI はイメージに同梱してあるので、`make up` するだけで未適用の migration が流れる。
-下のコマンドは migration を**作る**とき、またはホストで直接動かすときに使う。
+`atlas migrate apply` **runs automatically when the container starts**
+([docker-entrypoint.sh](docker-entrypoint.sh)); the Atlas CLI ships in the image,
+so `make up` applies any pending migration. The commands below are for **creating**
+migrations or running against the host directly:
 
 ```bash
-make schema                        # DDL を表示（DB 不要）
-make migrate-diff name=add_users   # 差分から migrations/*.sql を生成
-make migrate-apply                 # DB へ手動適用
+make schema                        # print the DDL (no DB needed)
+make migrate-diff name=add_users   # generate migrations/*.sql from the diff
+make migrate-apply                 # apply manually
 
-curl -sSf https://atlasgo.sh | sh  # Atlas のインストール（ホスト側）
+curl -sSf https://atlasgo.sh | sh  # install Atlas on the host
 ```
 
-押さえておくこと:
+Things to know:
 
-- **GORM の `AutoMigrate` は使わない。** 起動時にテーブルを勝手に書き換えるため記録が残らず、ロールバックもできない。代わりに Atlas で差分を SQL ファイルとして残す
-- **`make schema` の出力は完成形ではない。** partial unique index・`CREATE EXTENSION citext`・複数列 CHECK・循環 FK は GORM のタグで表現できないため、`migrations/` に手書き SQL として足す。何を足すべきかは `infrastructure/model.go` の各構造体の doc コメントに列挙してある
-- **GORM モデルは `domain` ではなく `infrastructure` に置く。** GORM のタグは DB の都合であり、`domain` に書くと「何にも依存しない」原則が崩れるため。`domain` のエンティティとは別物として扱い、変換は repository の責務
-- `cmd/migrate` は DDL を標準出力へ吐くだけの部品で、単体では何も migrate しない。設定の詳細は [atlas.hcl](atlas.hcl) の冒頭コメントを参照
-- **適用を忘れると空の DB に対してサーバだけが立つ。** `relation "oauth_accounts" does not exist (SQLSTATE 42P01)` はこれ。`make fclean` でボリュームを消した後も entrypoint が作り直すので、通常は起きない
-- entrypoint は `--env gorm` を使わない。あちらは差分生成用で scratch DB（`atlas-dev`）と `go run ./cmd/migrate` を要求するため、適用だけなら `--dir` / `--url` で足りる
+- **GORM `AutoMigrate` is never used.** It silently rewrites tables at boot with
+  no record and no rollback. Atlas keeps every change as a reviewed SQL file.
+- **`make schema` output is not the final schema.** Partial unique indexes,
+  `CREATE EXTENSION citext`, multi-column CHECKs and circular FKs can't be
+  expressed in GORM tags — they are added as hand-written SQL in `migrations/`.
+  Each struct's doc comment in `infrastructure/model.go` lists what to add
+  (`@migration` lines). When `atlas migrate diff` proposes DROPs for those
+  hand-written constraints, delete the DROPs from the generated file and rehash.
+- **GORM models live in `infrastructure`, not `domain`.** GORM tags are database
+  detail; putting them in `domain` would break "depends on nothing". Conversion
+  between the two is the repository's job.
+- `cmd/migrate` only prints DDL to stdout; it migrates nothing by itself. See the
+  comment atop [atlas.hcl](atlas.hcl) for the configuration details.
+- If migrations were skipped you get `relation "..." does not exist (SQLSTATE 42P01)`
+  — the entrypoint normally prevents this, even after `make fclean`.
 
-## 依存管理（go.mod / go.sum）
+## Dependency management (go.mod / go.sum)
 
-| ファイル | 役割 | 例え |
-| --- | --- | --- |
-| `go.mod` | モジュール名、必要な Go バージョン、依存パッケージとそのバージョンの**宣言** | 買い物リスト |
-| `go.sum` | 実際にダウンロードした各モジュールの**ハッシュ台帳**。改ざん検知に使う | レシート＋封印シール |
+| File     | Role                                                                    | Analogy                    |
+| -------- | ----------------------------------------------------------------------- | -------------------------- |
+| `go.mod` | Module name, Go version, **declared** dependencies and versions         | Shopping list              |
+| `go.sum` | **Hash ledger** of every downloaded module; detects tampering           | Receipt + tamper seal      |
 
-**どちらも Git にコミットする。** これがあるおかげで、誰がいつビルドしても同じ依存が入る（再現性）。
+**Both are committed.** Anyone building at any time gets identical dependencies.
 
-`go.mod` の `// indirect` は「自分のコードが直接 import していない」という印。`gorm.io/gorm` が indirect にいるのは、コード中で `import "gorm.io/gorm"` を書かず GORM タグ（文字列）だけを使っているため。
+`// indirect` marks modules our code never imports directly. Most of the ~1700
+`go.sum` lines come from `atlas-provider-gorm` dragging in every SQL driver — used
+only by `cmd/migrate`, never by the app itself.
 
-| コマンド | 内容 |
-| --- | --- |
-| `go get X` | X を追加・更新 |
-| `go mod tidy` | 実際の import と突き合わせて過不足を修正。**依存を足したら必ず実行する** |
-| `go mod verify` | 手元のキャッシュが `go.sum` と一致するか検証 |
-
-> `go.sum` が 1700 行を超えているのは、`atlas-provider-gorm` が MySQL / PostgreSQL / SQLite / SQL Server / Cloud Spanner の全ドライバを引き連れてくるため。これらは `cmd/migrate` のためだけで、アプリ本体は使わない。
+| Command         | What it does                                                        |
+| --------------- | ------------------------------------------------------------------- |
+| `go get X`      | Add/update X                                                        |
+| `go mod tidy`   | Reconcile with actual imports. **Run after every dependency change** |
+| `go mod verify` | Check the local cache against `go.sum`                              |
 
 ## Lint / Format
 
-整形と静的解析は **golangci-lint v2** に集約している（有効な linter は [.golangci.yml](.golangci.yml)）。
+Formatting and static analysis are unified under **golangci-lint v2**
+(enabled linters: [.golangci.yml](.golangci.yml)).
 
 ```bash
 go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
 ```
 
-| コマンド         | 内容                                              |
-| ---------------- | ------------------------------------------------- |
-| `make lint`      | 静的解析（CI と同じ）                             |
-| `make fmt`       | 整形（gofmt + goimports）                         |
-| `make fmt-check` | 整形漏れの検出（差分表示のみ）                     |
-| `make ci`        | `build` + `lint` + `fmt-check`                    |
-| `make vet`       | golangci-lint 無しで最低限だけ見たいとき          |
-| `make build`     | `./tmp/main` にビルド                             |
+| Command          | What it does                                |
+| ---------------- | ------------------------------------------- |
+| `make lint`      | Static analysis (same as CI)                |
+| `make fmt`       | Format (gofmt + goimports)                  |
+| `make fmt-check` | Detect unformatted files (diff only)        |
+| `make ci`        | `build` + `lint` + `fmt-check`              |
+| `make build`     | Build to `./tmp/main`                       |
 
-1箇所だけ例外にしたいときは、その行の上に理由付きで書く:
+For a justified one-off exception, annotate the line:
 
 ```go
-//nolint:errcheck // ベストエフォートなので失敗しても続行する
+//nolint:errcheck // best-effort; keep going on failure
 ```
 
-CI は [.github/workflows/backend-lint-format.yml](../.github/workflows/backend-lint-format.yml)。
-`backend/**` に変更がある PR / push で走るので、push 前に `make ci` を通しておくと落ちない。
+CI: [.github/workflows/backend-lint-format.yml](../.github/workflows/backend-lint-format.yml)
+runs on PRs/pushes touching `backend/**`. Run `make ci` before pushing.
 
-## 環境変数
+## Environment variables
 
-| 変数           | 説明                  | デフォルト |
-| -------------- | --------------------- | ---------- |
-| `PORT`         | リッスンするポート    | `4000`     |
-| `DATABASE_URL` | PostgreSQL 接続文字列 | -          |
+| Variable                | Description                                       | Default                                        |
+| ----------------------- | ------------------------------------------------- | ---------------------------------------------- |
+| `PORT`                  | Listen port                                       | `4000`                                         |
+| `DATABASE_URL`          | PostgreSQL connection string                      | –                                              |
+| `GOOGLE_CLIENT_ID`      | Google OAuth client ID                            | – (required)                                   |
+| `GOOGLE_CLIENT_SECRET`  | Google OAuth client secret                        | – (required)                                   |
+| `GOOGLE_REDIRECT_URL`   | OAuth callback (must match the Console entry)     | `https://localhost:8443/auth/google/callback`  |
+| `FRONTEND_URL`          | Where to send the browser after login             | `https://localhost`                            |
+| `MEDIA_DIR`             | Directory for uploaded avatars                    | `./uploads`                                    |
+| `PUBLIC_API_RATE_LIMIT` | Public API requests per minute per key            | `60`                                           |
 
-Docker で起動する場合はルートの `.env` から渡される。
+When running via Docker these come from the root `.env` / compose defaults.
