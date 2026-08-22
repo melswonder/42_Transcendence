@@ -15,11 +15,13 @@ import {
   Title,
 } from "@mantine/core";
 import { IconAlertTriangle, IconCheck, IconUpload } from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
 
 import { UserAvatar } from "@/components/user-avatar";
-import { apiUrl } from "@/lib/api";
 import type { User } from "@/lib/auth";
+import { ApiError, requestJSON } from "@/lib/request";
 
+// 言語名は各言語の自称のまま出す（他言語表示でも見つけやすい）。
 const locales = [
   { value: "ja", label: "日本語" },
   { value: "en", label: "English" },
@@ -29,19 +31,18 @@ const locales = [
 /** アバターは png / jpeg / webp、最大 5MB。バックエンドの検証と揃える。 */
 const avatarMaxBytes = 5 * 1024 * 1024;
 
-async function requestJSON(path: string, init?: RequestInit) {
-  const res = await fetch(apiUrl(path), { credentials: "include", ...init });
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as {
-      error?: string;
-    } | null;
-    throw new Error(body?.error ?? `リクエストに失敗しました (${res.status})`);
-  }
-  return res.status === 204 ? null : res.json();
-}
-
 export function SettingsForm({ user }: { user: User }) {
+  const t = useTranslations("settings");
+  const tErr = useTranslations("apiErrors");
   const router = useRouter();
+
+  /** code があれば翻訳、無ければサーバーの文言をそのまま。 */
+  const errorMessage = (e: unknown, fallback: string) => {
+    if (e instanceof ApiError && e.code && tErr.has(e.code)) {
+      return tErr(e.code);
+    }
+    return e instanceof Error ? e.message : fallback;
+  };
 
   const [displayName, setDisplayName] = useState(user.display_name);
   const [handle, setHandle] = useState(user.handle);
@@ -69,9 +70,11 @@ export function SettingsForm({ user }: { user: User }) {
         }),
       });
       setSaved(true);
+      // 言語はその場で切り替える。Cookie が表示言語の正本（i18n/request.ts）。
+      document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000; samesite=lax`;
       router.refresh(); // サイドバーの表示名なども追従させる
     } catch (e) {
-      setError(e instanceof Error ? e.message : "保存に失敗しました");
+      setError(errorMessage(e, t("saveFailed")));
     } finally {
       setSaving(false);
     }
@@ -81,7 +84,7 @@ export function SettingsForm({ user }: { user: User }) {
   const uploadAvatar = async (file: File | null) => {
     if (!file) return;
     if (file.size > avatarMaxBytes) {
-      setError("画像は 5MB 以下にしてください");
+      setError(t("avatarTooLarge"));
       return;
     }
     setUploading(true);
@@ -102,7 +105,7 @@ export function SettingsForm({ user }: { user: User }) {
       setAvatarAssetId(asset.id);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "アップロードに失敗しました");
+      setError(errorMessage(e, t("uploadFailed")));
     } finally {
       setUploading(false);
     }
@@ -119,7 +122,7 @@ export function SettingsForm({ user }: { user: User }) {
       setAvatarAssetId(null);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "削除に失敗しました");
+      setError(errorMessage(e, t("deleteFailed")));
     } finally {
       setUploading(false);
     }
@@ -138,14 +141,14 @@ export function SettingsForm({ user }: { user: User }) {
       )}
       {saved && (
         <Alert color="emerald" icon={<IconCheck size={16} />} variant="light">
-          保存しました
+          {t("saved")}
         </Alert>
       )}
 
       <Paper p="lg">
         <Stack gap="md">
           <Title order={3} size="h5">
-            アバター
+            {t("avatarSection")}
           </Title>
           <Group>
             <UserAvatar
@@ -166,7 +169,7 @@ export function SettingsForm({ user }: { user: User }) {
                       loading={uploading}
                       leftSection={<IconUpload size={16} />}
                     >
-                      画像を選ぶ
+                      {t("choose")}
                     </Button>
                   )}
                 </FileButton>
@@ -177,12 +180,12 @@ export function SettingsForm({ user }: { user: User }) {
                     disabled={uploading}
                     onClick={removeAvatar}
                   >
-                    削除する
+                    {t("remove")}
                   </Button>
                 )}
               </Group>
               <Text size="xs" c="dimmed">
-                png / jpeg / webp、5MB まで。削除するとデフォルトに戻ります。
+                {t("avatarHint")}
               </Text>
             </Stack>
           </Group>
@@ -192,23 +195,23 @@ export function SettingsForm({ user }: { user: User }) {
       <Paper p="lg">
         <Stack gap="md">
           <Title order={3} size="h5">
-            プロフィール
+            {t("profileSection")}
           </Title>
           <TextInput
-            label="表示名"
+            label={t("displayName")}
             value={displayName}
             maxLength={50}
             onChange={(e) => setDisplayName(e.currentTarget.value)}
           />
           <TextInput
-            label="ハンドル"
-            description="英小文字・数字・アンダースコア、3〜30 文字"
+            label={t("handle")}
+            description={t("handleHint")}
             value={handle}
             maxLength={30}
             onChange={(e) => setHandle(e.currentTarget.value.toLowerCase())}
           />
           <Select
-            label="言語"
+            label={t("language")}
             data={locales}
             value={locale}
             allowDeselect={false}
@@ -216,7 +219,7 @@ export function SettingsForm({ user }: { user: User }) {
           />
           <Group justify="flex-end">
             <Button onClick={save} loading={saving}>
-              保存する
+              {t("save")}
             </Button>
           </Group>
         </Stack>

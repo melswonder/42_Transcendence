@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { Avatar, Group, Paper, Stack, Text, Title } from "@mantine/core";
 
+import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
+
 import { AppShell } from "@/components/app-shell";
 import { PaginationControls } from "@/components/pagination-controls";
 import { StatsStream } from "@/components/use-stats-stream";
@@ -24,12 +27,13 @@ export default async function LeaderboardPage({
 
   // 自分が表示範囲に居るかどうかで、下の「自分の順位」を出し分ける。
   const meInPage = board.items.some((entry) => entry.user.id === user.id);
+  const t = await getTranslations("leaderboard");
 
   return (
     <AppShell user={user}>
       <StatsStream />
       <Stack gap="lg" maw={800} mx="auto">
-        <Title order={2}>ランキング</Title>
+        <Title order={2}>{t("title")}</Title>
 
         <Paper className="overflow-hidden">
           {board.items.map((entry, i) => (
@@ -45,7 +49,7 @@ export default async function LeaderboardPage({
         {board.me && !meInPage && (
           <Stack gap={4}>
             <Text size="sm" c="dimmed">
-              自分の順位
+              {t("myRank")}
             </Text>
             <Paper className="overflow-hidden">
               <LeaderboardRow entry={board.me} isMe divided={false} />
@@ -72,6 +76,7 @@ function LeaderboardRow({
   isMe: boolean;
   divided: boolean;
 }) {
+  const t = useTranslations("leaderboard");
   return (
     <Group
       justify="space-between"
@@ -103,7 +108,10 @@ function LeaderboardRow({
             {entry.user.display_name}
           </Text>
           <Text size="xs" c="dimmed" truncate>
-            @{entry.user.handle} ・ Lv.{entry.user.level}
+            {t("userLine", {
+              handle: entry.user.handle,
+              level: entry.user.level,
+            })}
           </Text>
         </Stack>
       </Group>
@@ -111,10 +119,10 @@ function LeaderboardRow({
       <Group gap="lg" wrap="nowrap">
         <Stack gap={0} align="flex-end" visibleFrom="xs">
           <Text size="sm">
-            {entry.wins}勝 {entry.losses}敗
+            {t("record", { wins: entry.wins, losses: entry.losses })}
           </Text>
           <Text size="xs" c="dimmed">
-            勝率 {(entry.win_rate * 100).toFixed(0)}%
+            {t("winRate", { rate: `${(entry.win_rate * 100).toFixed(0)}%` })}
           </Text>
         </Stack>
         <Text ff="monospace" fw={700} size="lg" className="tabular-nums">

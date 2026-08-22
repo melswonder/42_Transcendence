@@ -14,6 +14,8 @@ import {
   IconTrophy,
 } from "@tabler/icons-react";
 
+import { useTranslations } from "next-intl";
+
 import type { Achievement } from "@/lib/stats";
 
 // 分類ごとにアイコンを変える。同じ絵が並ぶと一覧で見分けがつかないため。
@@ -25,6 +27,15 @@ const CATEGORY_ICONS: Record<string, typeof IconTrophy> = {
 };
 
 export function AchievementList({ items }: { items: Achievement[] }) {
+  const t = useTranslations("achievements");
+  // 実績の定義は backend（日本語）にあるので、code を鍵に各言語へ引き直す。
+  // 未知の code が来ても壊れないよう、サーバーの文言へフォールバックする。
+  const name = (a: Achievement) =>
+    t.has(`items.${a.code}.name`) ? t(`items.${a.code}.name`) : a.name;
+  const description = (a: Achievement) =>
+    t.has(`items.${a.code}.description`)
+      ? t(`items.${a.code}.description`)
+      : a.description;
   return (
     <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
       {items.map((achievement) => {
@@ -50,10 +61,10 @@ export function AchievementList({ items }: { items: Achievement[] }) {
                 </ThemeIcon>
                 <Stack gap={0} className="min-w-0">
                   <Text fw={600} truncate>
-                    {achievement.name}
+                    {name(achievement)}
                   </Text>
                   <Text size="xs" c="dimmed" truncate>
-                    {achievement.description}
+                    {description(achievement)}
                   </Text>
                 </Stack>
               </Group>
@@ -63,7 +74,7 @@ export function AchievementList({ items }: { items: Achievement[] }) {
                 size="sm"
                 radius="xl"
                 color={achievement.unlocked ? "emerald" : "gray"}
-                aria-label={`${achievement.name} の進捗`}
+                aria-label={t("progressAria", { name: name(achievement) })}
               />
               <Text size="xs" c="dimmed" ta="right" ff="monospace">
                 {achievement.progress} / {achievement.target}

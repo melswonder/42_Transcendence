@@ -7,6 +7,8 @@ import { MatchHistory } from "@/components/match-history";
 import { PaginationControls } from "@/components/pagination-controls";
 import { StatsFilters } from "@/components/stats-filters";
 import { StatsStream } from "@/components/use-stats-stream";
+import { getTranslations } from "next-intl/server";
+
 import { getCurrentUser } from "@/lib/auth";
 import { getMatches, type StatsFilters as Filters } from "@/lib/stats";
 
@@ -20,13 +22,14 @@ export default async function MatchesPage({
 
   const filters = await searchParams;
   const matches = await getMatches(filters);
+  const t = await getTranslations("matches");
 
   return (
     <AppShell user={user}>
       <StatsStream />
       <Stack gap="lg" maw={900} mx="auto">
         <Group justify="space-between" align="center">
-          <Title order={2}>対戦履歴</Title>
+          <Title order={2}>{t("title")}</Title>
           <ExportButtons />
         </Group>
 

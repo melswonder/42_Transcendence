@@ -14,6 +14,8 @@ import { GameModeCard } from "@/components/game-mode-card";
 import { LinkButton } from "@/components/link-button";
 import { MatchHistory } from "@/components/match-history";
 import { StatsStream } from "@/components/use-stats-stream";
+import { getTranslations } from "next-intl/server";
+
 import { getCurrentUser } from "@/lib/auth";
 import { getMatches } from "@/lib/stats";
 
@@ -23,6 +25,7 @@ const RECENT_LIMIT = 5;
 export default async function HomePage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  const t = await getTranslations("home");
 
   const recent = await getMatches({ limit: `${RECENT_LIMIT}` });
 
@@ -34,7 +37,7 @@ export default async function HomePage() {
           <Group gap="xs" mb="lg">
             <IconPlayerPlay size={24} className="text-emerald-500" />
             <Title order={2} size="h3">
-              新しい対戦
+              {t("newMatch")}
             </Title>
           </Group>
 
@@ -42,20 +45,20 @@ export default async function HomePage() {
             <GameModeCard
               featured
               icon={<IconSearch size={24} />}
-              title="クイックマッチ"
-              description="同じくらいの実力の相手とランク戦を始めます。"
+              title={t("quickMatch.title")}
+              description={t("quickMatch.description")}
               href="/game"
             />
             <GameModeCard
               icon={<IconRobot size={24} />}
-              title="コンピュータ対戦"
-              description="AI を相手に練習します。"
+              title={t("vsAi.title")}
+              description={t("vsAi.description")}
               comingSoon
             />
             <GameModeCard
               icon={<IconUsers size={24} />}
-              title="フレンド対戦"
-              description="合言葉を使って部屋を作ります。"
+              title={t("vsFriend.title")}
+              description={t("vsFriend.description")}
               comingSoon
             />
           </SimpleGrid>

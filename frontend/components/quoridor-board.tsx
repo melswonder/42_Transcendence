@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import type {
   GameCell,
@@ -35,6 +36,7 @@ export function QuoridorBoard({
   onMove,
   onWall,
 }: QuoridorBoardProps) {
+  const t = useTranslations("game.board");
   // hoverWall は表示座標で持つ（描画にしか使わないため）。
   const [hoverWall, setHoverWall] = useState<GameWall | null>(null);
 
@@ -69,7 +71,7 @@ export function QuoridorBoard({
           type="button"
           disabled={!legal}
           onClick={() => onMove(model)}
-          aria-label={`マス ${model.row}-${model.col}`}
+          aria-label={t("cell", { row: model.row, col: model.col })}
           style={{ gridRow: cellTrack(row), gridColumn: cellTrack(col) }}
           className={`flex aspect-square items-center justify-center rounded-sm ${
             legal
@@ -124,7 +126,7 @@ export function QuoridorBoard({
           <button
             key={`gh-${row}-${col}`}
             type="button"
-            aria-label={`横壁 ${model.row}-${model.col}`}
+            aria-label={t("hWall", { row: model.row, col: model.col })}
             onClick={() => onWall(model)}
             onMouseEnter={() => setHoverWall(wall)}
             onMouseLeave={() => setHoverWall(null)}
@@ -142,7 +144,7 @@ export function QuoridorBoard({
           <button
             key={`gv-${row}-${col}`}
             type="button"
-            aria-label={`縦壁 ${model.row}-${model.col}`}
+            aria-label={t("vWall", { row: model.row, col: model.col })}
             onClick={() => onWall(model)}
             onMouseEnter={() => setHoverWall(wall)}
             onMouseLeave={() => setHoverWall(null)}

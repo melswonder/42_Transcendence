@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Group, Paper, SegmentedControl, Select } from "@mantine/core";
+import { useTranslations } from "next-intl";
 import { DatePickerInput } from "@mantine/dates";
 import { IconCalendar } from "@tabler/icons-react";
 
@@ -14,6 +15,7 @@ export function StatsFilters({
 }: {
   withInterval?: boolean;
 }) {
+  const t = useTranslations("stats");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -42,8 +44,8 @@ export function StatsFilters({
       <Group gap="md" align="flex-end" wrap="wrap">
         <DatePickerInput
           type="range"
-          label="期間"
-          placeholder="すべて"
+          label={t("filters.period")}
+          placeholder={t("filters.all")}
           leftSection={<IconCalendar size={16} />}
           value={range}
           onChange={([from, to]) => update({ from, to })}
@@ -52,29 +54,29 @@ export function StatsFilters({
         />
 
         <Select
-          label="モード"
-          placeholder="すべて"
+          label={t("filters.mode")}
+          placeholder={t("filters.all")}
           value={searchParams.get("mode")}
           onChange={(value) => update({ mode: value })}
           data={[
-            { value: "ranked", label: "ランク戦" },
-            { value: "casual", label: "カジュアル" },
-            { value: "ai", label: "AI 対戦" },
-            { value: "friend", label: "フレンド戦" },
+            { value: "ranked", label: t("modes.ranked") },
+            { value: "casual", label: t("modes.casual") },
+            { value: "ai", label: t("modes.ai") },
+            { value: "friend", label: t("modes.friend") },
           ]}
           clearable
           w={150}
         />
 
         <Select
-          label="結果"
-          placeholder="すべて"
+          label={t("filters.result")}
+          placeholder={t("filters.all")}
           value={searchParams.get("outcome")}
           onChange={(value) => update({ outcome: value })}
           data={[
-            { value: "win", label: "勝ち" },
-            { value: "loss", label: "負け" },
-            { value: "draw", label: "引き分け" },
+            { value: "win", label: t("outcomes.win") },
+            { value: "loss", label: t("outcomes.loss") },
+            { value: "draw", label: t("outcomes.draw") },
           ]}
           clearable
           w={130}
@@ -85,8 +87,8 @@ export function StatsFilters({
             value={searchParams.get("interval") ?? "day"}
             onChange={(value) => update({ interval: value })}
             data={[
-              { value: "day", label: "日別" },
-              { value: "week", label: "週別" },
+              { value: "day", label: t("filters.daily") },
+              { value: "week", label: t("filters.weekly") },
             ]}
           />
         )}

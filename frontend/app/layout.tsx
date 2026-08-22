@@ -5,6 +5,8 @@ import {
   MantineProvider,
   mantineHtmlProps,
 } from "@mantine/core";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import "./globals.css";
 
@@ -21,25 +23,33 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Transcendence",
-  description: "ブラウザで対戦できるコリドール（Quoridor）",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta");
+  return {
+    title: "Transcendence",
+    description: t("description"),
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
-    <html lang="ja" {...mantineHtmlProps} data-mantine-color-scheme="dark">
+    <html lang={locale} {...mantineHtmlProps} data-mantine-color-scheme="dark">
       <head>
         <ColorSchemeScript forceColorScheme="dark" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <MantineProvider theme={theme} forceColorScheme="dark">
-          {children}
-        </MantineProvider>
+        {/* messages は request config から自動で引き継がれる */}
+        <NextIntlClientProvider>
+          <MantineProvider theme={theme} forceColorScheme="dark">
+            {children}
+          </MantineProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

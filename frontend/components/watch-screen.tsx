@@ -19,6 +19,8 @@ import {
   IconRefresh,
 } from "@tabler/icons-react";
 
+import { useTranslations } from "next-intl";
+
 import { PlayerPanel, useCountdown } from "@/components/player-panel";
 import { QuoridorBoard } from "@/components/quoridor-board";
 import { type GamePlayer, useGameSocket } from "@/components/use-game-socket";
@@ -35,6 +37,8 @@ interface LiveMatch {
 }
 
 export function WatchScreen() {
+  const t = useTranslations("spectate");
+  const tg = useTranslations("game");
   const { status, state, lastError, watch, unwatch } = useGameSocket();
 
   const [matches, setMatches] = useState<LiveMatch[] | null>(null);
@@ -50,14 +54,16 @@ export function WatchScreen() {
       const res = await fetch(apiUrl("/game/live"), {
         credentials: "include",
       });
-      if (!res.ok) throw new Error(`一覧の取得に失敗しました (${res.status})`);
+      if (!res.ok) throw new Error(t("loadFailed", { status: res.status }));
       const body = (await res.json()) as { items: LiveMatch[] };
       setMatches(body.items);
       setListError(null);
     } catch (e) {
-      setListError(e instanceof Error ? e.message : "読み込みに失敗しました");
+      setListError(
+        e instanceof Error ? e.message : t("loadFailed", { status: 0 }),
+      );
     }
-  }, []);
+  }, [t]);
 
   // 観戦していない間は一覧を定期的に引き直す。
   const watching = state !== null;
@@ -89,15 +95,15 @@ export function WatchScreen() {
               leftSection={<IconArrowLeft size={16} />}
               onClick={backToList}
             >
-              一覧へ戻る
+              {t("backToList")}
             </Button>
             <Title order={2} size="h3">
-              観戦中
+              {t("watching")}
             </Title>
           </Group>
           <Group gap="xs">
             <Badge variant="light" leftSection={<IconEye size={12} />}>
-              観戦 {state.spectators} 人
+              {tg("spectatorBadge", { count: state.spectators })}
             </Badge>
             {status !== "online" && (
               <Badge
@@ -105,7 +111,7 @@ export function WatchScreen() {
                 variant="light"
                 leftSection={<IconPlugOff size={12} />}
               >
-                再接続中…
+                {tg("reconnecting")}
               </Badge>
             )}
           </Group>
@@ -139,13 +145,15 @@ export function WatchScreen() {
                 <Stack gap="sm">
                   <Title order={3} size="h4">
                     {state.winner !== undefined
-                      ? `${state.players[state.winner].displayName} の勝ち`
-                      : "対局は中断されました"}
+                      ? t("winner", {
+                          name: state.players[state.winner].displayName,
+                        })
+                      : t("aborted")}
                   </Title>
                   <Text size="sm" c="dimmed">
-                    総手数 {state.moveCount}
+                    {tg("totalMoves", { count: state.moveCount })}
                   </Text>
-                  <Button onClick={backToList}>一覧へ戻る</Button>
+                  <Button onClick={backToList}>{t("backToList")}</Button>
                 </Stack>
               </Paper>
             )}
@@ -160,7 +168,7 @@ export function WatchScreen() {
     <Stack gap="lg" maw={720} mx="auto">
       <Group justify="space-between">
         <Title order={2} size="h3">
-          観戦
+          {t("title")}
         </Title>
         <Button
           variant="subtle"
@@ -168,7 +176,7 @@ export function WatchScreen() {
           leftSection={<IconRefresh size={16} />}
           onClick={() => void reload()}
         >
-          更新
+          {t("refresh")}
         </Button>
       </Group>
 
@@ -185,7 +193,7 @@ export function WatchScreen() {
       {matches !== null && matches.length === 0 && (
         <Paper p="xl">
           <Text c="dimmed" ta="center">
-            いま進行中の対局はありません。
+            {t("empty")}
           </Text>
         </Paper>
       )}
@@ -214,7 +222,7 @@ export function WatchScreen() {
             </Group>
             <Group gap="sm" wrap="nowrap">
               <Text size="sm" c="dimmed">
-                {m.move_count} 手目
+                {t("moveCount", { count: m.move_count })}
               </Text>
               <Badge
                 variant="light"

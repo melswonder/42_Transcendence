@@ -148,15 +148,15 @@ func (h *FriendHandler) CreateRequest(w http.ResponseWriter, r *http.Request) {
 	case err == nil:
 		writeJSON(w, http.StatusCreated, toFriendshipResponse(*friendship))
 	case errors.Is(err, domain.ErrFriendSelf):
-		writeJSONError(w, http.StatusBadRequest, "cannot befriend yourself")
+		writeJSONErrorCode(w, http.StatusBadRequest, "friend_self", "cannot befriend yourself")
 	case errors.Is(err, domain.ErrUserNotFound):
-		writeJSONError(w, http.StatusNotFound, "user not found")
+		writeJSONErrorCode(w, http.StatusNotFound, "user_not_found", "user not found")
 	case errors.Is(err, domain.ErrFriendBlocked):
-		writeJSONError(w, http.StatusForbidden, "cannot send a request to this user")
+		writeJSONErrorCode(w, http.StatusForbidden, "friend_blocked", "cannot send a request to this user")
 	case errors.Is(err, domain.ErrFriendAlreadyRequested):
-		writeJSONError(w, http.StatusConflict, "friend request already sent")
+		writeJSONErrorCode(w, http.StatusConflict, "friend_already_requested", "friend request already sent")
 	case errors.Is(err, domain.ErrAlreadyFriends):
-		writeJSONError(w, http.StatusConflict, "already friends")
+		writeJSONErrorCode(w, http.StatusConflict, "already_friends", "already friends")
 	default:
 		writeJSONError(w, http.StatusInternalServerError, "failed to create friend request")
 	}
@@ -177,7 +177,7 @@ func (h *FriendHandler) Decide(w http.ResponseWriter, r *http.Request) {
 
 	otherID, err := uuid.Parse(r.PathValue("userId"))
 	if err != nil {
-		writeJSONError(w, http.StatusNotFound, "friend request not found")
+		writeJSONErrorCode(w, http.StatusNotFound, "friend_not_found", "friend request not found")
 		return
 	}
 
@@ -196,7 +196,7 @@ func (h *FriendHandler) Decide(w http.ResponseWriter, r *http.Request) {
 	case err == nil:
 		writeJSON(w, http.StatusOK, toFriendshipResponse(*friendship))
 	case errors.Is(err, domain.ErrFriendshipNotFound):
-		writeJSONError(w, http.StatusNotFound, "friend request not found")
+		writeJSONErrorCode(w, http.StatusNotFound, "friend_not_found", "friend request not found")
 	default:
 		writeJSONError(w, http.StatusInternalServerError, "failed to update friend request")
 	}
@@ -213,7 +213,7 @@ func (h *FriendHandler) Remove(w http.ResponseWriter, r *http.Request) {
 
 	otherID, err := uuid.Parse(r.PathValue("userId"))
 	if err != nil {
-		writeJSONError(w, http.StatusNotFound, "friendship not found")
+		writeJSONErrorCode(w, http.StatusNotFound, "friend_not_found", "friendship not found")
 		return
 	}
 
@@ -222,7 +222,7 @@ func (h *FriendHandler) Remove(w http.ResponseWriter, r *http.Request) {
 	case err == nil:
 		w.WriteHeader(http.StatusNoContent)
 	case errors.Is(err, domain.ErrFriendshipNotFound):
-		writeJSONError(w, http.StatusNotFound, "friendship not found")
+		writeJSONErrorCode(w, http.StatusNotFound, "friend_not_found", "friendship not found")
 	default:
 		writeJSONError(w, http.StatusInternalServerError, "failed to remove friendship")
 	}

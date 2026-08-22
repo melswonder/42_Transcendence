@@ -74,7 +74,7 @@ func (h *MediaHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var maxBytesErr *http.MaxBytesError
 		if errors.As(err, &maxBytesErr) {
-			writeJSONError(w, http.StatusRequestEntityTooLarge, "file too large (max 5MB)")
+			writeJSONErrorCode(w, http.StatusRequestEntityTooLarge, "file_too_large", "file too large (max 5MB)")
 			return
 		}
 		writeJSONError(w, http.StatusBadRequest, "form field 'file' is required")
@@ -93,11 +93,11 @@ func (h *MediaHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	case err == nil:
 		writeJSON(w, http.StatusCreated, toMediaAssetResponse(asset))
 	case errors.Is(err, domain.ErrMediaTooLarge):
-		writeJSONError(w, http.StatusRequestEntityTooLarge, "file too large (max 5MB)")
+		writeJSONErrorCode(w, http.StatusRequestEntityTooLarge, "file_too_large", "file too large (max 5MB)")
 	case errors.Is(err, domain.ErrUnsupportedMediaType):
-		writeJSONError(w, http.StatusUnsupportedMediaType, "unsupported image type (png / jpeg / webp)")
+		writeJSONErrorCode(w, http.StatusUnsupportedMediaType, "unsupported_media_type", "unsupported image type (png / jpeg / webp)")
 	case errors.Is(err, domain.ErrInvalidImage):
-		writeJSONError(w, http.StatusBadRequest, "file is not a valid image")
+		writeJSONErrorCode(w, http.StatusBadRequest, "invalid_image", "file is not a valid image")
 	default:
 		writeJSONError(w, http.StatusInternalServerError, "failed to upload avatar")
 	}
@@ -146,13 +146,13 @@ func (h *MediaHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	assetID, err := uuid.Parse(r.PathValue("assetId"))
 	if err != nil {
-		writeJSONError(w, http.StatusNotFound, "media asset not found")
+		writeJSONErrorCode(w, http.StatusNotFound, "media_not_found", "media asset not found")
 		return
 	}
 
 	asset, err := h.uc.GetOwned(r.Context(), assetID, user.ID)
 	if errors.Is(err, domain.ErrMediaNotFound) {
-		writeJSONError(w, http.StatusNotFound, "media asset not found")
+		writeJSONErrorCode(w, http.StatusNotFound, "media_not_found", "media asset not found")
 		return
 	}
 	if err != nil {
@@ -173,13 +173,13 @@ func (h *MediaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	assetID, err := uuid.Parse(r.PathValue("assetId"))
 	if err != nil {
-		writeJSONError(w, http.StatusNotFound, "media asset not found")
+		writeJSONErrorCode(w, http.StatusNotFound, "media_not_found", "media asset not found")
 		return
 	}
 
 	err = h.uc.Delete(r.Context(), assetID, user.ID)
 	if errors.Is(err, domain.ErrMediaNotFound) {
-		writeJSONError(w, http.StatusNotFound, "media asset not found")
+		writeJSONErrorCode(w, http.StatusNotFound, "media_not_found", "media asset not found")
 		return
 	}
 	if err != nil {

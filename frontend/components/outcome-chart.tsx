@@ -2,24 +2,9 @@
 
 import { DonutChart } from "@mantine/charts";
 import { Group, Paper, Stack, Text, Title } from "@mantine/core";
+import { useTranslations } from "next-intl";
 
 import type { BreakdownSlice } from "@/lib/stats";
-
-// API が返す識別子を画面の言葉に直す。
-// バックエンドが英語のまま返すのは、機械可読な値を API の正本にしておくため。
-const LABELS: Record<string, string> = {
-  win: "勝ち",
-  loss: "負け",
-  draw: "引き分け",
-  goal: "ゴール到達",
-  resign: "投了",
-  timeout: "時間切れ",
-  abort: "中断",
-  ranked: "ランク戦",
-  casual: "カジュアル",
-  ai: "AI 対戦",
-  friend: "フレンド戦",
-};
 
 // 勝敗は意味の決まった色を当て、それ以外は順番に振る。
 const OUTCOME_COLORS: Record<string, string> = {
@@ -43,6 +28,17 @@ export function OutcomeChart({
   title: string;
   slices: BreakdownSlice[];
 }) {
+  // API は機械可読な識別子を返し、画面の言葉はロケールごとの messages から引く。
+  const tOutcomes = useTranslations("stats.outcomes");
+  const tModes = useTranslations("stats.modes");
+  const tResults = useTranslations("stats.results");
+  const tStats = useTranslations("stats");
+  const label = (key: string) => {
+    if (tOutcomes.has(key)) return tOutcomes(key);
+    if (tModes.has(key)) return tModes(key);
+    if (tResults.has(key)) return tResults(key);
+    return key;
+  };
   const total = slices.reduce((sum, s) => sum + s.count, 0);
 
   if (total === 0) {
@@ -52,14 +48,14 @@ export function OutcomeChart({
           {title}
         </Title>
         <Text c="dimmed" ta="center" py="xl">
-          この期間の対戦がありません。
+          {tStats("emptyChart")}
         </Text>
       </Paper>
     );
   }
 
   const data = slices.map((slice, i) => ({
-    name: LABELS[slice.key] ?? slice.key,
+    name: label(slice.key),
     value: slice.count,
     color:
       OUTCOME_COLORS[slice.key] ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length],
@@ -76,7 +72,7 @@ export function OutcomeChart({
           size={170}
           thickness={26}
           tooltipDataSource="segment"
-          chartLabel={`${total} 戦`}
+          chartLabel={tStats("totalGames", { count: total })}
         />
         <Stack gap={6}>
           {data.map((d) => (

@@ -1,4 +1,5 @@
 import { Avatar } from "@mantine/core";
+import { useTranslations } from "next-intl";
 
 import { apiUrl } from "@/lib/api";
 
@@ -15,6 +16,7 @@ export function UserAvatar({
   avatarUrl: string | null | undefined;
   size?: number | string;
 }) {
+  const t = useTranslations("avatar");
   return (
     <Avatar
       radius="xl"
@@ -22,7 +24,7 @@ export function UserAvatar({
       color="emerald"
       variant="filled"
       src={avatarUrl ? apiUrl(avatarUrl) : null}
-      alt={`${displayName} のアバター`}
+      alt={t("alt", { name: displayName })}
     >
       {displayName.charAt(0).toUpperCase()}
     </Avatar>

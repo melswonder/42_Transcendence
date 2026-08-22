@@ -1,0 +1,276 @@
+{
+  "meta": {
+    "description": "Play Quoridor online in your browser"
+  },
+  "nav": {
+    "play": "Play",
+    "watch": "Spectate",
+    "stats": "Stats",
+    "matches": "Match history",
+    "achievements": "Achievements",
+    "leaderboard": "Leaderboard",
+    "friends": "Friends",
+    "settings": "Settings",
+    "logout": "Log out",
+    "level": "Lv.{level}"
+  },
+  "login": {
+    "tagline": "Sign in to play",
+    "googleButton": "Sign in with Google",
+    "disclaimer": "By continuing, we will receive your Google account's display name, email address and profile picture.",
+    "errors": {
+      "access_denied": "You cancelled on the Google consent screen.",
+      "invalid_state": "Sign-in verification failed. The request may have expired — please try again.",
+      "missing_code": "We did not receive an authorization code. Please try again.",
+      "login_failed": "Sign-in failed. Please try again in a moment.",
+      "fallback": "Could not sign you in."
+    }
+  },
+  "home": {
+    "newMatch": "New match",
+    "recentMatches": "Recent matches",
+    "comingSoon": "Coming soon",
+    "quickMatch": {
+      "title": "Quick match",
+      "description": "Start a ranked game against an opponent of similar skill."
+    },
+    "vsAi": {
+      "title": "Play vs computer",
+      "description": "Practice against an AI opponent."
+    },
+    "vsFriend": {
+      "title": "Play a friend",
+      "description": "Create a room with a passphrase."
+    }
+  },
+  "game": {
+    "title": "Quick match",
+    "connecting": "Connecting…",
+    "reconnecting": "Reconnecting…",
+    "queueHint": "Join the queue and the game starts as soon as an opponent is found.",
+    "findOpponent": "Find an opponent",
+    "searching": "Looking for an opponent…",
+    "cancel": "Cancel",
+    "spectatorBadge": "{count, plural, one {# spectator} other {# spectators}}",
+    "opponentDisconnected": "Your opponent disconnected. You win if they do not return within {seconds, plural, one {# second} other {# seconds}}.",
+    "boardHint": "Move: click a highlighted square ／ Wall: click between squares",
+    "resign": "Resign",
+    "backHome": "Back to home",
+    "totalMoves": "{count, plural, one {# move} other {# moves}} in total",
+    "ratingChange": "Rating {before} →",
+    "result": {
+      "win": "Victory",
+      "loss": "Defeat",
+      "aborted": "The game was aborted",
+      "goal": "reached the goal",
+      "resign": "resignation",
+      "timeout": "time out"
+    },
+    "resultWithReason": "{result} ({reason})",
+    "player": {
+      "you": "You",
+      "disconnected": "Offline",
+      "walls": "{count, plural, one {# wall} other {# walls}}"
+    },
+    "board": {
+      "cell": "Square {row}-{col}",
+      "hWall": "Horizontal wall {row}-{col}",
+      "vWall": "Vertical wall {row}-{col}"
+    },
+    "wsErrors": {
+      "not_your_turn": "It is your opponent's turn.",
+      "illegal_move": "You cannot move there.",
+      "wall_overlaps": "That wall overlaps an existing one.",
+      "wall_seals_goal": "That wall would completely seal a path to the goal.",
+      "invalid_wall": "You cannot place a wall there.",
+      "no_walls_left": "You have no walls left.",
+      "stale_version": "The board has changed. Please try again on the latest position.",
+      "game_finished": "This game is already over.",
+      "already_in_match": "You already have a game in progress.",
+      "no_active_match": "You are not in a game.",
+      "not_connected": "Not connected to the server."
+    }
+  },
+  "spectate": {
+    "title": "Spectate",
+    "watching": "Spectating",
+    "backToList": "Back to list",
+    "refresh": "Refresh",
+    "empty": "No games are being played right now.",
+    "moveCount": "{count, plural, one {move #} other {move #}}",
+    "winner": "{name} wins",
+    "aborted": "The game was aborted",
+    "loadFailed": "Failed to load the list ({status})"
+  },
+  "friends": {
+    "title": "Friends",
+    "tabFriends": "Friends ({count})",
+    "tabRequests": "Incoming",
+    "tabOutgoing": "Sent",
+    "tabSearch": "Find",
+    "emptyFriends": "No friends yet. Send a request from the Find tab.",
+    "emptyIncoming": "No incoming requests.",
+    "emptyOutgoing": "No pending requests.",
+    "emptySearch": "No one found.",
+    "online": "Online",
+    "offline": "Offline",
+    "accept": "Accept",
+    "rejectAria": "Reject request",
+    "removeAria": "Remove friend",
+    "withdraw": "Withdraw",
+    "request": "Add",
+    "requestSent": "Request sent",
+    "search": "Search",
+    "searchPlaceholder": "Search by name or @handle",
+    "userLine": "@{handle} ・ Lv.{level}",
+    "loadFailed": "Failed to load",
+    "actionFailed": "Something went wrong"
+  },
+  "settings": {
+    "title": "Settings",
+    "avatarSection": "Avatar",
+    "choose": "Choose image",
+    "remove": "Remove",
+    "avatarHint": "png / jpeg / webp, up to 5MB. Removing it restores the default.",
+    "avatarTooLarge": "Please choose an image up to 5MB",
+    "profileSection": "Profile",
+    "displayName": "Display name",
+    "handle": "Handle",
+    "handleHint": "Lowercase letters, digits and underscores, 3–30 characters",
+    "language": "Language",
+    "save": "Save",
+    "saved": "Saved",
+    "saveFailed": "Failed to save",
+    "uploadFailed": "Upload failed",
+    "deleteFailed": "Failed to remove"
+  },
+  "apiErrors": {
+    "requestFailed": "Request failed ({status})",
+    "handle_taken": "That handle is already taken.",
+    "invalid_display_name": "Display name must be 1–50 characters.",
+    "invalid_handle": "Handle must be 3–30 lowercase letters, digits or underscores.",
+    "invalid_locale": "That language is not supported.",
+    "invalid_avatar_asset": "That avatar cannot be used.",
+    "file_too_large": "The file is too large (max 5MB).",
+    "unsupported_media_type": "Unsupported image format (png / jpeg / webp).",
+    "invalid_image": "The file could not be read as an image.",
+    "friend_self": "You cannot send a request to yourself.",
+    "friend_blocked": "You cannot send a request to this user.",
+    "friend_already_requested": "Request already sent.",
+    "already_friends": "You are already friends.",
+    "friend_not_found": "Request not found.",
+    "user_not_found": "User not found.",
+    "media_not_found": "Image not found."
+  },
+  "stats": {
+    "title": "Stats",
+    "tiles": {
+      "matches": "Games",
+      "matchesHint": "{wins}W {losses}L {draws}D",
+      "winRate": "Win rate",
+      "winRateHint": "Draws count toward the total",
+      "rating": "Rating",
+      "ratingHint": "Only ranked games move it",
+      "ranking": "Rank",
+      "rankingValue": "#{rank}",
+      "rankingHint": "of {total, plural, one {# player} other {# players}}",
+      "winStreak": "Win streak",
+      "loseStreak": "Loss streak",
+      "streakHint": "Best: {count, plural, one {# win} other {# wins}} in a row",
+      "level": "Level",
+      "levelValue": "Lv.{level}",
+      "levelHint": "{current} / {needed} XP"
+    },
+    "nextLevel": "To next level",
+    "nextLevelAria": "Progress to the next level",
+    "ratingChart": "Rating over time",
+    "activityChart": "Games over time",
+    "emptyChart": "No games in this period.",
+    "byResultType": "How games ended",
+    "byMode": "By mode",
+    "totalGames": "{count, plural, one {# game} other {# games}}",
+    "filters": {
+      "period": "Period",
+      "all": "All",
+      "mode": "Mode",
+      "result": "Result",
+      "daily": "Daily",
+      "weekly": "Weekly"
+    },
+    "outcomes": {
+      "win": "Win",
+      "loss": "Loss",
+      "draw": "Draw"
+    },
+    "modes": {
+      "ranked": "Ranked",
+      "casual": "Casual",
+      "ai": "Vs AI",
+      "friend": "Friendly"
+    },
+    "results": {
+      "goal": "Goal reached",
+      "resign": "Resignation",
+      "timeout": "Time out",
+      "draw": "Draw",
+      "abort": "Aborted"
+    }
+  },
+  "matches": {
+    "title": "Match history",
+    "empty": "No matches for these filters.",
+    "vs": "vs {name}",
+    "moves": "{count, plural, one {# move} other {# moves}}",
+    "xp": "+{xp} XP"
+  },
+  "achievements": {
+    "title": "Achievements",
+    "unlockedCount": "{unlocked} / {total} unlocked",
+    "progressAria": "Progress for {name}",
+    "items": {
+      "first_win": {
+        "name": "First Victory",
+        "description": "Win your first game"
+      },
+      "win_10": { "name": "Winner", "description": "Win 10 games in total" },
+      "win_50": { "name": "Veteran", "description": "Win 50 games in total" },
+      "win_100": {
+        "name": "Champion",
+        "description": "Win 100 games in total"
+      },
+      "streak_3": {
+        "name": "Hat-trick",
+        "description": "Win 3 games in a row"
+      },
+      "streak_5": { "name": "Unbeaten", "description": "Win 5 games in a row" },
+      "streak_10": {
+        "name": "Unshakeable",
+        "description": "Win 10 games in a row"
+      },
+      "played_10": { "name": "Regular", "description": "Play 10 games" },
+      "played_50": { "name": "Seasoned", "description": "Play 50 games" },
+      "played_100": { "name": "Devoted", "description": "Play 100 games" },
+      "rating_1300": {
+        "name": "Advanced",
+        "description": "Reach a rating of 1300"
+      },
+      "rating_1500": {
+        "name": "Expert",
+        "description": "Reach a rating of 1500"
+      }
+    }
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "myRank": "Your rank",
+    "record": "{wins}W {losses}L",
+    "winRate": "Win rate {rate}",
+    "userLine": "@{handle} ・ Lv.{level}"
+  },
+  "pagination": {
+    "range": "{from}–{to} of {total, plural, one {# entry} other {# entries}}"
+  },
+  "avatar": {
+    "alt": "{name}'s avatar"
+  }
+}

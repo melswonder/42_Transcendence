@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { wsUrl } from "@/lib/api";
 
@@ -55,20 +56,6 @@ type ServerMessage =
 
 export type ConnectionStatus = "connecting" | "online" | "reconnecting";
 
-/** サーバーが返すエラーコードを画面に出せる日本語へ。 */
-const errorMessages: Record<string, string> = {
-  not_your_turn: "相手の手番です。",
-  illegal_move: "そのマスへは動けません。",
-  wall_overlaps: "既にある壁と重なっています。",
-  wall_seals_goal: "その壁はゴールへの道を完全に塞いでしまいます。",
-  invalid_wall: "そこには壁を置けません。",
-  no_walls_left: "持ち壁がありません。",
-  stale_version: "盤面が更新されました。最新の盤面でもう一度どうぞ。",
-  game_finished: "この対局はもう終わっています。",
-  already_in_match: "進行中の対局があります。",
-  no_active_match: "参加中の対局がありません。",
-};
-
 const maxReconnectDelayMs = 10_000;
 
 /** 対局 WebSocket の接続・再接続・メッセージ処理をまとめたフック。
@@ -79,6 +66,8 @@ const maxReconnectDelayMs = 10_000;
  * サーバー側が接続時に自動で復帰させ、最新の盤面を送ってくる。
  */
 export function useGameSocket() {
+  // サーバーはエラーをコードで返し、文言はクライアント側の言語で組み立てる。
+  const t = useTranslations("game.wsErrors");
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
   const [queued, setQueued] = useState(false);
   const [state, setState] = useState<GameState | null>(null);
@@ -132,7 +121,7 @@ export function useGameSocket() {
             setOpponentGrace(null);
             break;
           case "error":
-            setLastError(errorMessages[msg.code] ?? msg.message);
+            setLastError(t.has(msg.code) ? t(msg.code) : msg.message);
             break;
         }
       };
@@ -153,16 +142,21 @@ export function useGameSocket() {
       clearTimeout(retryTimer);
       socketRef.current?.close();
     };
+    // t は接続の張り直しを起こしたくないので依存に入れない（文言は次のエラーから反映される）。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const send = useCallback((payload: Record<string, unknown>) => {
-    const socket = socketRef.current;
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-      setLastError("サーバーと接続できていません。");
-      return;
-    }
-    socket.send(JSON.stringify(payload));
-  }, []);
+  const send = useCallback(
+    (payload: Record<string, unknown>) => {
+      const socket = socketRef.current;
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        setLastError(t("not_connected"));
+        return;
+      }
+      socket.send(JSON.stringify(payload));
+    },
+    [t],
+  );
 
   const joinQueue = useCallback(() => {
     setLastError(null);

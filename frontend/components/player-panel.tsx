@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Badge, Group, Paper, Text } from "@mantine/core";
+import { useTranslations } from "next-intl";
 
 import type { GamePlayer } from "@/components/use-game-socket";
 
@@ -39,6 +40,7 @@ export function PlayerPanel({
   /** 手番でなければ null。 */
   secondsLeft: number | null;
 }) {
+  const t = useTranslations("game.player");
   const isTurn = secondsLeft !== null;
   return (
     <Paper p="sm" className={isTurn ? "border-emerald-500" : undefined}>
@@ -48,12 +50,12 @@ export function PlayerPanel({
             <Text fw={600}>{player.displayName}</Text>
             {isMe && (
               <Badge size="xs" variant="light">
-                自分
+                {t("you")}
               </Badge>
             )}
             {!connected && (
               <Badge size="xs" color="red" variant="light">
-                切断中
+                {t("disconnected")}
               </Badge>
             )}
           </Group>
@@ -63,7 +65,7 @@ export function PlayerPanel({
         </div>
         <Group gap="sm" align="center">
           <Text size="sm" c="dimmed">
-            壁 {wallsLeft}
+            {t("walls", { count: wallsLeft })}
           </Text>
           {isTurn && (
             <Text

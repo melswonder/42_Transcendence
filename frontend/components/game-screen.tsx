@@ -19,23 +19,32 @@ import {
   IconSearch,
 } from "@tabler/icons-react";
 
+import { useTranslations } from "next-intl";
+
 import { PlayerPanel, useCountdown } from "@/components/player-panel";
 import { QuoridorBoard } from "@/components/quoridor-board";
 import { type GameState, useGameSocket } from "@/components/use-game-socket";
 
 /** 決着の見出し。自分視点の勝敗と理由を 1 行で。 */
-function resultText(state: GameState): string {
-  if (state.winner === undefined) return "対局は中断されました";
-  const won = state.winner === state.seat;
-  const reason = {
-    goal: "ゴール到達",
-    resign: "投了",
-    timeout: "時間切れ",
-  }[state.resultType ?? ""];
-  return `${won ? "勝ち" : "負け"}${reason ? `（${reason}）` : ""}`;
+function resultText(
+  t: ReturnType<typeof useTranslations<"game">>,
+  state: GameState,
+): string {
+  if (state.winner === undefined) return t("result.aborted");
+  const result = t(state.winner === state.seat ? "result.win" : "result.loss");
+  const reasonKey = state.resultType;
+  if (
+    reasonKey === "goal" ||
+    reasonKey === "resign" ||
+    reasonKey === "timeout"
+  ) {
+    return t("resultWithReason", { result, reason: t(`result.${reasonKey}`) });
+  }
+  return result;
 }
 
 export function GameScreen() {
+  const t = useTranslations("game");
   const {
     status,
     queued,
@@ -60,11 +69,11 @@ export function GameScreen() {
     <Stack gap="lg" maw={900} mx="auto">
       <Group justify="space-between">
         <Title order={2} size="h3">
-          クイックマッチ
+          {t("title")}
         </Title>
         {state !== null && state.spectators > 0 && (
           <Badge variant="light" leftSection={<IconEye size={12} />}>
-            観戦 {state.spectators} 人
+            {t("spectatorBadge", { count: state.spectators })}
           </Badge>
         )}
         {status !== "online" && (
@@ -73,7 +82,7 @@ export function GameScreen() {
             variant="light"
             leftSection={<IconPlugOff size={12} />}
           >
-            {status === "connecting" ? "接続中…" : "再接続中…"}
+            {status === "connecting" ? t("connecting") : t("reconnecting")}
           </Badge>
         )}
       </Group>
@@ -90,24 +99,21 @@ export function GameScreen() {
 
       {opponentGrace !== null && state !== null && !state.finished && (
         <Alert color="red" icon={<IconPlugOff size={16} />} variant="light">
-          相手の接続が切れました。{opponentGrace}
-          秒以内に戻らなければあなたの勝ちになります。
+          {t("opponentDisconnected", { seconds: opponentGrace })}
         </Alert>
       )}
 
       {state === null && !queued && (
         <Paper p="xl">
           <Stack align="center" gap="md">
-            <Text c="dimmed">
-              待機列に入ると、相手が見つかり次第すぐに対局が始まります。
-            </Text>
+            <Text c="dimmed">{t("queueHint")}</Text>
             <Button
               size="md"
               leftSection={<IconSearch size={18} />}
               onClick={joinQueue}
               disabled={status !== "online"}
             >
-              対戦相手を探す
+              {t("findOpponent")}
             </Button>
           </Stack>
         </Paper>
@@ -117,9 +123,9 @@ export function GameScreen() {
         <Paper p="xl">
           <Stack align="center" gap="md">
             <Loader />
-            <Text c="dimmed">対戦相手を探しています…</Text>
+            <Text c="dimmed">{t("searching")}</Text>
             <Button variant="subtle" onClick={leaveQueue}>
-              やめる
+              {t("cancel")}
             </Button>
           </Stack>
         </Paper>
@@ -140,7 +146,7 @@ export function GameScreen() {
               ta="center"
               className={myTurn && !state.finished ? undefined : "invisible"}
             >
-              移動: 光るマス ／ 壁: マスの間をクリック
+              {t("boardHint")}
             </Text>
           </Stack>
 
@@ -166,14 +172,16 @@ export function GameScreen() {
               <Paper p="md">
                 <Stack gap="sm">
                   <Title order={3} size="h4">
-                    {resultText(state)}
+                    {resultText(t, state)}
                   </Title>
                   <Text size="sm" c="dimmed">
-                    総手数 {state.moveCount}
+                    {t("totalMoves", { count: state.moveCount })}
                   </Text>
                   {state.ratingAfter && (
                     <Text size="sm">
-                      レート {state.players[mySeat].rating} →{" "}
+                      {t("ratingChange", {
+                        before: state.players[mySeat].rating,
+                      })}{" "}
                       <Text
                         span
                         fw={700}
@@ -189,13 +197,13 @@ export function GameScreen() {
                     </Text>
                   )}
                   <Button component={Link} href="/">
-                    ホームへ戻る
+                    {t("backHome")}
                   </Button>
                 </Stack>
               </Paper>
             ) : (
               <Button color="red" variant="light" onClick={resign}>
-                投了する
+                {t("resign")}
               </Button>
             )}
           </Stack>

@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@mantine/core";
 
 import { GoogleMark } from "@/components/google-mark";
 import { apiUrl } from "@/lib/api";
 
 export function GoogleLoginButton() {
+  const t = useTranslations("login");
   const [loading, setLoading] = useState(false);
 
   // fetch にしないこと。OAuth はブラウザごと同意画面へ遷移する流れなので、
@@ -29,7 +31,7 @@ export function GoogleLoginButton() {
       color="dark.7"
       leftSection={<GoogleMark />}
     >
-      Google でログイン
+      {t("googleButton")}
     </Button>
   );
 }
