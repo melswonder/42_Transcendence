@@ -326,6 +326,9 @@ func (c *GameClient) Events() <-chan GameEvent { return c.events }
 // Done は Close されたら閉じる。イベント読み側の終了合図。
 func (c *GameClient) Done() <-chan struct{} { return c.done }
 
+// UserID はこの接続のユーザー。
+func (c *GameClient) UserID() uuid.UUID { return c.user.ID }
+
 // Seat はこの接続の座席。対局に入っていなければ -1。
 func (c *GameClient) Seat() int {
 	c.mu.Lock()

@@ -31,10 +31,11 @@ type GameHandler struct {
 	uc          *usecase.GameUsecase
 	currentUser func(*http.Request) (*domain.User, error)
 	cfg         GameConfig
+	presence    PresenceToucher
 }
 
-func NewGameHandler(uc *usecase.GameUsecase, currentUser func(*http.Request) (*domain.User, error), cfg GameConfig) *GameHandler {
-	return &GameHandler{uc: uc, currentUser: currentUser, cfg: cfg}
+func NewGameHandler(uc *usecase.GameUsecase, currentUser func(*http.Request) (*domain.User, error), cfg GameConfig, presence PresenceToucher) *GameHandler {
+	return &GameHandler{uc: uc, currentUser: currentUser, cfg: cfg, presence: presence}
 }
 
 // クライアント → サーバー。
@@ -158,6 +159,10 @@ func (h *GameHandler) writePump(ctx context.Context, conn *websocket.Conn, clien
 		case <-ticker.C:
 			if err := conn.Ping(ctx); err != nil {
 				return
+			}
+			// 対局中は HTTP を叩かないので、keep-alive を presence の材料にする。
+			if h.presence != nil {
+				h.presence.Touch(client.UserID())
 			}
 		case <-client.Done():
 			return

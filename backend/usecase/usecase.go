@@ -23,6 +23,8 @@ type Dependencies struct {
 	UserRepository        UserRepository
 	MediaRepository       MediaRepository
 	MediaFileStore        FileStore
+	FriendRepository      FriendRepository
+	Presence              PresenceTracker
 	GoogleOAuth           OAuthProvider
 	MatchNotifier         MatchNotifier
 }
@@ -36,6 +38,7 @@ type Services struct {
 	Game         *GameUsecase
 	User         *UserUsecase
 	Media        *MediaUsecase
+	Friend       *FriendUsecase
 }
 
 func NewServices(dependencies Dependencies) Services {
@@ -52,5 +55,6 @@ func NewServices(dependencies Dependencies) Services {
 		Game:         NewGameUsecase(dependencies.GameRepository, dependencies.MatchNotifier, achievements),
 		User:         NewUserUsecase(dependencies.UserRepository),
 		Media:        NewMediaUsecase(dependencies.MediaRepository, dependencies.MediaFileStore),
+		Friend:       NewFriendUsecase(dependencies.FriendRepository, dependencies.Presence),
 	}
 }
