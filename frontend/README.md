@@ -1,87 +1,90 @@
-# フロントエンド 言語TypeScript
+# Frontend — TypeScript
 
-Next.js 16（App Router）/ React 19 / TailwindCSS v4 + Mantine v9。パッケージマネージャは pnpm。
+Next.js 16 (App Router) / React 19 / TailwindCSS v4 + Mantine v9. Package manager: pnpm.
 
-## 起動する
+## Running
 
 ```bash
-# Docker（ルートから）
-make up                 # http://localhost:3000
+# Docker (from the repository root)
+make up                 # https://localhost (via Caddy) / http://localhost:3000 (direct)
 make exec-frontend
 
-# ホストで直接
-corepack enable pnpm            # package.json でピン留めした pnpm が使えるようになる
+# Directly on the host
+corepack enable pnpm            # enables the pnpm version pinned in package.json
 pnpm install --frozen-lockfile
 pnpm dev                        # :3000
 ```
 
-前提は Node.js v22.13 以上 / pnpm v11.17.0（`package.json` の `engines` と `packageManager`）。
+Prerequisites: Node.js ≥ 22.13 / pnpm 11.17.0 (see `engines` and `packageManager` in `package.json`).
 
-| コマンド            | 内容                               |
-| ------------------- | ---------------------------------- |
-| `pnpm dev`          | 開発サーバー（ホットリロード）     |
-| `pnpm build`        | 本番ビルド                         |
-| `pnpm start`        | 本番サーバー（`build` 済みが前提） |
-| `pnpm lint`         | ESLint で静的解析                  |
-| `pnpm lint:fix`     | ESLint で自動修正                  |
-| `pnpm format`       | Prettier で整形                    |
-| `pnpm format:check` | 整形漏れの検出（CI と同じ）        |
+| Command             | What it does                          |
+| ------------------- | ------------------------------------- |
+| `pnpm dev`          | Dev server (hot reload)               |
+| `pnpm build`        | Production build                      |
+| `pnpm start`        | Production server (requires `build`)  |
+| `pnpm lint`         | Static analysis with ESLint           |
+| `pnpm lint:fix`     | ESLint auto-fix                       |
+| `pnpm format`       | Format with Prettier                  |
+| `pnpm format:check` | Detect unformatted files (same as CI) |
 
-> Docker では `./frontend` をマウントしているのでホットリロードが効くが、`node_modules` は匿名ボリュームでマスクされている。**依存を追加したら、イメージを作り直したうえで匿名ボリュームも捨てる。**
+> In Docker, `./frontend` is bind-mounted so hot reload works, but `node_modules`
+> is masked by an anonymous volume. **After adding a dependency, rebuild the image
+> and discard the anonymous volume:**
 >
 > ```bash
 > docker compose build frontend
-> docker compose up -d -V frontend   # -V を付けないと古い node_modules が残る
+> docker compose up -d -V frontend   # without -V the stale node_modules survives
 > ```
 >
-> `-V` を忘れると、コンテナ内の pnpm が食い違いに気付いて再インストールを試み、
-> `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY` で起動に失敗する。
+> If you forget `-V`, pnpm inside the container notices the mismatch, tries to
+> reinstall, and fails to start with `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`.
 
-## App Router の仕組み
+## How the App Router works
 
-**`app/` 以下のディレクトリ構造がそのまま URL になる。** ルーティング設定ファイルは書かない。
+**The directory structure under `app/` is the URL.** There is no routing config file.
 
 ```
 app/
-├── layout.tsx          →  全ページ共通の外枠（必須）
+├── layout.tsx          →  shared shell for every page (required)
 ├── page.tsx            →  /
 ├── game/
 │   └── page.tsx        →  /game
 └── users/
-    └── [id]/
-        └── page.tsx    →  /users/123  （[id] は動的セグメント）
+    └── [userId]/
+        └── page.tsx    →  /users/123  ([userId] is a dynamic segment)
 ```
 
-ファイル名には決まった役割がある。
+File names have fixed roles:
 
-| ファイル        | 役割                                                            |
-| --------------- | --------------------------------------------------------------- |
-| `page.tsx`      | そのパスの画面本体。これがあって初めて URL としてアクセスできる |
-| `layout.tsx`    | 配下のページを包む外枠。ページ遷移しても再マウントされない      |
-| `loading.tsx`   | データ取得中に自動で表示される                                  |
-| `error.tsx`     | エラー時に自動で表示される（Client Component 必須）             |
-| `not-found.tsx` | 404 のときに表示される                                          |
-| `route.ts`      | 画面ではなく API エンドポイントを作る場合                       |
+| File            | Role                                                              |
+| --------------- | ----------------------------------------------------------------- |
+| `page.tsx`      | The screen for that path; the URL only exists once this file does |
+| `layout.tsx`    | Wrapper around descendant pages; not remounted on navigation      |
+| `loading.tsx`   | Shown automatically while data loads                              |
+| `error.tsx`     | Shown automatically on errors (must be a Client Component)        |
+| `not-found.tsx` | Shown for 404s                                                    |
+| `route.ts`      | An API endpoint instead of a screen                               |
 
-ルートレイアウト（[app/layout.tsx](app/layout.tsx)）だけは `<html>` と `<body>` を自分で書く。
-`metadata` を export するだけで `<head>` が生成され、ページ側で同じものを export すれば上書きできる。
-フォントは `next/font` でビルド時に取り込むため、実行時に Google へのリクエストは飛ばない。
+Only the root layout ([app/layout.tsx](app/layout.tsx)) writes `<html>` and `<body>`.
+Exporting `metadata` (or `generateMetadata`) produces `<head>`; a page can export its
+own to override it. Fonts are bundled at build time via `next/font`, so no request
+goes to Google at runtime.
 
-## Server Component と Client Component
+## Server Components and Client Components
 
-App Router では **すべてのコンポーネントがデフォルトで Server Component**。
-これが Pages Router との一番大きな違い。
+In the App Router **every component is a Server Component by default** — the
+biggest difference from the Pages Router.
 
-|                          | Server Component（既定）     | Client Component（`"use client"`） |
-| ------------------------ | ---------------------------- | ---------------------------------- |
-| どこで動くか             | サーバーのみ                 | サーバー（初回 HTML）＋ブラウザ    |
-| `useState` / `useEffect` | 使えない                     | 使える                             |
-| `onClick` などのイベント | 使えない                     | 使える                             |
-| DB や秘密鍵へのアクセス  | できる（ブラウザに漏れない） | できない                           |
-| JS バンドルサイズ        | 増えない                     | 増える                             |
+|                            | Server Component (default) | Client Component (`"use client"`) |
+| -------------------------- | -------------------------- | --------------------------------- |
+| Where it runs              | Server only                | Server (first HTML) + browser     |
+| `useState` / `useEffect`   | Not available              | Available                         |
+| Event handlers (`onClick`) | Not available              | Available                         |
+| DB / secret access         | Allowed (never leaks)      | Not allowed                       |
+| JS bundle size             | Free                       | Adds to the bundle                |
 
 ```tsx
-// Server Component（既定）: async にして直接 await できる
+// Server Component (default): can be async and await directly
 export default async function Page() {
   const res = await fetch("http://backend:4000");
   const data = await res.json();
@@ -90,7 +93,7 @@ export default async function Page() {
 ```
 
 ```tsx
-"use client"; // ← ファイル先頭に書くと Client Component になる
+"use client"; // ← first line of the file makes it a Client Component
 
 import { useState } from "react";
 
@@ -100,116 +103,102 @@ export default function Counter() {
 }
 ```
 
-使い分けの方針:
+Guidelines:
 
-1. **まず Server Component で書く**
-2. 状態・イベントハンドラ・ブラウザ API（`window`、`localStorage`）が必要になったら、**その部分だけ**を小さな Client Component に切り出す
-3. ページ全体に `"use client"` を付けるのは避ける（配下すべてがクライアント側に送られてしまう）
+1. **Write Server Components first.**
+2. When you need state, event handlers or browser APIs (`window`, `localStorage`),
+   extract **just that part** into a small Client Component.
+3. Avoid putting `"use client"` on a whole page — everything below it ships to the client.
+4. Functions cannot cross the RSC boundary: passing `component={Link}` from a
+   Server Component into a Mantine component throws at render time. Wrap it in a
+   tiny Client Component instead (see `components/auth-link.tsx`).
 
-## ディレクトリ構成
+## Directory layout
 
-**`app/` `components/` `lib/` の 3 つだけ。** 迷ったら「URL になるか / 複数の画面から使うか」で決まる。
+**Only `app/`, `components/` and `lib/`.** When unsure, ask: “does it become a URL /
+is it used by more than one screen?”
 
 ```
 frontend/
-├── app/                  ルーティングと画面（App Router）
-│   ├── layout.tsx        ルートレイアウト
-│   ├── globals.css       Tailwind と Mantine の読み込み・レイヤー順・トークン橋渡し
-│   ├── page.tsx          /
-│   └── login/page.tsx    /login
-├── components/           複数の画面から使う UI 部品
-│   ├── google-login-button.tsx
-│   ├── link-button.tsx
-│   └── quoridor-mark.tsx
-├── lib/                  UI ではない共通ロジック
-│   ├── theme.ts          Mantine のテーマ（配色・フォント・既定値）
-│   ├── api.ts            バックエンドの URL 組み立て
-│   └── login-error.ts    エラーコード → 表示文言
-├── public/               静的ファイル（/next.svg のように参照）
-├── eslint.config.mjs     ESLint 設定（Flat Config）
-├── .prettierrc.json      Prettier 設定
-├── next.config.ts        Next.js 設定
-├── postcss.config.mjs    Mantine プリセットと TailwindCSS を登録
-└── tsconfig.json         TypeScript 設定（strict / パスエイリアス）
+├── app/                  routing and screens (App Router)
+├── components/           UI parts shared by two or more screens
+├── lib/                  shared non-UI logic (theme, API URLs, request helper)
+├── messages/             ja / en / fr translation catalogs (next-intl)
+├── i18n/                 locale config and request resolver
+└── public/               static files
 ```
 
-置き場所の決め方:
+Placement rules:
 
-| 書きたいもの                | 置き場所                             |
-| --------------------------- | ------------------------------------ |
-| 画面そのもの（URL を持つ）  | `app/<パス>/page.tsx` に**直接書く** |
-| その画面でしか使わない部品  | 同じ `page.tsx` の中、または隣に置く |
-| 2 つ以上の画面から使う部品  | `components/`                        |
-| UI を持たない処理・定数・型 | `lib/`                               |
+| What you are writing            | Where it goes                         |
+| ------------------------------- | ------------------------------------- |
+| A screen (has a URL)            | **Directly in** `app/<path>/page.tsx` |
+| A part used only by that screen | Inside/next to that `page.tsx`        |
+| A part used by 2+ screens       | `components/`                         |
+| Non-UI logic, constants, types  | `lib/`                                |
 
-- **画面を `app/` の外に出さない。** `page.tsx` は「呼ぶだけの薄い入口」にせず、画面の中身をそこに書く。
-  どこに何が描かれているかを URL から 1 ホップで辿れる状態を保つため
-- **`components/` は最初から入れない。** 2 つ目の画面で使うことになった時点で移す。
-  先回りして共通化すると、実際には共通でなかった部品が溜まる
-- ファイル名は kebab-case、export は名前付き（`page.tsx` の default export だけ例外）
-- 機能が増えて `components/` が平らなまま辛くなったら、その時に
-  `components/game/` のようなサブディレクトリで切る。空のディレクトリを先に作らない
+- **Don't move screens out of `app/`.** Keep the screen body in `page.tsx` rather
+  than making it a thin wrapper, so anyone can go from URL to code in one hop.
+- **Don't start in `components/`.** Move a part there when a second screen needs
+  it; premature extraction accumulates parts that were never actually shared.
+- File names are kebab-case; exports are named (only `page.tsx` default-exports).
+- When flat `components/` starts to hurt, cut subdirectories like
+  `components/game/` at that moment — never create empty directories in advance.
 
-`tsconfig.json` の `paths` で `@/*` がプロジェクトルートを指すので、`../../` を書かずに済む:
+`@/*` maps to the project root (`tsconfig.json` paths), so no `../../` imports:
 
 ```tsx
 import { apiUrl } from "@/lib/api";
 import { QuoridorMark } from "@/components/quoridor-mark";
 ```
 
-## 型定義とスキーマの同期
+## Types and schema
 
-DB スキーマの TypeScript 版は `lib/types.ts` に置き、**手作業で同期させる必要がある**
-（フロントから DB を触るようになった時点で作る。現状は未作成）。
+API response types are declared next to their consumers (e.g. `lib/stats.ts`,
+`lib/auth.ts`, socket types in `components/use-game-socket.ts`), each mirroring the
+backend handler DTO it corresponds to — the comment on each type names its Go
+counterpart. Keep the two in sync by hand when a handler changes.
 
-```
-docs/database-design.md          設計の正本（人が読む）
-        │  写す
-        ├──────────────────────────────┐
-        ▼                              ▼
-backend/infrastructure/model.go  frontend/lib/types.ts
-   GORM の構造体（→ Atlas）         フロントの型
-```
-
-押さえておくこと:
-
-- **スキーマを変えたら 3 箇所すべてを直す。** 自動生成は無いので、ここだけは仕組みで守られていない
-- **これは「テーブル定義」であって「API のレスポンス形」ではない。** `passwordHash` や `tokenHash` のようにクライアントへ絶対に送ってはいけない項目を含む。API のレスポンス型はこれを直接使わず、必要な項目だけを選んだ別の型を定義する
-- `Timestamp` は `string`。Go 側は `time.Time`（`timestamptz`）だが JSON を経由すると文字列になるため、`Date` として扱いたい場合は受け取り側で変換する
-- `owner?` `user?` のような省略可能プロパティは **JOIN して取得したときだけ入る**。存在を前提にしない
+- These are **API response shapes, not table definitions**. Server-only fields
+  (`password_hash`, `token_hash`, `storage_key`) never appear in them.
+- Timestamps arrive as `string` over JSON; convert to `Date` at the consumer if needed.
+- The authoritative database schema is the generated documentation in
+  [docs/schema/](../docs/schema/README.md) (tbls output per table with ER diagrams).
 
 ## TailwindCSS v4 + Mantine v9
 
-**スタイリングの土台は Tailwind、コンポーネントは Mantine** の二段構え。
-ボタン・カード・アラート・モーダルのようなプリミティブは自作せず
-[@mantine/core](https://mantine.dev/) から import し、既製のブロックは
-[ui.mantine.dev](https://ui.mantine.dev/) からコピーして `app/` や `components/` に置く。
-そこへの微調整（余白・レイアウト・字送り）を Tailwind のユーティリティで当てる。
+**Tailwind is the styling substrate; Mantine supplies the components.**
+Don't hand-roll primitives (buttons, cards, alerts, modals) — import them from
+[@mantine/core](https://mantine.dev/), copy ready-made blocks from
+[ui.mantine.dev](https://ui.mantine.dev/) into `app/`/`components/`, then adjust
+spacing/layout with Tailwind utilities.
 
-### レイヤー順がすべて
+### Layer order is everything
 
-同居の要は [app/globals.css](app/globals.css) 冒頭の 1 行。
-**後ろのレイヤーほど強い**ので、この順序が優先順位の正本になる。
+The whole coexistence hangs on the first line of [app/globals.css](app/globals.css).
+**Later layers win**, so this order is the authority on precedence:
 
 ```css
 @layer theme, base, mantine, components, utilities;
 
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base);
-@import "@mantine/core/styles.layer.css"; /* 中身が @layer mantine で包まれている */
+@import "@mantine/core/styles.layer.css"; /* internally wrapped in @layer mantine */
 @import "tailwindcss/utilities.css" layer(utilities);
 ```
 
-- `base`（Tailwind の reset）より `mantine` が後ろ → preflight が Mantine の見た目を壊さない
-- `mantine` より `utilities` が後ろ → **`<Paper className="p-0">` のように Tailwind で上書きできる。`!important` は不要**
-- `@mantine/core/styles.css` ではなく **`styles.layer.css`** を読むこと。前者はレイヤーに入っておらず、順序制御が効かない
-- `@import "tailwindcss"` の一括読み込みも使わない。Mantine を base と utilities の**間**に挟めなくなる
+- `mantine` after `base` (Tailwind's reset) → preflight can't break Mantine's look
+- `utilities` after `mantine` → **`<Paper className="p-0">` works without `!important`**
+- Import **`styles.layer.css`**, not `@mantine/core/styles.css` — the latter is
+  unlayered and escapes ordering control
+- Don't use the all-in-one `@import "tailwindcss"` either; it prevents inserting
+  Mantine **between** base and utilities
 
-### 色とトークン
+### Colors and tokens
 
-配色の実体は [lib/theme.ts](lib/theme.ts)（`createTheme`）にしかない。
-Tailwind 側へは `globals.css` の `@theme inline` で橋渡ししてあるので、
-**Tailwind のクラスからも同じ色を引ける**。
+Colors exist in exactly one place: [lib/theme.ts](lib/theme.ts) (`createTheme`).
+`@theme inline` in `globals.css` bridges them to Tailwind class names, so both
+worlds resolve to the same values:
 
 ```tsx
 <main className="bg-body">        {/* → var(--mantine-color-body) */}
@@ -217,80 +206,74 @@ Tailwind 側へは `globals.css` の `@theme inline` で橋渡ししてあるの
 <span className="bg-emerald-500"> {/* → var(--mantine-color-emerald-5) */}
 ```
 
-- **生の色を書かないこと。** `bg-[#0f172a]` や `text-slate-400` は禁止。
-  配色を変えたい時に `theme.ts` 一箇所で終わらせるため
-- 色を足したい時は `theme.ts` に 10 段のタプルで追加し、`globals.css` の
-  `@theme inline` に対応行を足す
-- 配色は dark 基調に固定（`layout.tsx` の `forceColorScheme="dark"`）。
-  切り替えを入れるならそれを外して `useMantineColorScheme` を使う
+- **Never write raw colors.** `bg-[#0f172a]` and `text-slate-400` are banned, so a
+  palette change stays a one-file edit in `theme.ts`.
+- To add a color: add a 10-step tuple in `theme.ts` and matching lines in
+  `@theme inline`.
+- The scheme is fixed to dark (`forceColorScheme="dark"` in `layout.tsx`).
 
-### どちらで書くかの目安
+### Which tool for what
 
-| やりたいこと                              | 使うもの                                   |
-| ----------------------------------------- | ------------------------------------------ |
-| ボタン・入力・カード・モーダル・通知      | Mantine のコンポーネント                   |
-| 余白・整列・グリッド・レスポンシブ        | Tailwind のユーティリティ                  |
-| Mantine コンポーネントの props で足りる分 | Mantine の props（`gap` `c` `maw` `size`） |
-| props にも Tailwind にも無い複雑な指定    | 隣に置く `*.module.css`（最後の手段）      |
+| Goal                                          | Use                                      |
+| --------------------------------------------- | ---------------------------------------- |
+| Buttons, inputs, cards, modals, notifications | Mantine components                       |
+| Spacing, alignment, grids, responsiveness     | Tailwind utilities                       |
+| Anything a Mantine prop covers                | Mantine props (`gap` `c` `maw` `size`)   |
+| Complex styles beyond props and Tailwind      | A colocated `*.module.css` (last resort) |
 
-`*.module.css` では `rem()` と `$mantine-breakpoint-*` が使える
-（[postcss.config.mjs](postcss.config.mjs) の `postcss-preset-mantine` /
-`postcss-simple-vars`）。素の `px` は書かず `rem()` を通すこと。
+`*.module.css` files can use `rem()` and `$mantine-breakpoint-*`
+([postcss.config.mjs](postcss.config.mjs)). Never write bare `px`; go through `rem()`.
 
-### アイコン
+### Icons
 
-Mantine が公式に前提としている [@tabler/icons-react](https://tabler.io/icons) を使う。
+Use [@tabler/icons-react](https://tabler.io/icons), Mantine's assumed icon set.
+Only product-specific marks (logo, Google G) live in `components/*-mark.tsx`.
 
-```tsx
-import { IconArrowRight } from "@tabler/icons-react";
+## Internationalization
 
-<Button rightSection={<IconArrowRight size={18} />}>始める</Button>;
-```
+next-intl with cookie-based locale (no URL prefix). `i18n/request.ts` resolves the
+locale from the `NEXT_LOCALE` cookie (default `ja`); catalogs live in
+`messages/{ja,en,fr}.json`. Rules:
 
-プロダクト固有の意匠（ロゴ、Google の G マーク）だけ `components/*-mark.tsx` に置く。
+- Every user-facing string goes through `useTranslations` (client) or
+  `getTranslations` (server). No hardcoded copy.
+- Counts use ICU plurals; dates and numbers go through `useFormatter`.
+- API/WebSocket errors are translated on the client keyed by the server's
+  machine-readable `code`, falling back to the server message.
 
-### Server Component との噛み合わせ
+## Calling the backend
 
-Mantine のコンポーネントは `"use client"` 付きで配布されているので、
-**Server Component からそのまま import してよい**。ただし RSC 境界を関数は越えられないため、
-次の 2 つは Client Component 側に閉じ込める必要がある。
+The URL differs by caller:
 
-- `lib/theme.ts` … `Button.extend()` を使うので先頭に `"use client"` が必要
-- `component={Link}` … 関数を props で渡すことになるので不可。
-  [components/link-button.tsx](components/link-button.tsx) のような小さなラッパーを挟む
+| Caller                           | URL                                                                             |
+| -------------------------------- | ------------------------------------------------------------------------------- |
+| Client Component / browser       | `process.env.NEXT_PUBLIC_API_URL` (default `https://localhost:8443`, via Caddy) |
+| Server Component / Route Handler | `API_URL` (`http://backend:4000`, container-to-container)                       |
 
-## バックエンドを呼ぶ
+Only variables prefixed `NEXT_PUBLIC_` are embedded in the browser bundle —
+so **never put secrets behind a `NEXT_PUBLIC_` name**.
 
-呼び出し元がブラウザかサーバーかで、使う URL が違う。
-
-| 呼び出し元                       | URL                                                          |
-| -------------------------------- | ------------------------------------------------------------ |
-| Client Component / ブラウザ      | `process.env.NEXT_PUBLIC_API_URL`（`http://localhost:4000`） |
-| Server Component / Route Handler | `http://backend:4000`（コンテナ間通信）                      |
-
-`NEXT_PUBLIC_` が付いた環境変数**だけ**がブラウザ向けのバンドルに埋め込まれる。
-逆に言うと、**秘密にしたい値に `NEXT_PUBLIC_` を付けてはいけない**。
-
-許可されるオリジンはバックエンド側の `backend/main.go` の `allowedOrigins` にある。
-サービス間の関係はルートの [README.md](../README.md#サービス間の関係) を参照。
+Allowed origins are listed in `backend/cmd/serv/main.go` (`allowedOrigins` for CORS,
+`allowedWSOrigins` for WebSocket handshakes). See the root
+[README](../README.md) for the service topology and HTTPS setup.
 
 ## Lint / Format
 
-役割を分けている。
+Responsibilities are split:
 
-- **Prettier**（[.prettierrc.json](.prettierrc.json)）… 整形だけを担当
-- **ESLint**（[eslint.config.mjs](eslint.config.mjs)）… バグや規約違反の検出だけを担当
+- **Prettier** ([.prettierrc.json](.prettierrc.json)) — formatting only
+- **ESLint** ([eslint.config.mjs](eslint.config.mjs)) — bug/convention detection only
 
-`eslint-config-prettier` を設定の**最後**に置いて ESLint 側の整形系ルールを無効化しているので、
-両者が衝突して直し合いになることはない。
+`eslint-config-prettier` sits **last** in the ESLint config to disable stylistic
+rules, so the two never fight.
 
 ```bash
-pnpm format      # 整形する
-pnpm lint        # 静的解析
-pnpm lint:fix    # 自動修正できるものを直す
+pnpm format      # format
+pnpm lint        # static analysis
+pnpm lint:fix    # apply auto-fixes
 ```
 
-CI は [frontend-lint-format.yml](../.github/workflows/frontend-lint-format.yml)。
-`frontend/**` に変更がある PR / push で走るので、push 前に `pnpm format && pnpm lint` を通しておくと落ちない。
+CI: [frontend-lint-format.yml](../.github/workflows/frontend-lint-format.yml) runs on
+PRs/pushes touching `frontend/**`. Run `pnpm format && pnpm lint` before pushing.
 
-レビュー観点は [pull_request_template.md](../.github/pull_request_template.md) にある。
+Review checklist: [pull_request_template.md](../.github/pull_request_template.md).
