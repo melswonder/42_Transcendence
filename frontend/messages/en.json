@@ -377,5 +377,11 @@
         "body": "Changes will be announced on this page. Continued use after a change constitutes acceptance of the updated terms."
       }
     }
+  },
+  "profile": {
+    "title": "Profile",
+    "memberSince": "Joined {date}",
+    "level": "Level",
+    "xp": "XP"
   }
 }

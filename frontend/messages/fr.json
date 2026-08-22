@@ -377,5 +377,11 @@
         "body": "Les modifications seront annoncées sur cette page. La poursuite de l'utilisation vaut acceptation des conditions mises à jour."
       }
     }
+  },
+  "profile": {
+    "title": "Profil",
+    "memberSince": "Inscrit le {date}",
+    "level": "Niveau",
+    "xp": "XP"
   }
 }
