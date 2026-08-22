@@ -1,0 +1,17 @@
+# ブラウザからの接続を HTTPS / WSS にするためのリバースプロキシ。
+# 証明書は Caddy のローカル CA による自己署名（開発・評価用）。
+# コンテナ間の内側の通信は平文のままでよい（課題の要件どおり）。
+
+{
+	local_certs
+}
+
+# フロントエンド
+https://localhost {
+	reverse_proxy frontend:3000
+}
+
+# バックエンド API（WebSocket / SSE もこのまま通る）
+https://localhost:8443 {
+	reverse_proxy backend:4000
+}

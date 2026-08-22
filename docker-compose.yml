@@ -60,9 +60,9 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       # Google Cloud Console に登録した値と完全一致させる必要がある。
       # ブラウザがアクセスする URL なので db や backend ではなく localhost。
-      GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL:-http://localhost:4000/auth/google/callback}
+      GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL:-https://localhost:8443/auth/google/callback}
       # ログイン後の戻り先。
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
     depends_on:
       db:
         condition: service_healthy
@@ -84,7 +84,7 @@ services:
     environment:
       # クライアントサイド（ブラウザ）からのアクセス用
       # ブラウザから実行されるため、localhost を使用
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://localhost:8443}
       # Server Component から呼ぶとき用。コンテナ内では localhost は
       # frontend 自身を指すので、サービス名で backend を呼ぶ。
       API_URL: http://backend:4000
@@ -97,6 +97,22 @@ services:
     networks:
       - transcendence-network
 
+  # ブラウザからの HTTPS / WSS の入口。証明書はローカル CA の自己署名。
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    ports:
+      - "443:443"   # https://localhost      -> frontend
+      - "8443:8443" # https://localhost:8443 -> backend (API / WSS)
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - transcendence-network
+
 networks:
   transcendence-network:
     name: transcendence-network
@@ -105,5 +121,7 @@ networks:
 volumes:
   postgres_data:
     name: postgres_data
+  caddy_data:
+    name: caddy_data
   media_data:
     name: media_data
