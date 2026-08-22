@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
+
 	"transcendence-backend/domain"
 	"transcendence-backend/usecase"
 )
@@ -47,6 +49,14 @@ func parseMatchFilter(r *http.Request, withPaging bool) (usecase.MatchFilter, er
 	}
 
 	f := usecase.MatchFilter{From: from, To: to, Mode: mode, Outcome: outcome}
+
+	if raw := q.Get("opponent"); raw != "" {
+		opponentID, err := uuid.Parse(raw)
+		if err != nil {
+			return usecase.MatchFilter{}, domain.ErrInvalidOpponent
+		}
+		f.Opponent = &opponentID
+	}
 
 	if withPaging {
 		f.Limit = parseBoundedInt(q.Get("limit"), defaultLimit, 1, maxLimit)

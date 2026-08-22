@@ -84,3 +84,4 @@ func (u *StatsUsecase) Leaderboard(
 
 	return entries, me, total, nil
 }
+

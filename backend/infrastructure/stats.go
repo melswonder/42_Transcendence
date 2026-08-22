@@ -50,6 +50,14 @@ func statsWhere(userID uuid.UUID, f usecase.MatchFilter) (string, []any) {
 		conds = append(conds, "mp.outcome = ?")
 		args = append(args, f.Outcome)
 	}
+	if f.Opponent != nil {
+		// 集計側のクエリは opp を JOIN していないので EXISTS で相手を絞る。
+		conds = append(conds, `EXISTS (
+			SELECT 1 FROM match_participants opp
+			WHERE opp.match_id = m.id AND opp.user_id = ?
+		)`)
+		args = append(args, *f.Opponent)
+	}
 
 	return strings.Join(conds, " AND "), args
 }
@@ -341,3 +349,4 @@ func (r *StatsRepo) LeaderboardEntryOf(
 
 	return &entry, nil
 }
+

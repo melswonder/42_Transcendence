@@ -17,8 +17,10 @@ type MatchFilter struct {
 	To      *time.Time
 	Mode    string
 	Outcome string
-	Limit   int
-	Offset  int
+	// Opponent を指定すると「この相手との対戦」だけに絞る。
+	Opponent *uuid.UUID
+	Limit    int
+	Offset   int
 }
 
 // MatchRepository は対戦の永続化。実装は infrastructure 層にある。
