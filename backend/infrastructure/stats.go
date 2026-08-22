@@ -350,3 +350,26 @@ func (r *StatsRepo) LeaderboardEntryOf(
 	return &entry, nil
 }
 
+// Opponents は対戦したことのある相手を名前順で返す。
+// フィルタのドロップダウンに出すだけなので、件数は現実的な範囲に収まる想定。
+func (r *StatsRepo) Opponents(ctx context.Context, userID uuid.UUID) ([]domain.User, error) {
+	var rows []User
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT DISTINCT u.id, u.display_name, u.handle
+		FROM match_participants mp
+		JOIN matches m ON m.id = mp.match_id
+		JOIN match_participants opp ON opp.match_id = mp.match_id AND opp.user_id <> mp.user_id
+		JOIN users u ON u.id = opp.user_id
+		WHERE mp.user_id = ? AND m.status = ?
+		ORDER BY u.display_name, u.handle
+	`, userID, matchStatusFinished).Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("list opponents: %w", err)
+	}
+
+	users := make([]domain.User, 0, len(rows))
+	for i := range rows {
+		users = append(users, *toDomainUser(&rows[i]))
+	}
+	return users, nil
+}
