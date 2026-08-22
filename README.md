@@ -24,7 +24,7 @@ Key features:
   language switcher, localized dates, numbers and plurals
 - **HTTPS/WSS** everywhere between the browser and the backend (Caddy reverse proxy)
 
-Japanese developer documentation with deeper architectural notes lives in
+Developer documentation with deeper architectural notes lives in
 [`backend/README.md`](backend/README.md) and [`frontend/README.md`](frontend/README.md).
 
 ## Instructions
