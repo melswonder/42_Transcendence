@@ -36,8 +36,16 @@ func corsMiddleware() gin.HandlerFunc {
 		if allowedOrigins[origin] {
 			c.Header("Access-Control-Allow-Origin", origin)
 			c.Header("Access-Control-Allow-Credentials", "true")
-			c.Header("Access-Control-Allow-Methods", "*")
-			c.Header("Access-Control-Allow-Headers", "*")
+			// 資格情報（Cookie）付きでは、ブラウザは Allow-Methods / Allow-Headers の
+			// ワイルドカード "*" を展開しない。preflight を通すため必ず明示する。
+			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+			if h := c.GetHeader("Access-Control-Request-Headers"); h != "" {
+				// preflight が尋ねてきたヘッダをそのまま許可して返す。
+				c.Header("Access-Control-Allow-Headers", h)
+			} else {
+				c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			}
+			c.Header("Vary", "Origin")
 		}
 
 		// プリフライトリクエスト
