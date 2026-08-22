@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslations } from "next-intl";
 
@@ -11,20 +12,25 @@ export function UserCard({ user }: { user: User }) {
   return (
     <Paper p="sm" bg="dark.7">
       <Group justify="space-between" wrap="nowrap">
-        <Group gap="sm" wrap="nowrap" className="min-w-0">
-          <UserAvatar
-            displayName={user.display_name}
-            avatarUrl={user.avatar_url}
-          />
-          <Stack gap={0} className="min-w-0">
-            <Text size="sm" fw={600} truncate>
-              {user.display_name}
-            </Text>
-            <Text size="xs" c="emerald">
-              {t("level", { level: user.level })}
-            </Text>
-          </Stack>
-        </Group>
+        <Link
+          href={`/users/${user.id}`}
+          className="min-w-0 no-underline text-inherit"
+        >
+          <Group gap="sm" wrap="nowrap">
+            <UserAvatar
+              displayName={user.display_name}
+              avatarUrl={user.avatar_url}
+            />
+            <Stack gap={0} className="min-w-0">
+              <Text size="sm" fw={600} truncate>
+                {user.display_name}
+              </Text>
+              <Text size="xs" c="emerald">
+                {t("level", { level: user.level })}
+              </Text>
+            </Stack>
+          </Group>
+        </Link>
         <LogoutButton iconOnly />
       </Group>
     </Paper>

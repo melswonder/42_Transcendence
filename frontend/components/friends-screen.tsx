@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActionIcon,
@@ -59,40 +60,45 @@ function UserRow({
   return (
     <Paper p="sm">
       <Group justify="space-between" wrap="nowrap">
-        <Group gap="sm" wrap="nowrap" className="min-w-0">
-          <Indicator
-            color="emerald"
-            size={12}
-            offset={4}
-            position="bottom-end"
-            withBorder
-            disabled={online === undefined || !online}
-          >
-            <UserAvatar
-              displayName={user.display_name}
-              avatarUrl={user.avatar_url}
-            />
-          </Indicator>
-          <Stack gap={0} className="min-w-0">
-            <Group gap="xs">
-              <Text size="sm" fw={600} truncate>
-                {user.display_name}
+        <Link
+          href={`/users/${user.id}`}
+          className="min-w-0 no-underline text-inherit"
+        >
+          <Group gap="sm" wrap="nowrap">
+            <Indicator
+              color="emerald"
+              size={12}
+              offset={4}
+              position="bottom-end"
+              withBorder
+              disabled={online === undefined || !online}
+            >
+              <UserAvatar
+                displayName={user.display_name}
+                avatarUrl={user.avatar_url}
+              />
+            </Indicator>
+            <Stack gap={0} className="min-w-0">
+              <Group gap="xs">
+                <Text size="sm" fw={600} truncate>
+                  {user.display_name}
+                </Text>
+                {online !== undefined && (
+                  <Badge
+                    size="xs"
+                    variant="light"
+                    color={online ? "emerald" : "gray"}
+                  >
+                    {online ? t("online") : t("offline")}
+                  </Badge>
+                )}
+              </Group>
+              <Text size="xs" c="dimmed" truncate>
+                {t("userLine", { handle: user.handle, level: user.level })}
               </Text>
-              {online !== undefined && (
-                <Badge
-                  size="xs"
-                  variant="light"
-                  color={online ? "emerald" : "gray"}
-                >
-                  {online ? t("online") : t("offline")}
-                </Badge>
-              )}
-            </Group>
-            <Text size="xs" c="dimmed" truncate>
-              {t("userLine", { handle: user.handle, level: user.level })}
-            </Text>
-          </Stack>
-        </Group>
+            </Stack>
+          </Group>
+        </Link>
         <Group gap="xs" wrap="nowrap">
           {right}
         </Group>

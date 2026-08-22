@@ -1,228 +1,242 @@
-# 42_Transcendence
+*This project has been created as part of the 42 curriculum by hirwatan, sguruge, atashiro, ttanaka, kanahash.*
 
-オンライン対戦型 **Quoridor（コリドール）** プラットフォーム。
-Next.js（フロントエンド） + Go（バックエンド） + PostgreSQL の3コンテナ構成。
+# Transcendence — Online Quoridor Platform
 
-## 構成
+## Description
 
-```
-42_Transcendence/
-├── frontend/     フロントエンド : Next.js (App Router) + Tailwind + Mantine → :3000
-│   ├── app/          ルーティングと画面
-│   ├── components/   複数の画面から使う UI 部品
-│   └── lib/          テーマ・API 呼び出しなどの共通ロジック
-├── backend/      バックエンド   : Go (net/http)                        → :4000
-│   ├── cmd/migrate/  GORM の構造体から DDL を生成（Atlas 用）
-│   ├── atlas.hcl     マイグレーション設定
-│   └── infrastructure/model.go   GORM の永続化モデル
-├── db/postgres/  データベース   : PostgreSQL 16                        → :5432
-├── docs/         設計ドキュメント（評価対象。Notion ではなくここが正本）
-├── setup/        ローカル開発環境のセットアップスクリプト
-├── docker-compose.yml
-└── Makefile      docker compose のラッパー
-```
+**Transcendence** is a real-time online platform for playing **Quoridor** — the classic
+board game where two players race their pawns across a 9×9 board while placing walls
+to slow each other down.
 
-各ディレクトリの詳細はそれぞれの README を参照:
+Key features:
 
-- [frontend/README.md](frontend/README.md) — App Router、Server/Client Component、ディレクトリ構成、Tailwind + Mantine、Lint/Format
-- [backend/README.md](backend/README.md) — Clean Architecture の考え方、層の追加方法、DB マイグレーション、Lint/Format
+- **Real-time matches** between remote players over WebSocket, with a
+  server-authoritative rules engine (moves, jumps, wall placement, BFS path
+  validation, timeouts, reconnection with a grace period)
+- **Quick matchmaking**, Elo rating, XP/levels, achievements, match history,
+  statistics dashboard and leaderboard
+- **Spectator mode**: watch any live match with live updates and spectator counts
+- **Accounts**: email + password (bcrypt) and Google OAuth 2.0 sign-in, profile
+  pages, avatars with content validation, friends with online status
+- **Public REST API** authenticated by hashed API keys with scopes, rate limiting
+  and OpenAPI documentation
+- **Internationalization**: full Japanese / English / French translations with a
+  language switcher, localized dates, numbers and plurals
+- **HTTPS/WSS** everywhere between the browser and the backend (Caddy reverse proxy)
 
-## ドキュメント
+Japanese developer documentation with deeper architectural notes lives in
+[`backend/README.md`](backend/README.md) and [`frontend/README.md`](frontend/README.md).
 
-設計資料は `docs/` に置く。**Notion は下書きであり、評価対象は Git リポジトリ内のこちら。**
+## Instructions
 
-| ドキュメント | 内容 |
+### Prerequisites
+
+- **Docker** (Docker Desktop or an equivalent with Compose v2) and **make**
+- A **Google OAuth client** (only needed for Google sign-in; email/password works without it)
+- Optional, for running checks outside containers: Go ≥ 1.26, Node ≥ 22 with pnpm, Atlas CLI
+
+### Setup
+
+1. Clone the repository and create your environment file:
+
+   ```bash
+   git clone <repository-url> && cd 42_Transcendence
+   cp .env.example .env
+   ```
+
+2. Fill in the Google OAuth values in `.env` (`GOOGLE_CLIENT_ID`,
+   `GOOGLE_CLIENT_SECRET`). In the
+   [Google Cloud Console](https://console.cloud.google.com/apis/credentials),
+   register the authorized redirect URI (exact match required):
+
+   ```
+   https://localhost:8443/auth/google/callback
+   ```
+
+3. Build and start everything with a single command:
+
+   ```bash
+   make
+   ```
+
+4. Open **https://localhost** (frontend) and **https://localhost:8443** (API) once
+   each and accept the locally-generated certificate (Caddy issues a self-signed
+   local CA for development). Then sign up and play.
+
+Useful commands:
+
+| Command | What it does |
 | --- | --- |
-| [docs/database-design.md](docs/database-design.md) | DB 設計の正本。全テーブル・制約・インデックス・トランザクション境界・Redis キー |
+| `make` | Build images and start db / backend / frontend / caddy |
+| `make down` / `make logs` / `make re` | Stop, tail logs, rebuild from scratch |
+| `cd backend && go test ./...` | Backend unit tests (domain rules, sessions, keys) |
+| `cd frontend && pnpm lint && pnpm format:check` | Frontend lint / format checks |
+| `cd backend && make swagger-serve` | OpenAPI UI at http://localhost:4000/swagger/index.html |
 
-## 技術スタック
+Database migrations (Atlas) are applied automatically when the backend container
+starts. Legal pages are served at `/privacy` and `/terms`.
 
-### 現在使っているもの
+## Team Information
 
-| 領域 | 技術 | 選定理由 |
+| Login | Role(s) | Responsibilities |
 | --- | --- | --- |
-| フロントエンド | **Next.js** (App Router) + TypeScript | 課題が求めるフレームワーク要件を満たす。SSR とファイルベースルーティングでページ追加のコストが低い |
-| スタイリング | **TailwindCSS** | 盤面 UI をレスポンシブに組むのに、独自 CSS を書かずクラスだけで完結できる |
-| UI コンポーネント | **Mantine** | ボタン・フォーム・モーダルを自作せずに済み、ui.mantine.dev の既製ブロックをそのまま持ってこられる。カスケードレイヤーで Tailwind と共存させている |
-| バックエンド | **Go** + **Gin** | goroutine による並行処理が WebSocket の多重接続を捌く用途に向く。Gin はルート木（パスパラメータ・グループ化）とミドルウェアチェーンを担い、Go で最も採用例が多くレビュー資料も豊富 |
-| バックエンド設計 | **Clean Architecture** | ゲームルール（domain）を HTTP・DB・WebSocket から独立させ、単体テストできる状態に保つ |
-| データベース | **PostgreSQL 16** | 後述 |
-| ORM | **GORM** | Go で最も広く使われる ORM。構造体からスキーマを導出でき、`cmd/migrate` の仕組みがそのまま使える |
-| マイグレーション | **Atlas** (`ariga.io/atlas`) | GORM の `AutoMigrate` と違い、**バージョン管理された SQL ファイル**として差分を残せる。ロールバック手順を持てる |
-| 実行環境 | **Docker Compose** | `cp .env.example .env` の後、単一コマンドで全サービスが起動する |
-| ホットリロード | **air**（Go） / Next.js dev server | `backend/` `frontend/` をコンテナにマウントしているため、編集が即反映される |
-| Lint / Format | **golangci-lint v2**（Go） / **ESLint + Prettier**（TS） | CI と同じチェックをローカルで実行できる |
+| **hirwatan** | Product Owner / Developer | Product direction and backlog, validation of completed work; authentication (email+password, OAuth 2.0), framework migration (Gin), HTTPS/Caddy, repository administration |
+| **ttanaka** | Project Manager / Developer | Planning, task tracking and coordination; Quoridor rules engine, real-time synchronization, remote play and reconnection logic |
+| **sguruge** | Technical Lead / Developer | Architecture (Clean Architecture layering) and code review; user management, friends & presence, statistics, achievements, spectator mode |
+| **atashiro** | Developer | Public API with API keys and rate limiting, analytics dashboard filters and exports |
+| **kanahash** | Developer | ORM data layer, internationalization (ja/en/fr), shared UI (modals, auth screens) |
 
-### なぜ PostgreSQL を選んだか
+## Project Management
 
-このプロジェクトは**アプリケーションのバグやレースコンディションを DB 制約で止める**方針を採っている（[docs/database-design.md](docs/database-design.md) §1）。そのために以下が必要で、いずれも PostgreSQL で使える。
+- **Task organization**: GitHub Issues for planned work and a shared task sheet for
+  module checklists; work was split into small feature branches with one PR each.
+- **Code review**: every change went through a pull request into `main`; an
+  automated review workflow plus at least one teammate reviewed significant PRs.
+  Commits are small and layered (schema → domain → usecase → infrastructure →
+  handler → UI) so each commit builds on its own.
+- **Communication**: a team Discord server for daily coordination, plus PR
+  comments (with `[must]/[imo]/[nits]/[ask]/[fyi]` prefixes) for review discussion.
+- **Cadence**: weekly sync to re-prioritize modules and unblock work.
 
-- **partial unique index** — 「進行中の対局に同時参加できない」「退会済みユーザーは handle の一意性判定から外す」といった条件付き一意制約
-- **CHECK 制約** — 盤面座標の範囲（0〜8）、`walls_remaining + walls_used = 10` のような複数列にまたがる不変条件
-- **`citext`** — 大文字小文字を区別しないメールアドレスの一意性
-- **`JSONB`** — `match_actions.payload` に操作内容を型を固定せず保存する
-- **`TIMESTAMPTZ`** — タイムゾーン付きの時刻。タイムアウト判定の正本になる
-- **トランザクションと行ロック** — `SELECT ... FOR UPDATE` で同一ターンの競合操作を直列化する
+## Technical Stack
 
-MySQL でも大半は代替できるが、partial unique index が無いため上記の二重参加防止をアプリ側検証に逃がすことになる。設計方針と合わないため PostgreSQL を選んだ。
-
-### フレームワークの使用箇所
-
-「依存を足しただけ」にならないよう、どこで何を使っているかを明記する。
-
-**Next.js（frontend/）**
-- ルーティング: `app/` のファイルベースルーティングで 12 画面（`/` `/login` `/game` `/watch` `/friends` `/settings` `/stats` `/matches` `/achievements` `/leaderboard` ほか）。パスは `app/<route>/page.tsx` がそのまま URL になる
-- コンポーネント構造: Server Component（`page.tsx` で認証・データ取得）と Client Component（`components/` の盤面・フォーム・WebSocket フック）を分離。共通レイアウトは `app/layout.tsx` と `components/app-shell.tsx`
-- そのほか `next/navigation`（ルーター・searchParams）、`generateMetadata`、`next-intl` プラグインを実使用
-
-**Gin（backend/）**
-- ルーティング: `handler/handler.go` の `NewRouter` が全ルートを `gin.Engine` で組む。ルートグループ（`/auth` `/game` `/users` `/media` `/friends` `/apikeys` `/v1` …）とパスパラメータ（`/users/:userId` と `/users/me` の共存など）は Gin のルート木が解決する
-- ミドルウェア: `cmd/serv/main.go` で `gin.Recovery()` → アクセスログ → CORS をチェーン。パニックでもプロセスは落ちず、リクエストごとに 1 行のログが出る
-- 各ハンドラは `wrapF` アダプタ経由の `net/http` 形式のままなので、Clean Architecture の内側は Gin を知らない
-
-### 今後追加する予定のもの
-
-| 領域 | 技術 | 対応 Issue |
+| Area | Choice | Why |
 | --- | --- | --- |
-| キャッシュ・presence・Pub/Sub | Redis（現在はメモリ上。複数インスタンス化のとき） | [#3](../../issues/3) |
-| リバースプロキシ / HTTPS・WSS | Caddy または Nginx | [#15](../../issues/15) |
+| Frontend | **Next.js 16** (App Router) + TypeScript | File-based routing and the Server/Client component split fit our screens; SSR keeps first paint fast |
+| UI | **Mantine** + **Tailwind CSS v4** | Ready-made accessible components combined with utility styling; they coexist through CSS cascade layers |
+| i18n | **next-intl** | Cookie-based locale without URL changes; ICU messages give plurals and localized dates/numbers |
+| Backend | **Go 1.26** + **Gin** | Goroutines handle many concurrent WebSocket connections; Gin provides the route tree (path params, groups) and the middleware chain (recovery → access log → CORS) |
+| Architecture | **Clean Architecture** | Game rules live in `domain` with zero HTTP/DB imports, so the whole rules engine is unit-testable |
+| Real-time | **coder/websocket** (WS) + SSE | Server-authoritative game state pushed as full snapshots; SSE for statistics refresh |
+| Database | **PostgreSQL 16** | Relational integrity for match/participant data; CHECK constraints and partial unique indexes encode invariants |
+| ORM / migrations | **GORM** + **Atlas** | Struct-driven schema with versioned SQL migrations; transactions guard multi-row updates |
+| Auth | Cookie sessions + **bcrypt** + Google **OAuth 2.0 / OIDC** | Hashed+salted passwords; opaque session tokens stored only as SHA-256 hashes |
+| HTTPS | **Caddy** | One small container terminates TLS for the frontend and the API (including WSS) with a local CA |
 
-## サービス間の関係
+Framework usage in detail (where, not just installed):
 
-```
-ブラウザ ──> frontend (:3000) ──> backend (:4000) ──> db (:5432)
-              Next.js              Go + Gin           PostgreSQL
-```
+- **Next.js**: 14 routes under `frontend/app/` (game, watch, friends, settings,
+  stats, matches, achievements, leaderboard, auth, legal…); Server Components
+  fetch and gate auth, Client Components own the board, forms and WebSocket hook.
+- **Gin**: `backend/handler/handler.go` builds every route on `gin.Engine`
+  (route groups, `/users/:userId` beside `/users/me`); `backend/cmd/serv/main.go`
+  chains `gin.Recovery()`, an access logger and CORS as middleware.
 
-ブラウザから直接叩く API の URL は `NEXT_PUBLIC_API_URL`（既定 `http://localhost:4000`）。
-サーバー間通信ではコンテナ名（`http://backend:4000`）で解決できるが、
-`NEXT_PUBLIC_` 付きの変数はブラウザで評価されるため `localhost` を使う点に注意。
+## Database Schema
 
-## Google OAuth の設定（callback）
+PostgreSQL with 10 tables. Generated, always-up-to-date docs (per-table Markdown +
+ER diagrams) live in [`docs/schema/`](docs/schema/README.md) (`tbls` output).
 
-ログインは Google OAuth 2.0（OIDC）。動かすには Google Cloud Console 側の登録が要る。
+Core relations:
 
-1. [Google Cloud Console](https://console.cloud.google.com/apis/credentials) で OAuth クライアント ID（ウェブアプリケーション）を作成する
-2. **承認済みのリダイレクト URI** に次を登録する（完全一致が必要）
+- `users` — profile, bcrypt `password_hash` (nullable for OAuth-only), rating, XP;
+  partial unique indexes free handles/emails of anonymized accounts
+- `oauth_accounts` — `(provider, provider_account_id)` unique: one Google identity
+  maps to exactly one user
+- `sessions` — SHA-256 token hashes only, 7-day expiry
+- `matches` + `match_participants` — one row per match, two participant rows
+  (seat 0/1) carrying outcome and rating before/after
+- `match_actions` — append-only move log; `action_seq` doubles as the optimistic
+  game version, `(match_id, action_id)` unique gives idempotent retries
+- `friendships` (normalized `user_low_id < user_high_id`), `media_assets`
+  (avatars; hashed storage keys), `user_achievements`, `api_keys` (hashed keys,
+  scopes, expiry/revocation)
 
-   ```
-   http://localhost:4000/auth/google/callback
-   ```
+## Features List
 
-3. ルートの `.env` に発行された値を書く
+| Feature | Owner(s) | Notes |
+| --- | --- | --- |
+| Quoridor rules engine (moves, jumps, walls, BFS path check) | ttanaka | Pure `domain` package, table-driven tests |
+| Real-time match sync, reconnection, idempotent actions | ttanaka | Full-state broadcasts; `gameVersion` + `actionId` |
+| Quick matchmaking, turn/disconnect timeouts | ttanaka | 60s per move, 45s reconnect grace |
+| Elo rating, XP/levels, achievements | sguruge | Applied transactionally on match end |
+| Statistics dashboard, match history, leaderboard, CSV/PDF export | sguruge / atashiro | Filters: date range, mode, result, opponent |
+| Spectator mode with live counts | sguruge | Watch any in-progress match mid-game |
+| Profiles, avatars (validated uploads), friends, online status | sguruge | Content-sniffed png/jpeg/webp ≤ 5MB |
+| Email+password and Google sign-in, separate signup/login screens | hirwatan | bcrypt; timing-safe login errors |
+| Public API with API keys, scopes, rate limiting, OpenAPI | atashiro | 8 data endpoints (GET/POST/PUT/DELETE) |
+| Internationalization ja/en/fr, language switcher | kanahash | ICU plurals, localized dates, translated API errors |
+| Shared modal system (result, confirmations) | kanahash | One shell, swappable content |
+| HTTPS/WSS via Caddy, legal pages | hirwatan | Local CA certificates |
 
-   ```
-   GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
-   GOOGLE_CLIENT_SECRET=xxxx
-   # 省略時は http://localhost:4000/auth/google/callback
-   GOOGLE_REDIRECT_URL=http://localhost:4000/auth/google/callback
-   ```
+## Modules
 
-ログインの流れは `GET /auth/google`（state / nonce を Cookie に預けて同意画面へ）→
-`GET /auth/google/callback`（state を定数時間比較で照合し、不一致は拒否）。
-初回ログインでユーザーが作られ、`(provider, provider_account_id)` のユニーク制約で
-同じ Google アカウントの二重登録を防いでいる。本番で URL が変わるときは、
-Console 側の登録と `GOOGLE_REDIRECT_URL` を同じ値に揃えること。
+Target: 14 points. Claimed: **7 Major (14 pts) + 5 Minor (5 pts) = 19 points.**
 
-## はじめかた
+| # | Module | Type | Pts | Owner | Implementation summary |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Framework for frontend and backend | Major | 2 | hirwatan | Next.js App Router on the frontend; Gin routing + middleware on the backend (see Technical Stack) |
+| 2 | Real-time features (WebSocket) | Major | 2 | ttanaka | Server-authoritative sessions broadcast full board snapshots; graceful disconnect/reconnect; stale ops rejected via `gameVersion`, retries deduplicated via `actionId` |
+| 3 | Public API (API key, rate limit, docs, 5+ endpoints) | Major | 2 | atashiro | `/v1` endpoints (GET/PUT profile, GET matches/stats/leaderboard/friends, POST/DELETE friends) with read/write scopes; raw key shown once, SHA-256 stored; 60 req/min fixed window with `X-RateLimit-*`; Swagger UI |
+| 4 | Complete web-based game (Quoridor) | Major | 2 | ttanaka | 9×9 board, 10 walls each, jump/side-step rules, BFS validates every wall keeps a path; goal/resign/timeout endings |
+| 5 | Remote players | Major | 2 | ttanaka | Separate browsers/PCs play live; latency-safe full-state sync; reconnection grace, then forfeit |
+| 6 | Standard user management | Major | 2 | sguruge | Profile view/edit pages, validated avatar upload with default fallback, friends with online status |
+| 7 | Advanced analytics dashboard | Major | 2 | atashiro | Interactive charts (line/bar/donut), filters (dates, mode, result, opponent), SSE refresh on match end, CSV/PDF export matching current filters |
+| 8 | ORM | Minor | 1 | kanahash | GORM models drive the Atlas schema; repositories use transactions for multi-row updates |
+| 9 | Game statistics / match history | Minor | 1 | sguruge | Wins/losses/rating/ranking/level/XP, dated history with opponents and result types, achievements, leaderboard |
+| 10 | OAuth 2.0 | Minor | 1 | hirwatan | Google OIDC with state/nonce verification (constant-time), first-login user creation, duplicate-identity prevention |
+| 11 | Spectator mode | Minor | 1 | sguruge | Live match list, join mid-game with latest state, real-time updates, read-only, spectator counts |
+| 12 | Multiple languages | Minor | 1 | kanahash | ja/en/fr complete translations incl. API errors; switcher persists via cookie; ICU plurals and localized dates |
 
-### 1. 環境変数
+## Individual Contributions
 
-```bash
-cp .env.example .env
-```
+- **hirwatan** — Authentication end to end: email+password registration/login
+  (bcrypt, timing-equalized failures), Google OAuth with CSRF-safe state
+  handling; migrated routing/middleware from `net/http` to Gin without touching
+  handler internals; Caddy HTTPS/WSS; legal pages; this README. Challenge:
+  credentialed CORS silently rejects wildcard headers — fixed by echoing the
+  preflight's requested headers.
+- **ttanaka** — The game itself: pure-domain Quoridor engine with exhaustive
+  table-driven tests; server-authoritative session layer (optimistic versioning,
+  idempotency keys, timers); WebSocket transport; game/board UI with per-player
+  board orientation. Challenge: making reconnection safe — solved by replaying
+  the append-only action log and broadcasting full snapshots.
+- **sguruge** — User-facing platform: profiles and validated avatar pipeline,
+  friends with reciprocal auto-accept and in-memory presence, statistics
+  aggregation, achievements, spectator attachment that never touches player
+  timers. Challenge: keeping stats queries correct once in-progress matches
+  shared tables with finished ones.
+- **atashiro** — Public surface: API-key lifecycle (hash-only storage, scopes,
+  expiry/revocation), fixed-window rate limiter with inspectable headers,
+  OpenAPI coverage; analytics opponent filter wired through every aggregate and
+  the CSV export. Challenge: proving rate limits and key rejection paths with
+  reproducible curl demos.
+- **kanahash** — Cross-cutting UX: next-intl integration with cookie persistence
+  and per-locale formatting, translation of every screen including error codes;
+  the shared modal system; ORM/migration hygiene. Challenge: React Server
+  Component boundaries — functions can't cross into client components, which
+  shaped several small client wrappers.
 
-| 変数                  | 用途                                       | 既定値                          |
-| --------------------- | ------------------------------------------ | ------------------------------- |
-| `POSTGRES_USER`       | DB ユーザー                                | `postgres`                      |
-| `POSTGRES_PASSWORD`   | DB パスワード                              | `postgres`                      |
-| `POSTGRES_DB`         | DB 名                                      | `transcendence`                 |
-| `DATABASE_URL`        | バックエンドの接続文字列                   | `postgresql://postgres:...`     |
-| `NEXT_PUBLIC_API_URL` | ブラウザから見たバックエンドの URL         | `http://localhost:4000`         |
+## Resources
 
-### 2. Docker で全部起動（推奨）
+- Quoridor rules — Gigamic: https://en.gigamic.com/game/quoridor
+- Next.js App Router: https://nextjs.org/docs
+- Gin: https://gin-gonic.com/docs/ / Go net/http: https://pkg.go.dev/net/http
+- GORM: https://gorm.io/docs/ / Atlas migrations: https://atlasgo.io/docs
+- coder/websocket: https://pkg.go.dev/github.com/coder/websocket
+- next-intl: https://next-intl.dev/docs / ICU MessageFormat: https://unicode-org.github.io/icu/userguide/format_parse/messages/
+- Mantine: https://mantine.dev/ / Tailwind CSS: https://tailwindcss.com/docs
+- OAuth 2.0 / OIDC: https://developers.google.com/identity/openid-connect/openid-connect
+- bcrypt: https://pkg.go.dev/golang.org/x/crypto/bcrypt
+- Caddy: https://caddyserver.com/docs/
+- tbls (schema docs): https://github.com/k1LoW/tbls
 
-```bash
-make        # build + up
-make logs   # ログを追う
-make down   # 停止・削除
-```
+### How AI was used
 
-- http://localhost:3000 … フロントエンド
-- http://localhost:4000 … バックエンド（`{"message":"Hello from Go!"}` が返る）
+AI assistance (Claude, via Claude Code) was used throughout the project as a
+productivity tool, always followed by human review:
 
-どちらもホットリロードが効く。`./backend` と `./frontend` がコンテナにマウントされていて、
-Go は air、Next.js は dev サーバーがファイル変更を検知する。
+- **Implementation scaffolding**: first drafts of features (game session layer,
+  API-key middleware, i18n sweep) which the responsible member then reviewed,
+  adjusted and tested.
+- **Tests and verification**: generating table-driven unit tests and reproducible
+  curl/WebSocket E2E scripts; every claimed behavior in our PRs was exercised
+  against a running stack.
+- **Translations**: English and French message drafts, reviewed for tone and
+  consistency.
+- **Debugging**: diagnosing framework-specific pitfalls (credentialed CORS
+  wildcards, React Server Component prop boundaries, Gin/WebSocket integration).
+- **Documentation**: PR descriptions and drafts of this README.
 
-### 3. ホストで直接動かす場合
-
-Go / Node のツールチェーンをホストに入れる:
-
-```bash
-./setup/setup.sh              # 両方
-./setup/setup.sh backend      # バックエンド（Go）だけ
-./setup/setup.sh frontend     # フロントエンドだけ
-```
-
-## データベースとマイグレーション
-
-スキーマの正本は [docs/database-design.md](docs/database-design.md)。それを GORM の構造体へ写したものが `backend/infrastructure/model.go`。
-
-migration の**適用は backend コンテナの起動時に自動で走る**（`backend/docker-entrypoint.sh`）。
-`make up` すれば `migrations/*.sql` が未適用のぶんだけ流れるので、手で叩く必要はない。
-適用済みなら `No migration files to execute` と出て、そのままサーバが立ち上がる。
-
-新しい migration を**作る**ときだけホストで作業する:
-
-```bash
-cd backend
-make schema         # GORM の構造体から DDL を生成して表示（確認用）
-make migrate-diff name=add_users   # 差分から migration ファイルを生成
-make migrate-apply  # DB へ手動適用（コンテナを再起動できないときの逃げ道）
-```
-
-**注意: 生成された DDL は完成形ではない。** partial unique index、`CREATE EXTENSION citext`、循環外部キーは GORM のタグでは表現できないため、手書きの SQL migration で補う必要がある。何を補うべきかは `backend/infrastructure/model.go` の各構造体のコメントに書いてある。
-
-詳細は [backend/README.md#データベース--マイグレーション](backend/README.md#データベース--マイグレーション)。
-
-## Makefile（ルート）
-
-| コマンド                 | 内容                                                      |
-| ------------------------ | --------------------------------------------------------- |
-| `make` / `make all`      | build して起動                                            |
-| `make build`             | イメージをビルド                                          |
-| `make up` / `make down`  | 起動（バックグラウンド） / 停止・削除                     |
-| `make stop` / `make start` | 一時停止 / 再開（コンテナは残す）                       |
-| `make restart`           | down してから up                                          |
-| `make logs`              | 全コンテナのログを追跡                                    |
-| `make status`            | コンテナの状態                                            |
-| `make clean`             | コンテナとイメージを削除（ボリュームは残す）              |
-| `make fclean`            | イメージ・ボリューム・ネットワークまで削除（DB も消える） |
-| `make re`                | fclean してから作り直し                                   |
-| `make exec-backend`      | バックエンドのコンテナに入る                              |
-| `make exec-frontend`     | フロントエンドのコンテナに入る                            |
-| `make exec-postgres`     | DB のコンテナに入る                                       |
-
-## CI
-
-GitHub Actions が変更されたディレクトリに応じて走る。
-
-| ワークフロー                                                             | 対象           | 内容                                                          |
-| ------------------------------------------------------------------------ | -------------- | ------------------------------------------------------------- |
-| [frontend-lint-format.yml](.github/workflows/frontend-lint-format.yml)     | `frontend/**`   | Prettier で整形チェック、ESLint で静的解析                    |
-| [backend-lint-format.yml](.github/workflows/backend-lint-format.yml)       | `backend/**`    | ビルド、golangci-lint で静的解析、gofmt/goimports で整形チェック |
-| [claude-auto-review.yaml](.github/workflows/claude-auto-review.yaml)       | PR 全体         | Claude による自動レビュー                                     |
-
-push 前にローカルで CI と同じチェックを通せる:
-
-```bash
-cd backend && make ci                   # ビルド + lint + 整形チェック
-cd frontend && pnpm format && pnpm lint
-```
-
-## 開発の流れ
-
-1. `main` / `develop` から作業ブランチを切る
-2. 実装する（`make logs` で動作を確認）
-3. push 前にローカルで lint / format を通す（上記）
-4. PR を出す → CI と Claude の自動レビューが走る
+All AI-generated code was read, understood and tested by the team member who
+shipped it; unit tests and end-to-end checks gate every merge to `main`.
