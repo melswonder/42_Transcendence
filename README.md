@@ -44,7 +44,7 @@ Next.js（フロントエンド） + Go（バックエンド） + PostgreSQL の
 | フロントエンド | **Next.js** (App Router) + TypeScript | 課題が求めるフレームワーク要件を満たす。SSR とファイルベースルーティングでページ追加のコストが低い |
 | スタイリング | **TailwindCSS** | 盤面 UI をレスポンシブに組むのに、独自 CSS を書かずクラスだけで完結できる |
 | UI コンポーネント | **Mantine** | ボタン・フォーム・モーダルを自作せずに済み、ui.mantine.dev の既製ブロックをそのまま持ってこられる。カスケードレイヤーで Tailwind と共存させている |
-| バックエンド | **Go** + `net/http` | 標準ライブラリだけで HTTP と goroutine による並行処理が完結する。WebSocket の多重接続を捌く用途に向く |
+| バックエンド | **Go** + **Gin** | goroutine による並行処理が WebSocket の多重接続を捌く用途に向く。Gin はルート木（パスパラメータ・グループ化）とミドルウェアチェーンを担い、Go で最も採用例が多くレビュー資料も豊富 |
 | バックエンド設計 | **Clean Architecture** | ゲームルール（domain）を HTTP・DB・WebSocket から独立させ、単体テストできる状態に保つ |
 | データベース | **PostgreSQL 16** | 後述 |
 | ORM | **GORM** | Go で最も広く使われる ORM。構造体からスキーマを導出でき、`cmd/migrate` の仕組みがそのまま使える |
@@ -66,27 +66,63 @@ Next.js（フロントエンド） + Go（バックエンド） + PostgreSQL の
 
 MySQL でも大半は代替できるが、partial unique index が無いため上記の二重参加防止をアプリ側検証に逃がすことになる。設計方針と合わないため PostgreSQL を選んだ。
 
+### フレームワークの使用箇所
+
+「依存を足しただけ」にならないよう、どこで何を使っているかを明記する。
+
+**Next.js（frontend/）**
+- ルーティング: `app/` のファイルベースルーティングで 12 画面（`/` `/login` `/game` `/watch` `/friends` `/settings` `/stats` `/matches` `/achievements` `/leaderboard` ほか）。パスは `app/<route>/page.tsx` がそのまま URL になる
+- コンポーネント構造: Server Component（`page.tsx` で認証・データ取得）と Client Component（`components/` の盤面・フォーム・WebSocket フック）を分離。共通レイアウトは `app/layout.tsx` と `components/app-shell.tsx`
+- そのほか `next/navigation`（ルーター・searchParams）、`generateMetadata`、`next-intl` プラグインを実使用
+
+**Gin（backend/）**
+- ルーティング: `handler/handler.go` の `NewRouter` が全ルートを `gin.Engine` で組む。ルートグループ（`/auth` `/game` `/users` `/media` `/friends` `/apikeys` `/v1` …）とパスパラメータ（`/users/:userId` と `/users/me` の共存など）は Gin のルート木が解決する
+- ミドルウェア: `cmd/serv/main.go` で `gin.Recovery()` → アクセスログ → CORS をチェーン。パニックでもプロセスは落ちず、リクエストごとに 1 行のログが出る
+- 各ハンドラは `wrapF` アダプタ経由の `net/http` 形式のままなので、Clean Architecture の内側は Gin を知らない
+
 ### 今後追加する予定のもの
 
 | 領域 | 技術 | 対応 Issue |
 | --- | --- | --- |
-| バックエンドフレームワーク | Gin（`net/http` から移行） | [#2](../../issues/2) |
-| キャッシュ・presence・Pub/Sub | Redis | [#3](../../issues/3) |
-| リアルタイム通信 | WebSocket（サーバー権威型） | [#8](../../issues/8) |
+| キャッシュ・presence・Pub/Sub | Redis（現在はメモリ上。複数インスタンス化のとき） | [#3](../../issues/3) |
 | リバースプロキシ / HTTPS・WSS | Caddy または Nginx | [#15](../../issues/15) |
-| API ドキュメント | OpenAPI / Swagger | [#12](../../issues/12) |
-| 多言語対応 | i18n（日本語 / 英語 / フランス語） | [#14](../../issues/14) |
 
 ## サービス間の関係
 
 ```
 ブラウザ ──> frontend (:3000) ──> backend (:4000) ──> db (:5432)
-              Next.js              Go net/http        PostgreSQL
+              Next.js              Go + Gin           PostgreSQL
 ```
 
 ブラウザから直接叩く API の URL は `NEXT_PUBLIC_API_URL`（既定 `http://localhost:4000`）。
 サーバー間通信ではコンテナ名（`http://backend:4000`）で解決できるが、
 `NEXT_PUBLIC_` 付きの変数はブラウザで評価されるため `localhost` を使う点に注意。
+
+## Google OAuth の設定（callback）
+
+ログインは Google OAuth 2.0（OIDC）。動かすには Google Cloud Console 側の登録が要る。
+
+1. [Google Cloud Console](https://console.cloud.google.com/apis/credentials) で OAuth クライアント ID（ウェブアプリケーション）を作成する
+2. **承認済みのリダイレクト URI** に次を登録する（完全一致が必要）
+
+   ```
+   http://localhost:4000/auth/google/callback
+   ```
+
+3. ルートの `.env` に発行された値を書く
+
+   ```
+   GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=xxxx
+   # 省略時は http://localhost:4000/auth/google/callback
+   GOOGLE_REDIRECT_URL=http://localhost:4000/auth/google/callback
+   ```
+
+ログインの流れは `GET /auth/google`（state / nonce を Cookie に預けて同意画面へ）→
+`GET /auth/google/callback`（state を定数時間比較で照合し、不一致は拒否）。
+初回ログインでユーザーが作られ、`(provider, provider_account_id)` のユニーク制約で
+同じ Google アカウントの二重登録を防いでいる。本番で URL が変わるときは、
+Console 側の登録と `GOOGLE_REDIRECT_URL` を同じ値に揃えること。
 
 ## はじめかた
 

@@ -12,6 +12,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
 	"transcendence-backend/domain"
@@ -74,60 +75,95 @@ func NewHandlers(services usecase.Services, cfg Config, events EventSubscriber, 
 	}
 }
 
-func NewRouter(handlers Handlers) http.Handler {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", handlers.Ping.Ping)
+// wrapF は net/http のハンドラを Gin のルートに載せるアダプタ。
+// パスパラメータは Go 1.22 の r.PathValue で読めるよう Request へ詰め替えるので、
+// 各ハンドラは Gin を知らないまま今までどおり動く。
+func wrapF(h http.HandlerFunc, params ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		for _, p := range params {
+			c.Request.SetPathValue(p, c.Param(p))
+		}
+		h(c.Writer, c.Request)
+	}
+}
 
-	// Go 1.22 以降の ServeMux はメソッド付きパターンを解釈し、
-	// より具体的なパターンを優先する。"/" と共存できる。
-	mux.HandleFunc("GET /auth/google", handlers.Auth.Start)
-	mux.HandleFunc("GET /auth/google/callback", handlers.Auth.Callback)
-	mux.HandleFunc("GET /auth/me", handlers.Auth.Me)
-	mux.HandleFunc("POST /auth/logout", handlers.Auth.Logout)
+// NewRouter は全ルートを Gin で組み立てる。
+// ルーティング（パスパラメータ含む）とミドルウェアチェーンは Gin に任せ、
+// リクエストの解釈とレスポンスの組み立ては従来どおり各ハンドラが担う。
+func NewRouter(handlers Handlers, middleware ...gin.HandlerFunc) http.Handler {
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
+	router.Use(middleware...)
 
-	// export.csv は "/matches/" 配下ではなく完全一致で登録する。
-	// より具体的なパターンが優先されるので "GET /matches" と共存できる。
-	mux.HandleFunc("POST /matches", handlers.Match.Create)
-	mux.HandleFunc("GET /matches", handlers.Match.List)
-	mux.HandleFunc("GET /matches/export.csv", handlers.Match.ExportCSV)
+	// 従来の "/" キャッチオール（疎通確認）を引き継ぐ。
+	router.NoRoute(wrapF(handlers.Ping.Ping))
 
-	mux.HandleFunc("GET /stats/me", handlers.Stats.Summary)
-	mux.HandleFunc("GET /stats/me/timeseries", handlers.Stats.Timeseries)
-	mux.HandleFunc("GET /stats/me/breakdown", handlers.Stats.Breakdown)
-	mux.HandleFunc("GET /leaderboard", handlers.Stats.Leaderboard)
-	mux.HandleFunc("GET /stats/opponents", handlers.Stats.Opponents)
+	auth := router.Group("/auth")
+	{
+		auth.GET("/google", wrapF(handlers.Auth.Start))
+		auth.GET("/google/callback", wrapF(handlers.Auth.Callback))
+		auth.GET("/me", wrapF(handlers.Auth.Me))
+		auth.POST("/logout", wrapF(handlers.Auth.Logout))
+	}
 
-	mux.HandleFunc("GET /achievements/me", handlers.Achievements.List)
-	mux.HandleFunc("GET /stats/stream", handlers.Achievements.Stream)
+	matches := router.Group("/matches")
+	{
+		matches.POST("", wrapF(handlers.Match.Create))
+		matches.GET("", wrapF(handlers.Match.List))
+		matches.GET("/export.csv", wrapF(handlers.Match.ExportCSV))
+	}
 
-	mux.HandleFunc("GET /game/ws", handlers.Game.WS)
-	mux.HandleFunc("GET /game/live", handlers.Game.Live)
+	stats := router.Group("/stats")
+	{
+		stats.GET("/me", wrapF(handlers.Stats.Summary))
+		stats.GET("/me/timeseries", wrapF(handlers.Stats.Timeseries))
+		stats.GET("/me/breakdown", wrapF(handlers.Stats.Breakdown))
+		stats.GET("/opponents", wrapF(handlers.Stats.Opponents))
+		stats.GET("/stream", wrapF(handlers.Achievements.Stream))
+	}
+	router.GET("/leaderboard", wrapF(handlers.Stats.Leaderboard))
+	router.GET("/achievements/me", wrapF(handlers.Achievements.List))
 
-	// /users/me はリテラル優先で {userId} と共存できる。
-	mux.HandleFunc("GET /users/me", handlers.User.Me)
-	mux.HandleFunc("PATCH /users/me", handlers.User.UpdateMe)
-	mux.HandleFunc("GET /users", handlers.User.List)
-	mux.HandleFunc("GET /users/{userId}", handlers.User.Get)
+	game := router.Group("/game")
+	{
+		game.GET("/ws", wrapF(handlers.Game.WS))
+		game.GET("/live", wrapF(handlers.Game.Live))
+	}
 
-	mux.HandleFunc("POST /media/avatars", handlers.Media.UploadAvatar)
-	mux.HandleFunc("GET /media", handlers.Media.List)
-	mux.HandleFunc("GET /media/{assetId}", handlers.Media.Get)
-	mux.HandleFunc("DELETE /media/{assetId}", handlers.Media.Delete)
-	mux.HandleFunc("GET /media/{assetId}/file", handlers.Media.File)
+	users := router.Group("/users")
+	{
+		users.GET("/me", wrapF(handlers.User.Me))
+		users.PATCH("/me", wrapF(handlers.User.UpdateMe))
+		users.GET("", wrapF(handlers.User.List))
+		users.GET("/:userId", wrapF(handlers.User.Get, "userId"))
+	}
 
-	mux.HandleFunc("GET /friends", handlers.Friend.List)
-	mux.HandleFunc("GET /friends/requests", handlers.Friend.ListRequests)
-	mux.HandleFunc("POST /friends/requests", handlers.Friend.CreateRequest)
-	mux.HandleFunc("PATCH /friends/requests/{userId}", handlers.Friend.Decide)
-	mux.HandleFunc("DELETE /friends/{userId}", handlers.Friend.Remove)
+	media := router.Group("/media")
+	{
+		media.POST("/avatars", wrapF(handlers.Media.UploadAvatar))
+		media.GET("", wrapF(handlers.Media.List))
+		media.GET("/:assetId", wrapF(handlers.Media.Get, "assetId"))
+		media.DELETE("/:assetId", wrapF(handlers.Media.Delete, "assetId"))
+		media.GET("/:assetId/file", wrapF(handlers.Media.File, "assetId"))
+	}
 
-	// API キー管理は Cookie セッションで守る。キー自身でキーは作れない。
-	mux.HandleFunc("POST /apikeys", handlers.APIKey.Create)
-	mux.HandleFunc("GET /apikeys", handlers.APIKey.List)
-	mux.HandleFunc("DELETE /apikeys/{keyId}", handlers.APIKey.Revoke)
+	friends := router.Group("/friends")
+	{
+		friends.GET("", wrapF(handlers.Friend.List))
+		friends.GET("/requests", wrapF(handlers.Friend.ListRequests))
+		friends.POST("/requests", wrapF(handlers.Friend.CreateRequest))
+		friends.PATCH("/requests/:userId", wrapF(handlers.Friend.Decide, "userId"))
+		friends.DELETE("/:userId", wrapF(handlers.Friend.Remove, "userId"))
+	}
 
-	// Public API（/v1）は API キーで認証する。
-	handlers.Public.Register(mux)
+	apikeys := router.Group("/apikeys")
+	{
+		apikeys.POST("", wrapF(handlers.APIKey.Create))
+		apikeys.GET("", wrapF(handlers.APIKey.List))
+		apikeys.DELETE("/:keyId", wrapF(handlers.APIKey.Revoke, "keyId"))
+	}
 
-	return mux
+	handlers.Public.Register(router)
+
+	return router
 }

@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/google/uuid"
 
 	"transcendence-backend/domain"
@@ -90,15 +92,18 @@ func (h *PublicHandler) withKey(scope string, next publicHandlerFunc) http.Handl
 // Register は /v1 配下の全エンドポイントを繋ぐ。
 // CRUD の要件はデータ側のエンドポイント（プロフィール・フレンド・履歴・統計）で満たし、
 // キー管理（/apikeys）はここに含めない。
-func (h *PublicHandler) Register(mux *http.ServeMux) {
-	mux.HandleFunc("GET /v1/profile", h.withKey(domain.APIScopeRead, h.getProfile))
-	mux.HandleFunc("PUT /v1/profile", h.withKey(domain.APIScopeWrite, h.updateProfile))
-	mux.HandleFunc("GET /v1/matches", h.withKey(domain.APIScopeRead, h.listMatches))
-	mux.HandleFunc("GET /v1/stats", h.withKey(domain.APIScopeRead, h.getStats))
-	mux.HandleFunc("GET /v1/leaderboard", h.withKey(domain.APIScopeRead, h.getLeaderboard))
-	mux.HandleFunc("GET /v1/friends", h.withKey(domain.APIScopeRead, h.listFriends))
-	mux.HandleFunc("POST /v1/friends/requests", h.withKey(domain.APIScopeWrite, h.createFriendRequest))
-	mux.HandleFunc("DELETE /v1/friends/{userId}", h.withKey(domain.APIScopeWrite, h.removeFriend))
+func (h *PublicHandler) Register(router *gin.Engine) {
+	v1 := router.Group("/v1")
+	{
+		v1.GET("/profile", wrapF(h.withKey(domain.APIScopeRead, h.getProfile)))
+		v1.PUT("/profile", wrapF(h.withKey(domain.APIScopeWrite, h.updateProfile)))
+		v1.GET("/matches", wrapF(h.withKey(domain.APIScopeRead, h.listMatches)))
+		v1.GET("/stats", wrapF(h.withKey(domain.APIScopeRead, h.getStats)))
+		v1.GET("/leaderboard", wrapF(h.withKey(domain.APIScopeRead, h.getLeaderboard)))
+		v1.GET("/friends", wrapF(h.withKey(domain.APIScopeRead, h.listFriends)))
+		v1.POST("/friends/requests", wrapF(h.withKey(domain.APIScopeWrite, h.createFriendRequest)))
+		v1.DELETE("/friends/:userId", wrapF(h.withKey(domain.APIScopeWrite, h.removeFriend), "userId"))
+	}
 }
 
 // getProfile - GET /v1/profile（read）
