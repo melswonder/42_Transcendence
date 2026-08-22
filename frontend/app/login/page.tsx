@@ -1,4 +1,5 @@
-import { Alert, Text } from "@mantine/core";
+import Link from "next/link";
+import { Alert, Anchor, Text } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 
@@ -30,6 +31,12 @@ export default async function LoginPage({
         {t("disclaimer")}
       </Text>
 
+      <Text size="sm" ta="center">
+        {t("noAccount")}{" "}
+        <Anchor component={Link} href="/signup" size="sm">
+          {t("signupLink")}
+        </Anchor>
+      </Text>
     </AuthCard>
   );
 }

@@ -26,7 +26,9 @@
       "missing_code": "Nous n'avons pas reçu de code d'autorisation. Veuillez réessayer.",
       "login_failed": "La connexion a échoué. Veuillez réessayer dans un instant.",
       "fallback": "Connexion impossible."
-    }
+    },
+    "noAccount": "Pas encore de compte ?",
+    "signupLink": "S'inscrire"
   },
   "home": {
     "newMatch": "Nouvelle partie",
@@ -300,5 +302,12 @@
   },
   "common": {
     "cancel": "Annuler"
+  },
+  "signup": {
+    "tagline": "Créez un compte et commencez à jouer",
+    "googleButton": "S'inscrire avec Google",
+    "disclaimer": "Inscrivez-vous avec votre compte Google. Votre compte est créé à la première connexion, avec votre nom, votre adresse e-mail et votre photo de profil.",
+    "haveAccount": "Vous avez déjà un compte ?",
+    "loginLink": "Se connecter"
   }
 }
