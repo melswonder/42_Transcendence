@@ -168,7 +168,11 @@
     "already_friends": "既にフレンドです。",
     "friend_not_found": "申請が見つかりません。",
     "user_not_found": "ユーザーが見つかりません。",
-    "media_not_found": "画像が見つかりません。"
+    "media_not_found": "画像が見つかりません。",
+    "email_taken": "そのメールアドレスは既に登録されています。",
+    "invalid_email": "メールアドレスの形式が正しくありません。",
+    "weak_password": "パスワードは 8〜72 文字にしてください。",
+    "invalid_credentials": "メールアドレスまたはパスワードが違います。"
   },
   "stats": {
     "title": "統計",
@@ -383,5 +387,19 @@
     "memberSince": "{date} に参加",
     "level": "レベル",
     "xp": "経験値"
+  },
+  "auth": {
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "passwordConfirm": "パスワード（確認）",
+    "passwordHint": "8 文字以上",
+    "displayName": "表示名",
+    "handle": "ハンドル",
+    "handleHint": "英小文字・数字・アンダースコア、3〜30 文字",
+    "signupSubmit": "アカウントを作成",
+    "loginSubmit": "ログイン",
+    "passwordMismatch": "パスワードが一致しません。",
+    "failed": "処理に失敗しました。",
+    "or": "または"
   }
 }
