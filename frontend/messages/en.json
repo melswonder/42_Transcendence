@@ -12,7 +12,9 @@
     "friends": "Friends",
     "settings": "Settings",
     "logout": "Log out",
-    "level": "Lv.{level}"
+    "level": "Lv.{level}",
+    "logoutConfirmTitle": "Log out?",
+    "logoutConfirmMessage": "You can sign back in at any time."
   },
   "login": {
     "tagline": "Sign in to play",
@@ -89,7 +91,11 @@
       "already_in_match": "You already have a game in progress.",
       "no_active_match": "You are not in a game.",
       "not_connected": "Not connected to the server."
-    }
+    },
+    "viewResult": "View result",
+    "viewBoard": "View board",
+    "resignConfirmTitle": "Resign?",
+    "resignConfirmMessage": "This game will be recorded as a loss for you."
   },
   "spectate": {
     "title": "Spectate",
@@ -232,8 +238,14 @@
         "name": "First Victory",
         "description": "Win your first game"
       },
-      "win_10": { "name": "Winner", "description": "Win 10 games in total" },
-      "win_50": { "name": "Veteran", "description": "Win 50 games in total" },
+      "win_10": {
+        "name": "Winner",
+        "description": "Win 10 games in total"
+      },
+      "win_50": {
+        "name": "Veteran",
+        "description": "Win 50 games in total"
+      },
       "win_100": {
         "name": "Champion",
         "description": "Win 100 games in total"
@@ -242,14 +254,26 @@
         "name": "Hat-trick",
         "description": "Win 3 games in a row"
       },
-      "streak_5": { "name": "Unbeaten", "description": "Win 5 games in a row" },
+      "streak_5": {
+        "name": "Unbeaten",
+        "description": "Win 5 games in a row"
+      },
       "streak_10": {
         "name": "Unshakeable",
         "description": "Win 10 games in a row"
       },
-      "played_10": { "name": "Regular", "description": "Play 10 games" },
-      "played_50": { "name": "Seasoned", "description": "Play 50 games" },
-      "played_100": { "name": "Devoted", "description": "Play 100 games" },
+      "played_10": {
+        "name": "Regular",
+        "description": "Play 10 games"
+      },
+      "played_50": {
+        "name": "Seasoned",
+        "description": "Play 50 games"
+      },
+      "played_100": {
+        "name": "Devoted",
+        "description": "Play 100 games"
+      },
       "rating_1300": {
         "name": "Advanced",
         "description": "Reach a rating of 1300"
@@ -272,5 +296,8 @@
   },
   "avatar": {
     "alt": "{name}'s avatar"
+  },
+  "common": {
+    "cancel": "Cancel"
   }
 }

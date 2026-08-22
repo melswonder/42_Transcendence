@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import {
   Alert,
   Badge,
@@ -21,6 +22,8 @@ import {
 
 import { useTranslations } from "next-intl";
 
+import { AppModal } from "@/components/app-modal";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { PlayerPanel, useCountdown } from "@/components/player-panel";
 import { QuoridorBoard } from "@/components/quoridor-board";
 import { type GameState, useGameSocket } from "@/components/use-game-socket";
@@ -57,6 +60,14 @@ export function GameScreen() {
     placeWall,
     resign,
   } = useGameSocket();
+
+  // 勝敗モーダル。決着したら開き、閉じたら盤面を見返せる。
+  // 「どの対局で閉じたか」を持つので、次の対局では自然にまた開く。
+  const [dismissedFor, setDismissedFor] = useState<string | null>(null);
+  const resultDismissed = dismissedFor === state?.matchId;
+
+  // 投了は取り消せないので、確認を一枚挟む。
+  const [resignOpen, setResignOpen] = useState(false);
 
   const mySeat = state?.seat ?? 0;
   const myTurn = state !== null && !state.finished && state.turn === mySeat;
@@ -169,46 +180,82 @@ export function GameScreen() {
             />
 
             {state.finished ? (
-              <Paper p="md">
-                <Stack gap="sm">
-                  <Title order={3} size="h4">
-                    {resultText(t, state)}
-                  </Title>
-                  <Text size="sm" c="dimmed">
-                    {t("totalMoves", { count: state.moveCount })}
-                  </Text>
-                  {state.ratingAfter && (
-                    <Text size="sm">
-                      {t("ratingChange", {
-                        before: state.players[mySeat].rating,
-                      })}{" "}
-                      <Text
-                        span
-                        fw={700}
-                        c={
-                          state.ratingAfter[mySeat] >=
-                          state.players[mySeat].rating
-                            ? "emerald"
-                            : "red"
-                        }
-                      >
-                        {state.ratingAfter[mySeat]}
-                      </Text>
-                    </Text>
-                  )}
-                  <Button component={Link} href="/">
-                    {t("backHome")}
-                  </Button>
-                </Stack>
-              </Paper>
+              <Stack gap="sm">
+                <Button onClick={() => setDismissedFor(null)}>
+                  {t("viewResult")}
+                </Button>
+                <Button component={Link} href="/" variant="subtle">
+                  {t("backHome")}
+                </Button>
+              </Stack>
             ) : (
-              <Button color="red" variant="light" onClick={resign}>
+              <Button
+                color="red"
+                variant="light"
+                onClick={() => setResignOpen(true)}
+              >
                 {t("resign")}
               </Button>
             )}
           </Stack>
         </div>
       )}
+
+      {/* 勝敗モーダル。共通モーダルの中身を差し替えて使う。 */}
+      {state !== null && (
+        <AppModal
+          opened={state.finished && !resultDismissed}
+          onClose={() => setDismissedFor(state.matchId)}
+          title={resultText(t, state)}
+        >
+          <Stack gap="md">
+            <Text size="sm" c="dimmed">
+              {t("totalMoves", { count: state.moveCount })}
+            </Text>
+            {state.ratingAfter && (
+              <Text>
+                {t("ratingChange", { before: state.players[mySeat].rating })}{" "}
+                <Text
+                  span
+                  fw={700}
+                  c={
+                    state.ratingAfter[mySeat] >= state.players[mySeat].rating
+                      ? "emerald"
+                      : "red"
+                  }
+                >
+                  {state.ratingAfter[mySeat]}
+                </Text>
+              </Text>
+            )}
+            <Group justify="flex-end" gap="sm">
+              <Button
+                variant="default"
+                onClick={() => setDismissedFor(state.matchId)}
+              >
+                {t("viewBoard")}
+              </Button>
+              <Button component={Link} href="/">
+                {t("backHome")}
+              </Button>
+            </Group>
+          </Stack>
+        </AppModal>
+      )}
+
+      {/* 投了の確認。 */}
+      <ConfirmModal
+        opened={resignOpen}
+        onClose={() => setResignOpen(false)}
+        onConfirm={() => {
+          resign();
+          setResignOpen(false);
+        }}
+        title={t("resignConfirmTitle")}
+        message={t("resignConfirmMessage")}
+        confirmLabel={t("resign")}
+        color="red"
+      />
     </Stack>
   );
 }

@@ -12,7 +12,9 @@
     "friends": "フレンド",
     "settings": "設定",
     "logout": "ログアウト",
-    "level": "Lv.{level}"
+    "level": "Lv.{level}",
+    "logoutConfirmTitle": "ログアウトしますか？",
+    "logoutConfirmMessage": "またいつでもログインし直せます。"
   },
   "login": {
     "tagline": "サインインしてプレイ",
@@ -89,7 +91,11 @@
       "already_in_match": "進行中の対局があります。",
       "no_active_match": "参加中の対局がありません。",
       "not_connected": "サーバーと接続できていません。"
-    }
+    },
+    "viewResult": "結果を見る",
+    "viewBoard": "盤面を見る",
+    "resignConfirmTitle": "投了しますか？",
+    "resignConfirmMessage": "この対局はあなたの負けとして記録されます。"
   },
   "spectate": {
     "title": "観戦",
@@ -228,16 +234,46 @@
     "unlockedCount": "{unlocked} / {total} 解除",
     "progressAria": "{name} の進捗",
     "items": {
-      "first_win": { "name": "初勝利", "description": "はじめて対戦に勝つ" },
-      "win_10": { "name": "常勝", "description": "通算 10 勝する" },
-      "win_50": { "name": "百戦錬磨", "description": "通算 50 勝する" },
-      "win_100": { "name": "覇者", "description": "通算 100 勝する" },
-      "streak_3": { "name": "三連覇", "description": "3 連勝する" },
-      "streak_5": { "name": "無敗", "description": "5 連勝する" },
-      "streak_10": { "name": "不動", "description": "10 連勝する" },
-      "played_10": { "name": "常連", "description": "10 戦する" },
-      "played_50": { "name": "歴戦", "description": "50 戦する" },
-      "played_100": { "name": "求道者", "description": "100 戦する" },
+      "first_win": {
+        "name": "初勝利",
+        "description": "はじめて対戦に勝つ"
+      },
+      "win_10": {
+        "name": "常勝",
+        "description": "通算 10 勝する"
+      },
+      "win_50": {
+        "name": "百戦錬磨",
+        "description": "通算 50 勝する"
+      },
+      "win_100": {
+        "name": "覇者",
+        "description": "通算 100 勝する"
+      },
+      "streak_3": {
+        "name": "三連覇",
+        "description": "3 連勝する"
+      },
+      "streak_5": {
+        "name": "無敗",
+        "description": "5 連勝する"
+      },
+      "streak_10": {
+        "name": "不動",
+        "description": "10 連勝する"
+      },
+      "played_10": {
+        "name": "常連",
+        "description": "10 戦する"
+      },
+      "played_50": {
+        "name": "歴戦",
+        "description": "50 戦する"
+      },
+      "played_100": {
+        "name": "求道者",
+        "description": "100 戦する"
+      },
       "rating_1300": {
         "name": "上級者",
         "description": "レーティング 1300 に到達する"
@@ -260,5 +296,8 @@
   },
   "avatar": {
     "alt": "{name} のアバター"
+  },
+  "common": {
+    "cancel": "キャンセル"
   }
 }

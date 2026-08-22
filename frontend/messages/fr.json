@@ -12,7 +12,9 @@
     "friends": "Amis",
     "settings": "Paramètres",
     "logout": "Se déconnecter",
-    "level": "Niv. {level}"
+    "level": "Niv. {level}",
+    "logoutConfirmTitle": "Se déconnecter ?",
+    "logoutConfirmMessage": "Vous pourrez vous reconnecter à tout moment."
   },
   "login": {
     "tagline": "Connectez-vous pour jouer",
@@ -89,7 +91,11 @@
       "already_in_match": "Vous avez déjà une partie en cours.",
       "no_active_match": "Vous n'êtes dans aucune partie.",
       "not_connected": "Non connecté au serveur."
-    }
+    },
+    "viewResult": "Voir le résultat",
+    "viewBoard": "Voir le plateau",
+    "resignConfirmTitle": "Abandonner ?",
+    "resignConfirmMessage": "Cette partie sera comptée comme une défaite pour vous."
   },
   "spectate": {
     "title": "Regarder",
@@ -256,9 +262,18 @@
         "name": "Inébranlable",
         "description": "Gagnez 10 parties d'affilée"
       },
-      "played_10": { "name": "Habitué", "description": "Jouez 10 parties" },
-      "played_50": { "name": "Aguerri", "description": "Jouez 50 parties" },
-      "played_100": { "name": "Passionné", "description": "Jouez 100 parties" },
+      "played_10": {
+        "name": "Habitué",
+        "description": "Jouez 10 parties"
+      },
+      "played_50": {
+        "name": "Aguerri",
+        "description": "Jouez 50 parties"
+      },
+      "played_100": {
+        "name": "Passionné",
+        "description": "Jouez 100 parties"
+      },
       "rating_1300": {
         "name": "Avancé",
         "description": "Atteignez un classement de 1300"
@@ -281,5 +296,8 @@
   },
   "avatar": {
     "alt": "Avatar de {name}"
+  },
+  "common": {
+    "cancel": "Annuler"
   }
 }
