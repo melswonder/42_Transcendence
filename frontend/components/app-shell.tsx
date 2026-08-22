@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ScrollArea, Stack, Title } from "@mantine/core";
 
+import { LegalLinks } from "@/components/legal-links";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { SideNav } from "@/components/side-nav";
 import { UserCard } from "@/components/user-card";
@@ -33,6 +34,7 @@ export function AppShell({
 
         <LocaleSwitcher loggedIn />
         <UserCard user={user} />
+        <LegalLinks />
       </aside>
 
       <ScrollArea className="flex-1" scrollbars="y">

@@ -309,5 +309,73 @@
     "disclaimer": "Inscrivez-vous avec votre compte Google. Votre compte est créé à la première connexion, avec votre nom, votre adresse e-mail et votre photo de profil.",
     "haveAccount": "Vous avez déjà un compte ?",
     "loginLink": "Se connecter"
+  },
+  "legal": {
+    "updated": "Dernière mise à jour : 23 août 2026",
+    "back": "Retour à la connexion",
+    "footerPrivacy": "Politique de confidentialité",
+    "footerTerms": "Conditions d'utilisation",
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "s1": {
+        "title": "1. Introduction",
+        "body": "Transcendence (le « Service ») est une plateforme de Quoridor en ligne développée et exploitée par une équipe d'étudiants dans le cadre du cursus 42. Cette politique explique quelles informations le Service collecte et comment elles sont traitées."
+      },
+      "s2": {
+        "title": "2. Informations collectées",
+        "body": "Compte : avec la connexion Google, nous recevons votre nom, votre adresse e-mail et votre photo de profil ; avec l'inscription par e-mail, nous stockons votre adresse e-mail et un mot de passe haché.\nJeu : historique des parties (adversaire, coups, résultats), classement, succès et relations d'amitié.\nTéléversements : les avatars que vous définissez.\nCookies : uniquement pour la session (connexion) et la langue (NEXT_LOCALE). Aucun cookie publicitaire ou de suivi."
+      },
+      "s3": {
+        "title": "3. Utilisation",
+        "body": "Les informations collectées servent uniquement à fournir les fonctionnalités du Service (parties, spectateurs, statistiques, amis), à prévenir les abus (limitation de débit, validation des coups) et à diagnostiquer les pannes."
+      },
+      "s4": {
+        "title": "4. Stockage et sécurité",
+        "body": "Les données sont stockées dans la base PostgreSQL du Service. Les mots de passe, jetons de session et clés d'API ne sont conservés que sous forme de hachés. Les sessions expirent après 7 jours."
+      },
+      "s5": {
+        "title": "5. Tiers",
+        "body": "En dehors de la communication avec Google (OAuth 2.0) pour l'authentification, nous ne partageons ni ne vendons d'informations personnelles. Aucun service externe d'analyse ou de publicité n'est utilisé."
+      },
+      "s6": {
+        "title": "6. Suppression",
+        "body": "Pour demander la suppression de votre compte et des données associées, contactez l'équipe de développement (par exemple via une issue du dépôt). Les historiques de parties sont anonymisés."
+      },
+      "s7": {
+        "title": "7. Modifications",
+        "body": "Toute modification de cette politique sera annoncée sur cette page et la date de mise à jour sera révisée en cas de changement important."
+      }
+    },
+    "terms": {
+      "title": "Conditions d'utilisation",
+      "s1": {
+        "title": "1. À propos de ces conditions",
+        "body": "En utilisant le Service, vous acceptez ces conditions. Le Service est un projet non commercial réalisé dans le cadre du cursus 42."
+      },
+      "s2": {
+        "title": "2. Le Service",
+        "body": "Le Service permet de jouer et de regarder des parties de Quoridor dans le navigateur, de consulter des statistiques et de gérer des amis. Les fonctionnalités peuvent évoluer ou être interrompues sans préavis."
+      },
+      "s3": {
+        "title": "3. Comptes",
+        "body": "Vous êtes responsable de la sécurité de vos identifiants (mot de passe, clés d'API). Les clés d'API ne sont affichées qu'une seule fois à la création."
+      },
+      "s4": {
+        "title": "4. Comportements interdits",
+        "body": "Sont interdits : la manipulation des résultats par des moyens déloyaux (triche), l'usurpation d'identité, les attaques contre le Service ou ses utilisateurs (requêtes excessives, exploitation de vulnérabilités, etc.) et tout comportement contraire à la loi."
+      },
+      "s5": {
+        "title": "5. API publique",
+        "body": "L'API publique ne peut être utilisée qu'avec une clé émise, dans la limite de ses portées. Les requêtes au-delà de la limite de débit (60 requêtes/minute par défaut) sont rejetées. Le contournement des limites peut entraîner la suspension du compte."
+      },
+      "s6": {
+        "title": "6. Responsabilité",
+        "body": "Le Service est fourni « en l'état » en tant que projet pédagogique, sans garantie de disponibilité ni de persistance des données. L'équipe décline toute responsabilité pour les dommages résultant de son utilisation."
+      },
+      "s7": {
+        "title": "7. Modification des conditions",
+        "body": "Les modifications seront annoncées sur cette page. La poursuite de l'utilisation vaut acceptation des conditions mises à jour."
+      }
+    }
   }
 }
