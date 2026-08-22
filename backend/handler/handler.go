@@ -96,6 +96,7 @@ func NewRouter(handlers Handlers) http.Handler {
 	mux.HandleFunc("GET /stats/stream", handlers.Achievements.Stream)
 
 	mux.HandleFunc("GET /game/ws", handlers.Game.WS)
+	mux.HandleFunc("GET /game/live", handlers.Game.Live)
 
 	// /users/me はリテラル優先で {userId} と共存できる。
 	mux.HandleFunc("GET /users/me", handlers.User.Me)
