@@ -309,5 +309,73 @@
     "disclaimer": "Register with your Google account. Your account is created on first sign-in, using your display name, email address and profile picture.",
     "haveAccount": "Already have an account?",
     "loginLink": "Log in"
+  },
+  "legal": {
+    "updated": "Last updated: August 23, 2026",
+    "back": "Back to sign-in",
+    "footerPrivacy": "Privacy Policy",
+    "footerTerms": "Terms of Service",
+    "privacy": {
+      "title": "Privacy Policy",
+      "s1": {
+        "title": "1. Introduction",
+        "body": "Transcendence (the \"Service\") is an online Quoridor platform built and operated by a student team as part of the 42 curriculum. This policy explains what information the Service collects and how it is handled."
+      },
+      "s2": {
+        "title": "2. Information we collect",
+        "body": "Account information: with Google sign-in we receive your display name, email address and profile picture; with email registration we store your email address and a hashed password.\nGame data: match records (opponent, moves, results), rating, achievements and friend relations.\nUploads: avatar images you set.\nCookies: used only to keep you signed in (session) and to remember your language (NEXT_LOCALE). There are no advertising or tracking cookies."
+      },
+      "s3": {
+        "title": "3. How we use it",
+        "body": "Collected information is used solely to provide the Service's features (matches, spectating, statistics, friends), to prevent abuse (rate limiting, move validation) and to investigate failures."
+      },
+      "s4": {
+        "title": "4. Storage and security",
+        "body": "Data is stored in the Service's PostgreSQL database. Passwords, session tokens and API keys are stored only as hashes, never in their original form. Sessions expire after 7 days."
+      },
+      "s5": {
+        "title": "5. Third parties",
+        "body": "Apart from communicating with Google (OAuth 2.0) for authentication, we do not share or sell personal information to third parties. No external analytics or advertising services are used."
+      },
+      "s6": {
+        "title": "6. Deletion requests",
+        "body": "To request deletion of your account and associated personal data, contact the development team (e.g. via a repository issue). Match records are anonymized so that they can no longer identify you."
+      },
+      "s7": {
+        "title": "7. Changes",
+        "body": "Changes to this policy will be announced on this page, and the last-updated date above will be revised for significant changes."
+      }
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "s1": {
+        "title": "1. About these terms",
+        "body": "By using the Service you agree to these terms. The Service is a non-commercial project provided as part of the 42 curriculum."
+      },
+      "s2": {
+        "title": "2. The Service",
+        "body": "The Service lets you play and spectate Quoridor matches in the browser, view statistics and manage friends. Features may change or be discontinued without notice."
+      },
+      "s3": {
+        "title": "3. Accounts",
+        "body": "You are responsible for keeping your credentials (password, API keys) safe. API keys are shown only once at creation and cannot be displayed again."
+      },
+      "s4": {
+        "title": "4. Prohibited conduct",
+        "body": "The following are prohibited: manipulating match results by unfair means (cheating), impersonating others, attacking the Service or other users (excessive requests, exploiting vulnerabilities, etc.), and any conduct that violates applicable law."
+      },
+      "s5": {
+        "title": "5. Public API",
+        "body": "The Public API may only be used with an issued API key within its scopes. Requests beyond the rate limit (60 requests/minute by default) are rejected. Attempting to circumvent limits may lead to account suspension."
+      },
+      "s6": {
+        "title": "6. Disclaimer",
+        "body": "The Service is provided \"as is\" as an educational project, with no guarantee of availability or data persistence. The development team is not liable for damages arising from its use."
+      },
+      "s7": {
+        "title": "7. Changes to these terms",
+        "body": "Changes will be announced on this page. Continued use after a change constitutes acceptance of the updated terms."
+      }
+    }
   }
 }

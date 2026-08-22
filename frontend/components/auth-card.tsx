@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Paper, Stack, Text, ThemeIcon, Title } from "@mantine/core";
 
+import { LegalLinks } from "@/components/legal-links";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { QuoridorMark } from "@/components/quoridor-mark";
 
@@ -31,6 +32,8 @@ export function AuthCard({
           {children}
 
           <LocaleSwitcher />
+
+          <LegalLinks />
         </Stack>
       </Paper>
     </main>
