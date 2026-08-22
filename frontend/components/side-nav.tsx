@@ -7,6 +7,7 @@ import {
   IconActivity,
   IconAward,
   IconChartBar,
+  IconEye,
   IconHistory,
   IconSettings,
   IconTrophy,
@@ -15,6 +16,7 @@ import {
 
 const items = [
   { href: "/", label: "プレイ", icon: IconActivity },
+  { href: "/watch", label: "観戦", icon: IconEye },
   { href: "/stats", label: "統計", icon: IconChartBar },
   { href: "/matches", label: "対戦履歴", icon: IconHistory },
   { href: "/achievements", label: "実績", icon: IconAward },
