@@ -39,6 +39,7 @@ type userPrivateResponse struct {
 	userPublicResponse
 	Email           *string   `json:"email"`
 	PreferredLocale string    `json:"preferred_locale"`
+	AvatarAssetID   *string   `json:"avatar_asset_id"` // 設定画面が削除・差し替えに使う
 	HasPassword     bool      `json:"has_password"`
 	LinkedProviders []string  `json:"linked_providers"`
 	UpdatedAt       time.Time `json:"updated_at"`
@@ -71,10 +72,16 @@ func toUserPrivate(p *domain.Profile) userPrivateResponse {
 	if providers == nil {
 		providers = []string{}
 	}
+	var avatarAssetID *string
+	if p.AvatarAssetID != nil {
+		id := p.AvatarAssetID.String()
+		avatarAssetID = &id
+	}
 	return userPrivateResponse{
 		userPublicResponse: toUserPublic(p.User),
 		Email:              p.Email,
 		PreferredLocale:    p.PreferredLocale,
+		AvatarAssetID:      avatarAssetID,
 		HasPassword:        p.HasPassword,
 		LinkedProviders:    providers,
 		UpdatedAt:          p.UpdatedAt,
