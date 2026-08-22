@@ -4,9 +4,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Anchor } from "@mantine/core";
 
-/** 認証画面のページ間リンク。
- * Server Component から Mantine の Anchor に component={Link}（関数）は
- * 渡せないので、ここだけ Client Component に切り出す。
+/** 認証画面のページ間リンク。Server Component からは Mantine の Anchor に
+ * component={Link}（関数）を渡せないため、ここだけ Client Component にする。
  */
 export function AuthLink({
   href,

@@ -29,7 +29,7 @@ export function StatsFilters({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // 「相手」の選択肢は対戦したことのある相手だけ。effect 内で setState しない形で読む。
+  // 「相手」の選択肢は、対戦したことのある相手だけ。
   const [opponents, setOpponents] = useState<OpponentOption[]>([]);
   useEffect(() => {
     const load = () =>

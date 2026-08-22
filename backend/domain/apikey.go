@@ -18,7 +18,6 @@ const (
 	APIScopeWrite = "write" // 更新系（プロフィール編集・フレンド申請/解除）
 )
 
-// APIScopes は有効なスコープの一覧。
 var APIScopes = []string{APIScopeRead, APIScopeWrite}
 
 // APIKeyNameMaxLen は api_keys.name の上限。
@@ -51,15 +50,12 @@ type APIKey struct {
 	CreatedAt  time.Time
 }
 
-// Revoked は失効済みかどうか。
 func (k APIKey) Revoked() bool { return k.RevokedAt != nil }
 
-// Expired は now 時点で期限切れかどうか。
 func (k APIKey) Expired(now time.Time) bool {
 	return k.ExpiresAt != nil && now.After(*k.ExpiresAt)
 }
 
-// HasScope は要求スコープを持っているかどうか。
 func (k APIKey) HasScope(scope string) bool {
 	return slices.Contains(k.Scopes, scope)
 }
@@ -86,7 +82,6 @@ func APIKeyPrefixOf(raw string) string {
 	return raw[:visible]
 }
 
-// ValidateAPIKeyInput はキー作成の入力を確かめる。
 func ValidateAPIKeyInput(name string, scopes []string, expiresAt *time.Time, now time.Time) error {
 	name = strings.TrimSpace(name)
 	if name == "" || len([]rune(name)) > APIKeyNameMaxLen {
