@@ -50,22 +50,32 @@ function useCountdown(deadline: string | undefined, running: boolean) {
   return Math.max(0, Math.ceil((new Date(deadline).getTime() - now) / 1000));
 }
 
+/** 残り時間の表示。60 秒制なので 0:47 の形にする。 */
+function formatSeconds(total: number): string {
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
+
+/** 1 人ぶんのカード。手番のプレイヤーには枠の強調と持ち時間が付く。
+ * 「あなたの手番です」のような文は置かず、時計の位置で手番を伝える。
+ */
 function PlayerPanel({
   player,
   wallsLeft,
-  isTurn,
   isMe,
   connected,
+  secondsLeft,
 }: {
   player: GamePlayer;
   wallsLeft: number;
-  isTurn: boolean;
   isMe: boolean;
   connected: boolean;
+  /** 手番でなければ null。 */
+  secondsLeft: number | null;
 }) {
+  const isTurn = secondsLeft !== null;
   return (
     <Paper p="sm" className={isTurn ? "border-emerald-500" : undefined}>
-      <Group justify="space-between">
+      <Group justify="space-between" align="center">
         <div>
           <Group gap="xs">
             <Text fw={600}>{player.displayName}</Text>
@@ -84,9 +94,22 @@ function PlayerPanel({
             @{player.handle}
           </Text>
         </div>
-        <Text size="sm" c="dimmed">
-          残り壁 {wallsLeft}
-        </Text>
+        <Group gap="sm" align="center">
+          <Text size="sm" c="dimmed">
+            壁 {wallsLeft}
+          </Text>
+          {isTurn && (
+            <Text
+              ff="monospace"
+              fw={700}
+              size="lg"
+              c={secondsLeft <= 10 ? "red" : undefined}
+              className="rounded-sm bg-dark-500 px-2 py-0.5"
+            >
+              {formatSeconds(secondsLeft)}
+            </Text>
+          )}
+        </Group>
       </Group>
     </Paper>
   );
@@ -179,52 +202,40 @@ export function GameScreen() {
 
       {state !== null && (
         <div className="flex flex-col gap-6 lg:flex-row">
-          <QuoridorBoard
-            state={state}
-            interactive={myTurn && status === "online"}
-            onMove={movePawn}
-            onWall={placeWall}
-          />
+          <Stack gap="xs" className="w-full max-w-[560px]">
+            <QuoridorBoard
+              state={state}
+              interactive={myTurn && status === "online"}
+              onMove={movePawn}
+              onWall={placeWall}
+            />
+            <Text
+              size="xs"
+              c="dimmed"
+              ta="center"
+              className={myTurn && !state.finished ? undefined : "invisible"}
+            >
+              移動: 光るマス ／ 壁: マスの間をクリック
+            </Text>
+          </Stack>
 
           <Stack gap="sm" className="lg:w-72">
             <PlayerPanel
               player={state.players[1 - mySeat]}
               wallsLeft={state.wallsLeft[1 - mySeat]}
-              isTurn={!state.finished && state.turn !== mySeat}
               isMe={false}
               connected={state.connected[1 - mySeat]}
+              secondsLeft={
+                !state.finished && state.turn !== mySeat ? secondsLeft : null
+              }
             />
             <PlayerPanel
               player={state.players[mySeat]}
               wallsLeft={state.wallsLeft[mySeat]}
-              isTurn={myTurn}
               isMe
               connected
+              secondsLeft={myTurn ? secondsLeft : null}
             />
-
-            {!state.finished && (
-              <Paper p="sm">
-                <Group justify="space-between">
-                  <Text size="sm">
-                    {myTurn ? "あなたの手番です" : "相手の手番です"}
-                  </Text>
-                  {secondsLeft !== null && (
-                    <Text
-                      size="sm"
-                      c={secondsLeft <= 10 ? "red" : "dimmed"}
-                      ff="monospace"
-                    >
-                      {secondsLeft}s
-                    </Text>
-                  )}
-                </Group>
-                {myTurn && (
-                  <Text size="xs" c="dimmed" mt={4}>
-                    光っているマスへ移動するか、マスの間をクリックして壁を置きます。
-                  </Text>
-                )}
-              </Paper>
-            )}
 
             {state.finished ? (
               <Paper p="md">
