@@ -312,13 +312,17 @@ func translateUniqueViolation(err error) error {
 // toDomainUser は DB 都合の型を、内側の層が扱う型に詰め替える。
 func toDomainUser(u *User) *domain.User {
 	return &domain.User{
-		ID:          u.ID,
-		Email:       u.Email,
-		DisplayName: u.DisplayName,
-		Handle:      u.Handle,
-		Status:      u.Status,
-		Level:       u.Level,
-		Rating:      u.Rating,
-		CreatedAt:   u.CreatedAt,
+		ID:               u.ID,
+		Email:            u.Email,
+		DisplayName:      u.DisplayName,
+		Handle:           u.Handle,
+		Status:           u.Status,
+		Level:            u.Level,
+		ExperiencePoints: u.ExperiencePoints,
+		Rating:           u.Rating,
+		PreferredLocale:  u.PreferredLocale,
+		AvatarAssetID:    u.AvatarAssetID,
+		CreatedAt:        u.CreatedAt,
+		UpdatedAt:        u.UpdatedAt,
 	}
 }

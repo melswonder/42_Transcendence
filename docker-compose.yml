@@ -68,6 +68,8 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+      # アップロードされたアバター画像。bind mount の外に置いて repo を汚さない。
+      - media_data:/app/uploads
     networks:
       - transcendence-network
 
@@ -103,3 +105,5 @@ networks:
 volumes:
   postgres_data:
     name: postgres_data
+  media_data:
+    name: media_data
