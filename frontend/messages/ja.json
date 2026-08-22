@@ -1,0 +1,264 @@
+{
+  "meta": {
+    "description": "ブラウザで対戦できるコリドール（Quoridor）"
+  },
+  "nav": {
+    "play": "プレイ",
+    "watch": "観戦",
+    "stats": "統計",
+    "matches": "対戦履歴",
+    "achievements": "実績",
+    "leaderboard": "ランキング",
+    "friends": "フレンド",
+    "settings": "設定",
+    "logout": "ログアウト",
+    "level": "Lv.{level}"
+  },
+  "login": {
+    "tagline": "サインインしてプレイ",
+    "googleButton": "Google でログイン",
+    "disclaimer": "続行すると、Google アカウントの表示名・メールアドレス・プロフィール画像を取得します。",
+    "errors": {
+      "access_denied": "Google の同意画面でキャンセルされました。",
+      "invalid_state": "ログインの照合に失敗しました。時間が経ちすぎた可能性があります。もう一度お試しください。",
+      "missing_code": "認可コードを受け取れませんでした。もう一度お試しください。",
+      "login_failed": "ログイン処理に失敗しました。しばらくしてからお試しください。",
+      "fallback": "ログインできませんでした。"
+    }
+  },
+  "home": {
+    "newMatch": "新しい対戦",
+    "recentMatches": "最近の対戦",
+    "comingSoon": "準備中",
+    "quickMatch": {
+      "title": "クイックマッチ",
+      "description": "同じくらいの実力の相手とランク戦を始めます。"
+    },
+    "vsAi": {
+      "title": "コンピュータ対戦",
+      "description": "AI を相手に練習します。"
+    },
+    "vsFriend": {
+      "title": "フレンド対戦",
+      "description": "合言葉を使って部屋を作ります。"
+    }
+  },
+  "game": {
+    "title": "クイックマッチ",
+    "connecting": "接続中…",
+    "reconnecting": "再接続中…",
+    "queueHint": "待機列に入ると、相手が見つかり次第すぐに対局が始まります。",
+    "findOpponent": "対戦相手を探す",
+    "searching": "対戦相手を探しています…",
+    "cancel": "やめる",
+    "spectatorBadge": "観戦 {count, plural, other {# 人}}",
+    "opponentDisconnected": "相手の接続が切れました。{seconds, plural, other {# 秒}}以内に戻らなければあなたの勝ちになります。",
+    "boardHint": "移動: 光るマス ／ 壁: マスの間をクリック",
+    "resign": "投了する",
+    "backHome": "ホームへ戻る",
+    "totalMoves": "総手数 {count}",
+    "ratingChange": "レート {before} →",
+    "result": {
+      "win": "勝ち",
+      "loss": "負け",
+      "aborted": "対局は中断されました",
+      "goal": "ゴール到達",
+      "resign": "投了",
+      "timeout": "時間切れ"
+    },
+    "resultWithReason": "{result}（{reason}）",
+    "player": {
+      "you": "自分",
+      "disconnected": "切断中",
+      "walls": "壁 {count}"
+    },
+    "board": {
+      "cell": "マス {row}-{col}",
+      "hWall": "横壁 {row}-{col}",
+      "vWall": "縦壁 {row}-{col}"
+    },
+    "wsErrors": {
+      "not_your_turn": "相手の手番です。",
+      "illegal_move": "そのマスへは動けません。",
+      "wall_overlaps": "既にある壁と重なっています。",
+      "wall_seals_goal": "その壁はゴールへの道を完全に塞いでしまいます。",
+      "invalid_wall": "そこには壁を置けません。",
+      "no_walls_left": "持ち壁がありません。",
+      "stale_version": "盤面が更新されました。最新の盤面でもう一度どうぞ。",
+      "game_finished": "この対局はもう終わっています。",
+      "already_in_match": "進行中の対局があります。",
+      "no_active_match": "参加中の対局がありません。",
+      "not_connected": "サーバーと接続できていません。"
+    }
+  },
+  "spectate": {
+    "title": "観戦",
+    "watching": "観戦中",
+    "backToList": "一覧へ戻る",
+    "refresh": "更新",
+    "empty": "いま進行中の対局はありません。",
+    "moveCount": "{count, plural, other {# 手目}}",
+    "winner": "{name} の勝ち",
+    "aborted": "対局は中断されました",
+    "loadFailed": "一覧の取得に失敗しました ({status})"
+  },
+  "friends": {
+    "title": "フレンド",
+    "tabFriends": "フレンド ({count})",
+    "tabRequests": "届いた申請",
+    "tabOutgoing": "送った申請",
+    "tabSearch": "探す",
+    "emptyFriends": "まだフレンドがいません。「探す」から申請を送りましょう。",
+    "emptyIncoming": "届いている申請はありません。",
+    "emptyOutgoing": "送信中の申請はありません。",
+    "emptySearch": "見つかりませんでした。",
+    "online": "オンライン",
+    "offline": "オフライン",
+    "accept": "承認",
+    "rejectAria": "申請を拒否",
+    "removeAria": "フレンドを解除",
+    "withdraw": "取り下げる",
+    "request": "申請",
+    "requestSent": "申請を送りました",
+    "search": "検索",
+    "searchPlaceholder": "表示名か @handle で検索",
+    "userLine": "@{handle} ・ Lv.{level}",
+    "loadFailed": "読み込みに失敗しました",
+    "actionFailed": "操作に失敗しました"
+  },
+  "settings": {
+    "title": "設定",
+    "avatarSection": "アバター",
+    "choose": "画像を選ぶ",
+    "remove": "削除する",
+    "avatarHint": "png / jpeg / webp、5MB まで。削除するとデフォルトに戻ります。",
+    "avatarTooLarge": "画像は 5MB 以下にしてください",
+    "profileSection": "プロフィール",
+    "displayName": "表示名",
+    "handle": "ハンドル",
+    "handleHint": "英小文字・数字・アンダースコア、3〜30 文字",
+    "language": "言語",
+    "save": "保存する",
+    "saved": "保存しました",
+    "saveFailed": "保存に失敗しました",
+    "uploadFailed": "アップロードに失敗しました",
+    "deleteFailed": "削除に失敗しました"
+  },
+  "apiErrors": {
+    "requestFailed": "リクエストに失敗しました ({status})",
+    "handle_taken": "そのハンドルは既に使われています。",
+    "invalid_display_name": "表示名は 1〜50 文字で入力してください。",
+    "invalid_handle": "ハンドルは英小文字・数字・アンダースコアの 3〜30 文字です。",
+    "invalid_locale": "その言語には対応していません。",
+    "invalid_avatar_asset": "そのアバターは使えません。",
+    "file_too_large": "ファイルが大きすぎます（最大 5MB）。",
+    "unsupported_media_type": "対応していない画像形式です（png / jpeg / webp）。",
+    "invalid_image": "画像として読み込めませんでした。",
+    "friend_self": "自分自身には申請できません。",
+    "friend_blocked": "この相手には申請できません。",
+    "friend_already_requested": "申請は送信済みです。",
+    "already_friends": "既にフレンドです。",
+    "friend_not_found": "申請が見つかりません。",
+    "user_not_found": "ユーザーが見つかりません。",
+    "media_not_found": "画像が見つかりません。"
+  },
+  "stats": {
+    "title": "統計",
+    "tiles": {
+      "matches": "対戦数",
+      "matchesHint": "{wins}勝 {losses}敗 {draws}分",
+      "winRate": "勝率",
+      "winRateHint": "引き分けも母数に含む",
+      "rating": "レーティング",
+      "ratingHint": "ランク戦のみ変動",
+      "ranking": "順位",
+      "rankingValue": "{rank} 位",
+      "rankingHint": "{total, plural, other {# 人中}}",
+      "winStreak": "連勝",
+      "loseStreak": "連敗",
+      "streakHint": "最長 {count} 連勝",
+      "level": "レベル",
+      "levelValue": "Lv.{level}",
+      "levelHint": "{current} / {needed} XP"
+    },
+    "nextLevel": "次のレベルまで",
+    "nextLevelAria": "次のレベルまでの進捗",
+    "ratingChart": "レーティングの推移",
+    "activityChart": "対戦数の推移",
+    "emptyChart": "この期間の対戦がありません。",
+    "byResultType": "決着のつき方",
+    "byMode": "モード別",
+    "totalGames": "{count, plural, other {# 戦}}",
+    "filters": {
+      "period": "期間",
+      "all": "すべて",
+      "mode": "モード",
+      "result": "結果",
+      "daily": "日別",
+      "weekly": "週別"
+    },
+    "outcomes": {
+      "win": "勝ち",
+      "loss": "負け",
+      "draw": "引き分け"
+    },
+    "modes": {
+      "ranked": "ランク戦",
+      "casual": "カジュアル",
+      "ai": "AI 対戦",
+      "friend": "フレンド戦"
+    },
+    "results": {
+      "goal": "ゴール到達",
+      "resign": "投了",
+      "timeout": "時間切れ",
+      "draw": "引き分け",
+      "abort": "中断"
+    }
+  },
+  "matches": {
+    "title": "対戦履歴",
+    "empty": "この条件に合う対戦がありません。",
+    "vs": "vs {name}",
+    "moves": "{count, plural, other {# 手}}",
+    "xp": "+{xp} XP"
+  },
+  "achievements": {
+    "title": "実績",
+    "unlockedCount": "{unlocked} / {total} 解除",
+    "progressAria": "{name} の進捗",
+    "items": {
+      "first_win": { "name": "初勝利", "description": "はじめて対戦に勝つ" },
+      "win_10": { "name": "常勝", "description": "通算 10 勝する" },
+      "win_50": { "name": "百戦錬磨", "description": "通算 50 勝する" },
+      "win_100": { "name": "覇者", "description": "通算 100 勝する" },
+      "streak_3": { "name": "三連覇", "description": "3 連勝する" },
+      "streak_5": { "name": "無敗", "description": "5 連勝する" },
+      "streak_10": { "name": "不動", "description": "10 連勝する" },
+      "played_10": { "name": "常連", "description": "10 戦する" },
+      "played_50": { "name": "歴戦", "description": "50 戦する" },
+      "played_100": { "name": "求道者", "description": "100 戦する" },
+      "rating_1300": {
+        "name": "上級者",
+        "description": "レーティング 1300 に到達する"
+      },
+      "rating_1500": {
+        "name": "熟練者",
+        "description": "レーティング 1500 に到達する"
+      }
+    }
+  },
+  "leaderboard": {
+    "title": "ランキング",
+    "myRank": "自分の順位",
+    "record": "{wins}勝 {losses}敗",
+    "winRate": "勝率 {rate}",
+    "userLine": "@{handle} ・ Lv.{level}"
+  },
+  "pagination": {
+    "range": "{total, plural, other {# 件}}中 {from}–{to} 件"
+  },
+  "avatar": {
+    "alt": "{name} のアバター"
+  }
+}

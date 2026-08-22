@@ -23,8 +23,10 @@ import {
   IconX,
 } from "@tabler/icons-react";
 
+import { useTranslations } from "next-intl";
+
 import { UserAvatar } from "@/components/user-avatar";
-import { apiUrl } from "@/lib/api";
+import { ApiError, requestJSON } from "@/lib/request";
 
 /** backend の handler/user.go userPublicResponse と対。 */
 interface PublicUser {
@@ -43,17 +45,6 @@ interface Friendship {
   online: boolean;
 }
 
-async function requestJSON(path: string, init?: RequestInit) {
-  const res = await fetch(apiUrl(path), { credentials: "include", ...init });
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as {
-      error?: string;
-    } | null;
-    throw new Error(body?.error ?? `リクエストに失敗しました (${res.status})`);
-  }
-  return res.status === 204 ? null : res.json();
-}
-
 /** 名前・handle・オンライン表示つきの 1 行。 */
 function UserRow({
   user,
@@ -64,6 +55,7 @@ function UserRow({
   online?: boolean;
   right: React.ReactNode;
 }) {
+  const t = useTranslations("friends");
   return (
     <Paper p="sm">
       <Group justify="space-between" wrap="nowrap">
@@ -92,12 +84,12 @@ function UserRow({
                   variant="light"
                   color={online ? "emerald" : "gray"}
                 >
-                  {online ? "オンライン" : "オフライン"}
+                  {online ? t("online") : t("offline")}
                 </Badge>
               )}
             </Group>
             <Text size="xs" c="dimmed" truncate>
-              @{user.handle} ・ Lv.{user.level}
+              {t("userLine", { handle: user.handle, level: user.level })}
             </Text>
           </Stack>
         </Group>
@@ -110,6 +102,8 @@ function UserRow({
 }
 
 export function FriendsScreen() {
+  const t = useTranslations("friends");
+  const tErr = useTranslations("apiErrors");
   const [friends, setFriends] = useState<Friendship[]>([]);
   const [incoming, setIncoming] = useState<Friendship[]>([]);
   const [outgoing, setOutgoing] = useState<Friendship[]>([]);
@@ -135,9 +129,9 @@ export function FriendsScreen() {
       setIncoming(inc.items);
       setOutgoing(out.items);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "読み込みに失敗しました");
+      setError(e instanceof Error ? e.message : t("loadFailed"));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const load = () => void reload();
@@ -159,7 +153,11 @@ export function FriendsScreen() {
       if (done) setNotice(done);
       await reload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "操作に失敗しました");
+      if (e instanceof ApiError && e.code && tErr.has(e.code)) {
+        setError(tErr(e.code));
+      } else {
+        setError(e instanceof Error ? e.message : t("actionFailed"));
+      }
     }
   };
 
@@ -184,7 +182,7 @@ export function FriendsScreen() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user_id: userId }),
         }),
-      "申請を送りました",
+      t("requestSent"),
     );
 
   const decide = (userId: string, action: "accept" | "reject") =>
@@ -224,18 +222,19 @@ export function FriendsScreen() {
 
       <Tabs defaultValue="friends" keepMounted={false}>
         <Tabs.List>
-          <Tabs.Tab value="friends">フレンド ({friends.length})</Tabs.Tab>
-          <Tabs.Tab value="requests">
-            届いた申請 {incoming.length > 0 && `(${incoming.length})`}
+          <Tabs.Tab value="friends">
+            {t("tabFriends", { count: friends.length })}
           </Tabs.Tab>
-          <Tabs.Tab value="outgoing">送った申請</Tabs.Tab>
-          <Tabs.Tab value="search">探す</Tabs.Tab>
+          <Tabs.Tab value="requests">
+            {t("tabRequests")} {incoming.length > 0 && `(${incoming.length})`}
+          </Tabs.Tab>
+          <Tabs.Tab value="outgoing">{t("tabOutgoing")}</Tabs.Tab>
+          <Tabs.Tab value="search">{t("tabSearch")}</Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="friends" pt="md">
           <Stack gap="sm">
-            {friends.length === 0 &&
-              empty("まだフレンドがいません。「探す」から申請を送りましょう。")}
+            {friends.length === 0 && empty(t("emptyFriends"))}
             {friends.map((f) => (
               <UserRow
                 key={f.user.id}
@@ -245,7 +244,7 @@ export function FriendsScreen() {
                   <ActionIcon
                     variant="subtle"
                     color="red"
-                    aria-label="フレンドを解除"
+                    aria-label={t("removeAria")}
                     onClick={() => remove(f.user.id)}
                   >
                     <IconUserMinus size={18} />
@@ -258,7 +257,7 @@ export function FriendsScreen() {
 
         <Tabs.Panel value="requests" pt="md">
           <Stack gap="sm">
-            {incoming.length === 0 && empty("届いている申請はありません。")}
+            {incoming.length === 0 && empty(t("emptyIncoming"))}
             {incoming.map((f) => (
               <UserRow
                 key={f.user.id}
@@ -269,12 +268,12 @@ export function FriendsScreen() {
                       size="xs"
                       onClick={() => decide(f.user.id, "accept")}
                     >
-                      承認
+                      {t("accept")}
                     </Button>
                     <ActionIcon
                       variant="subtle"
                       color="red"
-                      aria-label="申請を拒否"
+                      aria-label={t("rejectAria")}
                       onClick={() => decide(f.user.id, "reject")}
                     >
                       <IconX size={18} />
@@ -288,7 +287,7 @@ export function FriendsScreen() {
 
         <Tabs.Panel value="outgoing" pt="md">
           <Stack gap="sm">
-            {outgoing.length === 0 && empty("送信中の申請はありません。")}
+            {outgoing.length === 0 && empty(t("emptyOutgoing"))}
             {outgoing.map((f) => (
               <UserRow
                 key={f.user.id}
@@ -299,7 +298,7 @@ export function FriendsScreen() {
                     variant="subtle"
                     onClick={() => remove(f.user.id)}
                   >
-                    取り下げる
+                    {t("withdraw")}
                   </Button>
                 }
               />
@@ -318,7 +317,7 @@ export function FriendsScreen() {
               <Group>
                 <TextInput
                   className="flex-1"
-                  placeholder="表示名か @handle で検索"
+                  placeholder={t("searchPlaceholder")}
                   value={query}
                   onChange={(e) => setQuery(e.currentTarget.value)}
                 />
@@ -328,13 +327,13 @@ export function FriendsScreen() {
                   leftSection={<IconSearch size={16} />}
                   disabled={query.trim() === ""}
                 >
-                  検索
+                  {t("search")}
                 </Button>
               </Group>
             </form>
             {results !== null &&
               results.length === 0 &&
-              empty("見つかりませんでした。")}
+              empty(t("emptySearch"))}
             {results?.map((u) => (
               <UserRow
                 key={u.id}
@@ -346,7 +345,7 @@ export function FriendsScreen() {
                     leftSection={<IconUserPlus size={16} />}
                     onClick={() => sendRequest(u.id)}
                   >
-                    申請
+                    {t("request")}
                   </Button>
                 }
               />

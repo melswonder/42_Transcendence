@@ -139,7 +139,7 @@ async function fetchJSON<T>(path: string): Promise<T> {
     cache: "no-store",
   });
   if (!res.ok) {
-    throw new Error(`${path} が ${res.status} を返しました`);
+    throw new Error(`${path} returned ${res.status}`);
   }
 
   return res.json();

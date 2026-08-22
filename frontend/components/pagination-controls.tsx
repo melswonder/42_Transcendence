@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Group, Pagination, Text } from "@mantine/core";
+import { useFormatter, useTranslations } from "next-intl";
 
 /** ページ番号も URL のクエリに持つ。リロードや共有で位置が保たれる。 */
 export function PaginationControls({
@@ -13,6 +14,8 @@ export function PaginationControls({
   limit: number;
   offset: number;
 }) {
+  const t = useTranslations("pagination");
+  const format = useFormatter();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -29,7 +32,11 @@ export function PaginationControls({
   return (
     <Group justify="space-between" className="print:hidden">
       <Text size="sm" c="dimmed">
-        {total} 件中 {offset + 1}–{Math.min(offset + limit, total)} 件
+        {t("range", {
+          total,
+          from: format.number(offset + 1),
+          to: format.number(Math.min(offset + limit, total)),
+        })}
       </Text>
       <Pagination
         total={pages}

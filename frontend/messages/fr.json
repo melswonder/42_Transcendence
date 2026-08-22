@@ -1,0 +1,285 @@
+{
+  "meta": {
+    "description": "Jouez au Quoridor en ligne dans votre navigateur"
+  },
+  "nav": {
+    "play": "Jouer",
+    "watch": "Regarder",
+    "stats": "Statistiques",
+    "matches": "Historique",
+    "achievements": "Succès",
+    "leaderboard": "Classement",
+    "friends": "Amis",
+    "settings": "Paramètres",
+    "logout": "Se déconnecter",
+    "level": "Niv. {level}"
+  },
+  "login": {
+    "tagline": "Connectez-vous pour jouer",
+    "googleButton": "Se connecter avec Google",
+    "disclaimer": "En continuant, nous recevrons le nom, l'adresse e-mail et la photo de profil de votre compte Google.",
+    "errors": {
+      "access_denied": "Vous avez annulé sur l'écran de consentement Google.",
+      "invalid_state": "La vérification de connexion a échoué. La demande a peut-être expiré — veuillez réessayer.",
+      "missing_code": "Nous n'avons pas reçu de code d'autorisation. Veuillez réessayer.",
+      "login_failed": "La connexion a échoué. Veuillez réessayer dans un instant.",
+      "fallback": "Connexion impossible."
+    }
+  },
+  "home": {
+    "newMatch": "Nouvelle partie",
+    "recentMatches": "Parties récentes",
+    "comingSoon": "Bientôt disponible",
+    "quickMatch": {
+      "title": "Partie rapide",
+      "description": "Lancez une partie classée contre un adversaire de votre niveau."
+    },
+    "vsAi": {
+      "title": "Contre l'ordinateur",
+      "description": "Entraînez-vous contre une IA."
+    },
+    "vsFriend": {
+      "title": "Contre un ami",
+      "description": "Créez un salon avec un mot de passe."
+    }
+  },
+  "game": {
+    "title": "Partie rapide",
+    "connecting": "Connexion…",
+    "reconnecting": "Reconnexion…",
+    "queueHint": "Rejoignez la file : la partie démarre dès qu'un adversaire est trouvé.",
+    "findOpponent": "Chercher un adversaire",
+    "searching": "Recherche d'un adversaire…",
+    "cancel": "Annuler",
+    "spectatorBadge": "{count, plural, one {# spectateur} other {# spectateurs}}",
+    "opponentDisconnected": "Votre adversaire s'est déconnecté. Vous gagnez s'il ne revient pas dans {seconds, plural, one {# seconde} other {# secondes}}.",
+    "boardHint": "Déplacer : case en surbrillance ／ Mur : cliquez entre les cases",
+    "resign": "Abandonner",
+    "backHome": "Retour à l'accueil",
+    "totalMoves": "{count, plural, one {# coup} other {# coups}} au total",
+    "ratingChange": "Classement {before} →",
+    "result": {
+      "win": "Victoire",
+      "loss": "Défaite",
+      "aborted": "La partie a été interrompue",
+      "goal": "objectif atteint",
+      "resign": "abandon",
+      "timeout": "temps écoulé"
+    },
+    "resultWithReason": "{result} ({reason})",
+    "player": {
+      "you": "Vous",
+      "disconnected": "Hors ligne",
+      "walls": "{count, plural, one {# mur} other {# murs}}"
+    },
+    "board": {
+      "cell": "Case {row}-{col}",
+      "hWall": "Mur horizontal {row}-{col}",
+      "vWall": "Mur vertical {row}-{col}"
+    },
+    "wsErrors": {
+      "not_your_turn": "C'est le tour de votre adversaire.",
+      "illegal_move": "Vous ne pouvez pas vous déplacer là.",
+      "wall_overlaps": "Ce mur chevauche un mur existant.",
+      "wall_seals_goal": "Ce mur fermerait complètement un chemin vers l'objectif.",
+      "invalid_wall": "Vous ne pouvez pas placer de mur ici.",
+      "no_walls_left": "Vous n'avez plus de murs.",
+      "stale_version": "Le plateau a changé. Réessayez sur la position la plus récente.",
+      "game_finished": "Cette partie est déjà terminée.",
+      "already_in_match": "Vous avez déjà une partie en cours.",
+      "no_active_match": "Vous n'êtes dans aucune partie.",
+      "not_connected": "Non connecté au serveur."
+    }
+  },
+  "spectate": {
+    "title": "Regarder",
+    "watching": "En spectateur",
+    "backToList": "Retour à la liste",
+    "refresh": "Actualiser",
+    "empty": "Aucune partie en cours pour le moment.",
+    "moveCount": "{count, plural, one {coup #} other {coup #}}",
+    "winner": "{name} gagne",
+    "aborted": "La partie a été interrompue",
+    "loadFailed": "Échec du chargement de la liste ({status})"
+  },
+  "friends": {
+    "title": "Amis",
+    "tabFriends": "Amis ({count})",
+    "tabRequests": "Reçues",
+    "tabOutgoing": "Envoyées",
+    "tabSearch": "Rechercher",
+    "emptyFriends": "Pas encore d'amis. Envoyez une demande depuis l'onglet Rechercher.",
+    "emptyIncoming": "Aucune demande reçue.",
+    "emptyOutgoing": "Aucune demande en attente.",
+    "emptySearch": "Personne trouvé.",
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "accept": "Accepter",
+    "rejectAria": "Refuser la demande",
+    "removeAria": "Retirer l'ami",
+    "withdraw": "Retirer",
+    "request": "Ajouter",
+    "requestSent": "Demande envoyée",
+    "search": "Rechercher",
+    "searchPlaceholder": "Nom ou @identifiant",
+    "userLine": "@{handle} ・ Niv. {level}",
+    "loadFailed": "Échec du chargement",
+    "actionFailed": "Une erreur est survenue"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "avatarSection": "Avatar",
+    "choose": "Choisir une image",
+    "remove": "Supprimer",
+    "avatarHint": "png / jpeg / webp, 5 Mo max. La suppression rétablit l'avatar par défaut.",
+    "avatarTooLarge": "Choisissez une image de 5 Mo maximum",
+    "profileSection": "Profil",
+    "displayName": "Nom affiché",
+    "handle": "Identifiant",
+    "handleHint": "Minuscules, chiffres et tirets bas, 3 à 30 caractères",
+    "language": "Langue",
+    "save": "Enregistrer",
+    "saved": "Enregistré",
+    "saveFailed": "Échec de l'enregistrement",
+    "uploadFailed": "Échec de l'envoi",
+    "deleteFailed": "Échec de la suppression"
+  },
+  "apiErrors": {
+    "requestFailed": "La requête a échoué ({status})",
+    "handle_taken": "Cet identifiant est déjà pris.",
+    "invalid_display_name": "Le nom affiché doit faire de 1 à 50 caractères.",
+    "invalid_handle": "L'identifiant doit faire 3 à 30 caractères (minuscules, chiffres, tirets bas).",
+    "invalid_locale": "Cette langue n'est pas prise en charge.",
+    "invalid_avatar_asset": "Cet avatar ne peut pas être utilisé.",
+    "file_too_large": "Le fichier est trop volumineux (5 Mo max).",
+    "unsupported_media_type": "Format d'image non pris en charge (png / jpeg / webp).",
+    "invalid_image": "Le fichier n'a pas pu être lu comme une image.",
+    "friend_self": "Vous ne pouvez pas vous envoyer une demande.",
+    "friend_blocked": "Vous ne pouvez pas envoyer de demande à cet utilisateur.",
+    "friend_already_requested": "Demande déjà envoyée.",
+    "already_friends": "Vous êtes déjà amis.",
+    "friend_not_found": "Demande introuvable.",
+    "user_not_found": "Utilisateur introuvable.",
+    "media_not_found": "Image introuvable."
+  },
+  "stats": {
+    "title": "Statistiques",
+    "tiles": {
+      "matches": "Parties",
+      "matchesHint": "{wins} V {losses} D {draws} N",
+      "winRate": "Taux de victoire",
+      "winRateHint": "Les nuls comptent dans le total",
+      "rating": "Classement",
+      "ratingHint": "Seules les parties classées le modifient",
+      "ranking": "Rang",
+      "rankingValue": "no {rank}",
+      "rankingHint": "sur {total, plural, one {# joueur} other {# joueurs}}",
+      "winStreak": "Série de victoires",
+      "loseStreak": "Série de défaites",
+      "streakHint": "Record : {count, plural, one {# victoire} other {# victoires}} d'affilée",
+      "level": "Niveau",
+      "levelValue": "Niv. {level}",
+      "levelHint": "{current} / {needed} XP"
+    },
+    "nextLevel": "Vers le niveau suivant",
+    "nextLevelAria": "Progression vers le niveau suivant",
+    "ratingChart": "Évolution du classement",
+    "activityChart": "Évolution des parties",
+    "emptyChart": "Aucune partie sur cette période.",
+    "byResultType": "Issue des parties",
+    "byMode": "Par mode",
+    "totalGames": "{count, plural, one {# partie} other {# parties}}",
+    "filters": {
+      "period": "Période",
+      "all": "Toutes",
+      "mode": "Mode",
+      "result": "Résultat",
+      "daily": "Par jour",
+      "weekly": "Par semaine"
+    },
+    "outcomes": {
+      "win": "Victoire",
+      "loss": "Défaite",
+      "draw": "Nul"
+    },
+    "modes": {
+      "ranked": "Classée",
+      "casual": "Amicale",
+      "ai": "Contre l'IA",
+      "friend": "Entre amis"
+    },
+    "results": {
+      "goal": "Objectif atteint",
+      "resign": "Abandon",
+      "timeout": "Temps écoulé",
+      "draw": "Nul",
+      "abort": "Interrompue"
+    }
+  },
+  "matches": {
+    "title": "Historique",
+    "empty": "Aucune partie pour ces filtres.",
+    "vs": "contre {name}",
+    "moves": "{count, plural, one {# coup} other {# coups}}",
+    "xp": "+{xp} XP"
+  },
+  "achievements": {
+    "title": "Succès",
+    "unlockedCount": "{unlocked} / {total} débloqués",
+    "progressAria": "Progression de {name}",
+    "items": {
+      "first_win": {
+        "name": "Première victoire",
+        "description": "Gagnez votre première partie"
+      },
+      "win_10": {
+        "name": "Vainqueur",
+        "description": "Gagnez 10 parties au total"
+      },
+      "win_50": {
+        "name": "Vétéran",
+        "description": "Gagnez 50 parties au total"
+      },
+      "win_100": {
+        "name": "Champion",
+        "description": "Gagnez 100 parties au total"
+      },
+      "streak_3": {
+        "name": "Triplé",
+        "description": "Gagnez 3 parties d'affilée"
+      },
+      "streak_5": {
+        "name": "Invaincu",
+        "description": "Gagnez 5 parties d'affilée"
+      },
+      "streak_10": {
+        "name": "Inébranlable",
+        "description": "Gagnez 10 parties d'affilée"
+      },
+      "played_10": { "name": "Habitué", "description": "Jouez 10 parties" },
+      "played_50": { "name": "Aguerri", "description": "Jouez 50 parties" },
+      "played_100": { "name": "Passionné", "description": "Jouez 100 parties" },
+      "rating_1300": {
+        "name": "Avancé",
+        "description": "Atteignez un classement de 1300"
+      },
+      "rating_1500": {
+        "name": "Expert",
+        "description": "Atteignez un classement de 1500"
+      }
+    }
+  },
+  "leaderboard": {
+    "title": "Classement",
+    "myRank": "Votre rang",
+    "record": "{wins} V {losses} D",
+    "winRate": "Victoires {rate}",
+    "userLine": "@{handle} ・ Niv. {level}"
+  },
+  "pagination": {
+    "range": "{from}–{to} sur {total, plural, one {# entrée} other {# entrées}}"
+  },
+  "avatar": {
+    "alt": "Avatar de {name}"
+  }
+}

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ScrollArea, Stack, Title } from "@mantine/core";
 
+import { LocaleSwitcher } from "@/components/locale-switcher";
 import { SideNav } from "@/components/side-nav";
 import { UserCard } from "@/components/user-card";
 import type { User } from "@/lib/auth";
@@ -30,6 +31,7 @@ export function AppShell({
           <SideNav />
         </Stack>
 
+        <LocaleSwitcher loggedIn />
         <UserCard user={user} />
       </aside>
 

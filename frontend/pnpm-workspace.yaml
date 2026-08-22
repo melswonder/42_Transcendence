@@ -1,5 +1,8 @@
 packages:
   - .
 allowBuilds:
+  # ネイティブバイナリは同梱の prebuilt を使うので、ビルドスクリプトは走らせない。
+  "@parcel/watcher": false
+  "@swc/core": false
   sharp: false
   unrs-resolver: false

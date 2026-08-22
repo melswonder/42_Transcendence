@@ -25,7 +25,7 @@ export function useStatsStream() {
     // 切断時の再接続は EventSource 側が自動で行うので、ここでは何もしない。
     // ログを出すだけにしておかないと、再接続のたびに握り潰したことに気付けない。
     source.onerror = () =>
-      console.warn("stats stream: 接続が切れました。再接続します");
+      console.warn("stats stream: connection lost, reconnecting");
 
     return () => source.close();
   }, [router]);

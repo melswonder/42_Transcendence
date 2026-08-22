@@ -1,4 +1,5 @@
 import { Group, Paper, Stack, Text } from "@mantine/core";
+import { useTranslations } from "next-intl";
 
 import { LogoutButton } from "@/components/logout-button";
 import { UserAvatar } from "@/components/user-avatar";
@@ -6,6 +7,7 @@ import type { User } from "@/lib/auth";
 
 /** サイドバー下部の自分のカード。 */
 export function UserCard({ user }: { user: User }) {
+  const t = useTranslations("nav");
   return (
     <Paper p="sm" bg="dark.7">
       <Group justify="space-between" wrap="nowrap">
@@ -19,7 +21,7 @@ export function UserCard({ user }: { user: User }) {
               {user.display_name}
             </Text>
             <Text size="xs" c="emerald">
-              Lv.{user.level}
+              {t("level", { level: user.level })}
             </Text>
           </Stack>
         </Group>

@@ -154,12 +154,15 @@ func (h *UserHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	case err == nil:
 		writeJSON(w, http.StatusOK, toUserPrivate(profile))
 	case errors.Is(err, domain.ErrHandleTaken):
-		writeJSONError(w, http.StatusConflict, "handle already taken")
-	case errors.Is(err, domain.ErrInvalidDisplayName),
-		errors.Is(err, domain.ErrInvalidHandle),
-		errors.Is(err, domain.ErrInvalidLocale),
-		errors.Is(err, domain.ErrInvalidAvatarAsset):
-		writeJSONError(w, http.StatusBadRequest, err.Error())
+		writeJSONErrorCode(w, http.StatusConflict, "handle_taken", "handle already taken")
+	case errors.Is(err, domain.ErrInvalidDisplayName):
+		writeJSONErrorCode(w, http.StatusBadRequest, "invalid_display_name", err.Error())
+	case errors.Is(err, domain.ErrInvalidHandle):
+		writeJSONErrorCode(w, http.StatusBadRequest, "invalid_handle", err.Error())
+	case errors.Is(err, domain.ErrInvalidLocale):
+		writeJSONErrorCode(w, http.StatusBadRequest, "invalid_locale", err.Error())
+	case errors.Is(err, domain.ErrInvalidAvatarAsset):
+		writeJSONErrorCode(w, http.StatusBadRequest, "invalid_avatar_asset", err.Error())
 	default:
 		writeJSONError(w, http.StatusInternalServerError, "failed to update profile")
 	}

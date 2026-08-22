@@ -16,6 +16,8 @@ import { OutcomeChart } from "@/components/outcome-chart";
 import { RatingChart } from "@/components/rating-chart";
 import { StatsFilters } from "@/components/stats-filters";
 import { StatTile } from "@/components/stat-tile";
+import { getTranslations } from "next-intl/server";
+
 import { getCurrentUser } from "@/lib/auth";
 import {
   getBreakdown,
@@ -41,6 +43,7 @@ export default async function StatsPage({
     getBreakdown(filters),
   ]);
 
+  const t = await getTranslations("stats");
   const xpInLevel = summary.xp - summary.xp_for_level;
   const xpNeeded = summary.xp_for_next_level - summary.xp_for_level;
   const streak = summary.current_streak;
@@ -49,7 +52,7 @@ export default async function StatsPage({
     <AppShell user={user}>
       <Stack gap="lg" maw={1100} mx="auto">
         <Group justify="space-between" align="center">
-          <Title order={2}>統計</Title>
+          <Title order={2}>{t("title")}</Title>
           <ExportButtons />
         </Group>
 
@@ -60,47 +63,54 @@ export default async function StatsPage({
         <SimpleGrid cols={{ base: 1, xs: 2, md: 3, lg: 6 }} spacing="md">
           <StatTile
             icon={<IconSwords size={20} />}
-            label="対戦数"
+            label={t("tiles.matches")}
             value={`${summary.total_matches}`}
-            hint={`${summary.wins}勝 ${summary.losses}敗 ${summary.draws}分`}
+            hint={t("tiles.matchesHint", {
+              wins: summary.wins,
+              losses: summary.losses,
+              draws: summary.draws,
+            })}
           />
           <StatTile
             icon={<IconTrophy size={20} />}
-            label="勝率"
+            label={t("tiles.winRate")}
             value={`${(summary.win_rate * 100).toFixed(1)}%`}
-            hint="引き分けも母数に含む"
+            hint={t("tiles.winRateHint")}
           />
           <StatTile
             icon={<IconChartLine size={20} />}
-            label="レーティング"
+            label={t("tiles.rating")}
             value={`${summary.rating}`}
-            hint="ランク戦のみ変動"
+            hint={t("tiles.ratingHint")}
           />
           <StatTile
             icon={<IconMedal size={20} />}
-            label="順位"
-            value={`${summary.ranking}位`}
-            hint={`${summary.total_players} 人中`}
+            label={t("tiles.ranking")}
+            value={t("tiles.rankingValue", { rank: summary.ranking })}
+            hint={t("tiles.rankingHint", { total: summary.total_players })}
           />
           <StatTile
             icon={<IconFlame size={20} />}
-            label={streak >= 0 ? "連勝" : "連敗"}
+            label={streak >= 0 ? t("tiles.winStreak") : t("tiles.loseStreak")}
             value={`${Math.abs(streak)}`}
-            hint={`最長 ${summary.best_streak} 連勝`}
+            hint={t("tiles.streakHint", { count: summary.best_streak })}
             tone={streak > 0 ? "positive" : streak < 0 ? "negative" : undefined}
           />
           <StatTile
             icon={<IconStars size={20} />}
-            label="レベル"
-            value={`Lv.${summary.level}`}
-            hint={`${xpInLevel} / ${xpNeeded} XP`}
+            label={t("tiles.level")}
+            value={t("tiles.levelValue", { level: summary.level })}
+            hint={t("tiles.levelHint", {
+              current: xpInLevel,
+              needed: xpNeeded,
+            })}
           />
         </SimpleGrid>
 
         <Stack gap={4}>
           <Group justify="space-between">
             <Text size="sm" c="dimmed">
-              次のレベルまで
+              {t("nextLevel")}
             </Text>
             <Text size="sm" c="dimmed" ff="monospace">
               {xpNeeded - xpInLevel} XP
@@ -110,7 +120,7 @@ export default async function StatsPage({
             value={xpNeeded > 0 ? (xpInLevel / xpNeeded) * 100 : 0}
             size="md"
             radius="xl"
-            aria-label="次のレベルまでの進捗"
+            aria-label={t("nextLevelAria")}
           />
         </Stack>
 
@@ -119,10 +129,10 @@ export default async function StatsPage({
 
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
           <OutcomeChart
-            title="決着のつき方"
+            title={t("byResultType")}
             slices={breakdown.by_result_type}
           />
-          <OutcomeChart title="モード別" slices={breakdown.by_mode} />
+          <OutcomeChart title={t("byMode")} slices={breakdown.by_mode} />
         </SimpleGrid>
       </Stack>
     </AppShell>

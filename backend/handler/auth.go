@@ -219,3 +219,9 @@ func writeJSON(w http.ResponseWriter, status int, body any) {
 func writeJSONError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, map[string]string{"error": message})
 }
+
+// writeJSONErrorCode は機械可読なコード付きの失敗レスポンス。
+// 文言の翻訳はクライアントが code を鍵にして行う（サーバーはロケールを知らない）。
+func writeJSONErrorCode(w http.ResponseWriter, status int, code, message string) {
+	writeJSON(w, status, map[string]string{"error": message, "code": code})
+}

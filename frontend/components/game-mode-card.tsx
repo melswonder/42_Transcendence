@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Paper, Stack, Text, ThemeIcon } from "@mantine/core";
+import { useTranslations } from "next-intl";
 
 interface GameModeCardProps {
   icon: ReactNode;
@@ -24,6 +25,7 @@ export function GameModeCard({
   featured = false,
   comingSoon = false,
 }: GameModeCardProps) {
+  const t = useTranslations("home");
   const body = (
     <Stack gap="sm" align="flex-start">
       <ThemeIcon size={44} radius="md" variant={featured ? "filled" : "light"}>
@@ -33,7 +35,7 @@ export function GameModeCard({
         {title}
       </Text>
       <Text size="sm" c="dimmed">
-        {comingSoon ? "準備中" : description}
+        {comingSoon ? t("comingSoon") : description}
       </Text>
     </Stack>
   );

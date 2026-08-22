@@ -1,21 +1,7 @@
 import { Group, Paper, Stack, Text, ThemeIcon } from "@mantine/core";
+import { useFormatter, useTranslations } from "next-intl";
 
 import type { Match } from "@/lib/stats";
-
-const MODE_LABELS: Record<string, string> = {
-  ranked: "ランク戦",
-  casual: "カジュアル",
-  ai: "AI 対戦",
-  friend: "フレンド戦",
-};
-
-const RESULT_LABELS: Record<string, string> = {
-  goal: "ゴール到達",
-  resign: "投了",
-  timeout: "時間切れ",
-  draw: "引き分け",
-  abort: "中断",
-};
 
 const OUTCOME_MARK: Record<string, { label: string; color: string }> = {
   win: { label: "W", color: "emerald" },
@@ -27,11 +13,17 @@ const OUTCOME_MARK: Record<string, { label: string; color: string }> = {
  * 外枠 1 枚の中に区切り線で並べる。
  */
 export function MatchHistory({ matches }: { matches: Match[] }) {
+  const t = useTranslations("matches");
+  const tModes = useTranslations("stats.modes");
+  const tResults = useTranslations("stats.results");
+  // 日付・時刻はロケールの流儀で出す（2026/08/22 / Aug 22, 2026 / 22 août 2026）。
+  const format = useFormatter();
+
   if (matches.length === 0) {
     return (
       <Paper p="xl">
         <Text c="dimmed" ta="center">
-          この条件に合う対戦がありません。
+          {t("empty")}
         </Text>
       </Paper>
     );
@@ -61,20 +53,26 @@ export function MatchHistory({ matches }: { matches: Match[] }) {
               </ThemeIcon>
               <Stack gap={2} className="min-w-0">
                 <Text fw={600} truncate>
-                  vs {match.opponent.display_name}
+                  {t("vs", { name: match.opponent.display_name })}
                 </Text>
                 <Text size="xs" c="dimmed">
-                  {formatDateTime(match.finished_at)} ・{" "}
-                  {MODE_LABELS[match.mode] ?? match.mode} ・{" "}
-                  {RESULT_LABELS[match.result_type] ?? match.result_type} ・{" "}
-                  {match.total_moves} 手
+                  {format.dateTime(new Date(match.finished_at), {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}{" "}
+                  ・ {tModes.has(match.mode) ? tModes(match.mode) : match.mode}{" "}
+                  ・{" "}
+                  {tResults.has(match.result_type)
+                    ? tResults(match.result_type)
+                    : match.result_type}{" "}
+                  ・ {t("moves", { count: match.total_moves })}
                 </Text>
               </Stack>
             </Group>
 
             <Group gap="md" wrap="nowrap">
               <Text size="xs" c="dimmed" ff="monospace" visibleFrom="sm">
-                +{match.xp_gained} XP
+                {t("xp", { xp: match.xp_gained })}
               </Text>
               <Text
                 ff="monospace"
@@ -104,12 +102,4 @@ function formatDiff(diff: number): string {
   if (diff === 0) return "±0";
 
   return diff > 0 ? `+${diff}` : `${diff}`;
-}
-
-function formatDateTime(iso: string): string {
-  // ロケール依存の揺れを避けるため、表示形式は固定する。
-  const d = new Date(iso);
-  const pad = (n: number) => `${n}`.padStart(2, "0");
-
-  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { ActionIcon, Button } from "@mantine/core";
 import { IconLogout } from "@tabler/icons-react";
 
@@ -8,6 +9,7 @@ import { apiUrl } from "@/lib/api";
 
 /** セッションを失効させてログイン画面へ戻す。 */
 export function LogoutButton({ iconOnly = false }: { iconOnly?: boolean }) {
+  const t = useTranslations("nav");
   const [loading, setLoading] = useState(false);
 
   const logout = async () => {
@@ -33,7 +35,7 @@ export function LogoutButton({ iconOnly = false }: { iconOnly?: boolean }) {
         loading={loading}
         variant="subtle"
         color="gray"
-        aria-label="ログアウト"
+        aria-label={t("logout")}
       >
         <IconLogout size={18} />
       </ActionIcon>
@@ -48,7 +50,7 @@ export function LogoutButton({ iconOnly = false }: { iconOnly?: boolean }) {
       color="gray"
       leftSection={<IconLogout size={18} />}
     >
-      ログアウト
+      {t("logout")}
     </Button>
   );
 }

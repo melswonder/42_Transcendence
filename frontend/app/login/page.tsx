@@ -2,8 +2,11 @@ import { Alert, Paper, Stack, Text, ThemeIcon, Title } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 
 import { GoogleLoginButton } from "@/components/google-login-button";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 import { QuoridorMark } from "@/components/quoridor-mark";
-import { resolveLoginError } from "@/lib/login-error";
+import { getTranslations } from "next-intl/server";
+
+import { resolveLoginErrorKey } from "@/lib/login-error";
 
 export default async function LoginPage({
   searchParams,
@@ -11,7 +14,9 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
-  const message = resolveLoginError(error);
+  const t = await getTranslations("login");
+  const errorKey = resolveLoginErrorKey(error);
+  const message = errorKey ? t(`errors.${errorKey}`) : null;
 
   return (
     <main className="flex min-h-dvh items-center justify-center bg-body p-4">
@@ -24,7 +29,7 @@ export default async function LoginPage({
             <Title order={1} className="text-3xl tracking-[0.15em]">
               TRANSCENDENCE
             </Title>
-            <Text c="dimmed">Sign in to play</Text>
+            <Text c="dimmed">{t("tagline")}</Text>
           </Stack>
 
           {message && (
@@ -36,9 +41,10 @@ export default async function LoginPage({
           <GoogleLoginButton />
 
           <Text size="xs" c="dimmed" ta="center">
-            続行すると、Google
-            アカウントの表示名・メールアドレス・プロフィール画像を取得します。
+            {t("disclaimer")}
           </Text>
+
+          <LocaleSwitcher />
         </Stack>
       </Paper>
     </main>
