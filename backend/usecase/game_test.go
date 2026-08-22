@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -89,6 +90,39 @@ func (r *fakeGameRepo) FinishMatch(_ context.Context, matchID uuid.UUID, resultT
 	}
 	r.settled[matchID] = participants
 	return nil
+}
+
+func (r *fakeGameRepo) FindActiveMatchByID(_ context.Context, matchID uuid.UUID) (*StoredGame, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	g, ok := r.games[matchID]
+	if !ok {
+		return nil, domain.ErrMatchNotFound
+	}
+	if _, done := r.finished[matchID]; done {
+		return nil, domain.ErrMatchNotFound
+	}
+	copied := *g
+	return &copied, nil
+}
+
+func (r *fakeGameRepo) ListLiveMatches(_ context.Context, _, _ int) ([]LiveMatch, int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var out []LiveMatch
+	for _, g := range r.games {
+		if _, done := r.finished[g.MatchID]; done {
+			continue
+		}
+		out = append(out, LiveMatch{
+			MatchID:   g.MatchID,
+			Mode:      g.Mode,
+			StartedAt: g.StartedAt,
+			Players:   g.Players,
+			MoveCount: len(g.Actions),
+		})
+	}
+	return out, len(out), nil
 }
 
 func (r *fakeGameRepo) FindActiveMatch(_ context.Context, userID uuid.UUID) (*StoredGame, error) {
@@ -403,6 +437,126 @@ func TestTurnTimeout(t *testing.T) {
 	}
 	if rt, winner, ok := repo.result(state.MatchID); !ok || rt != "timeout" || winner != 1 {
 		t.Errorf("timeout / winner=1 で記録されるはず: %s %d %v", rt, winner, ok)
+	}
+}
+
+func TestSpectatorFlow(t *testing.T) {
+	t.Parallel()
+
+	_, uc, c1, c2, state := startTestMatch(t)
+
+	// 第三者が途中から観戦に入る。
+	carol := testUser("carol")
+	c3, err := uc.Connect(context.Background(), carol)
+	if err != nil {
+		t.Fatalf("connect c3: %v", err)
+	}
+	if err := c3.Watch(context.Background(), state.MatchID); err != nil {
+		t.Fatalf("観戦に入れるはず: %v", err)
+	}
+
+	// 観戦者には最新の盤面が届き、座席は無い。
+	st := waitEvent(t, c3, GameEventState)
+	if st.State.Version != 0 || c3.Seat() != -1 {
+		t.Errorf("最新盤面と seat -1 のはず: v=%d seat=%d", st.State.Version, c3.Seat())
+	}
+	if st.State.Spectators != 1 {
+		t.Errorf("観戦者数 1 のはず: %d", st.State.Spectators)
+	}
+	// 対局者にも観戦者数が伝わる。
+	stPlayer := waitEvent(t, c1, GameEventState)
+	if stPlayer.State.Spectators != 1 {
+		t.Errorf("対局者にも観戦者数が届くはず: %d", stPlayer.State.Spectators)
+	}
+
+	// 対局が進めば観戦者にもリアルタイムに届く。
+	if err := move(c1, 0, 1, 4); err != nil {
+		t.Fatalf("1 手目: %v", err)
+	}
+	st = waitEvent(t, c3, GameEventState)
+	if st.State.Version != 1 {
+		t.Errorf("観戦者にも手が届くはず: v=%d", st.State.Version)
+	}
+
+	// 観戦者は操作できない。
+	err = c3.Act(context.Background(), GameActionInput{
+		ActionID:        uuid.New(),
+		ExpectedVersion: 1,
+		Kind:            domain.GameActionMove,
+		Cell:            domain.Cell{Row: 7, Col: 4},
+	})
+	if !errors.Is(err, domain.ErrNotMatchPlayer) {
+		t.Errorf("観戦者の操作は拒否されるはず: %v", err)
+	}
+
+	// 観戦をやめると観戦者数が減って全員に伝わる。
+	// チャネルには古い盤面も溜まっているので、観戦者数 0 の通知が来るまで読み進める。
+	c3.Unwatch()
+	deadline := time.After(2 * time.Second)
+	for {
+		select {
+		case ev := <-c2.Events():
+			if ev.Type == GameEventState && ev.State.Spectators == 0 {
+				return
+			}
+		case <-deadline:
+			t.Fatal("観戦者数 0 の通知が届かない")
+		}
+	}
+}
+
+func TestMultipleSpectatorsAndListLive(t *testing.T) {
+	t.Parallel()
+
+	_, uc, _, _, state := startTestMatch(t)
+
+	// 観戦者 2 人。
+	for i := range 2 {
+		c, err := uc.Connect(context.Background(), testUser(fmt.Sprintf("watcher%d", i)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := c.Watch(context.Background(), state.MatchID); err != nil {
+			t.Fatal(err)
+		}
+		st := waitEvent(t, c, GameEventState)
+		if st.State.Spectators != i+1 {
+			t.Errorf("観戦者数が積み上がるはず: got %d want %d", st.State.Spectators, i+1)
+		}
+	}
+
+	live, total, err := uc.ListLive(context.Background(), 20, 0)
+	if err != nil || total != 1 || len(live) != 1 {
+		t.Fatalf("進行中の対局が 1 件のはず: %v %d", err, total)
+	}
+	if live[0].MatchID != state.MatchID || live[0].Spectators != 2 {
+		t.Errorf("一覧に観戦者数が載るはず: %+v", live[0])
+	}
+}
+
+func TestWatchRejectsUnknownOrFinishedMatch(t *testing.T) {
+	t.Parallel()
+
+	repo, uc, _, c2, state := startTestMatch(t)
+
+	// 存在しない対局。
+	c, err := uc.Connect(context.Background(), testUser("nosy"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Watch(context.Background(), uuid.New()); !errors.Is(err, domain.ErrMatchNotFound) {
+		t.Errorf("存在しない対局の観戦は 404 のはず: %v", err)
+	}
+
+	// 決着済みの対局。
+	if err := c2.Act(context.Background(), GameActionInput{ActionID: uuid.New(), Kind: domain.GameActionResign}); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, ok := repo.result(state.MatchID); !ok {
+		t.Fatal("決着しているはず")
+	}
+	if err := c.Watch(context.Background(), state.MatchID); !errors.Is(err, domain.ErrMatchNotFound) {
+		t.Errorf("決着済みの観戦は 404 のはず: %v", err)
 	}
 }
 

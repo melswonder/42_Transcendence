@@ -84,6 +84,20 @@ type GameRepository interface {
 	FinishMatch(ctx context.Context, matchID uuid.UUID, resultType string, totalMoves int, participants []domain.MatchParticipant) error
 	// FindActiveMatch は user が参加している進行中の対局を返す。無ければ domain.ErrMatchNotFound。
 	FindActiveMatch(ctx context.Context, userID uuid.UUID) (*StoredGame, error)
+	// FindActiveMatchByID は進行中の対局を ID で引く。観戦の入り口。
+	FindActiveMatchByID(ctx context.Context, matchID uuid.UUID) (*StoredGame, error)
+	// ListLiveMatches は進行中の対局を開始の新しい順に返す。
+	ListLiveMatches(ctx context.Context, limit, offset int) ([]LiveMatch, int, error)
+}
+
+// LiveMatch は観戦一覧の 1 行。Spectators は usecase がメモリから埋める。
+type LiveMatch struct {
+	MatchID    uuid.UUID
+	Mode       string
+	StartedAt  time.Time
+	Players    [2]GamePlayer
+	MoveCount  int
+	Spectators int
 }
 
 // GameActionInput はクライアントから届いた 1 操作。
@@ -131,6 +145,7 @@ type GameStateView struct {
 	TurnDeadline time.Time
 	Players      [2]GamePlayer
 	Connected    [2]bool
+	Spectators   int // いま観戦している接続数
 }
 
 // 手の中身。match_actions.payload に入れる形。
@@ -406,6 +421,88 @@ func (u *GameUsecase) startMatch(ctx context.Context, first, second *GameClient)
 	return nil
 }
 
+// Watch は進行中の対局に観戦者として合流する。
+// 観戦者は盤面の更新を受け取るだけで、操作は座席が無いので通らない。
+func (c *GameClient) Watch(ctx context.Context, matchID uuid.UUID) error {
+	c.mu.Lock()
+	current := c.session
+	c.mu.Unlock()
+	if current != nil {
+		if current.matchID == matchID {
+			// 同じ対局を観戦し直しただけ。最新の盤面を送り直す。
+			current.sendState(c)
+			return nil
+		}
+		return domain.ErrAlreadyInMatch
+	}
+
+	s, err := c.u.sessionByID(ctx, matchID)
+	if err != nil {
+		return err
+	}
+	s.attachWatcher(c)
+	return nil
+}
+
+// Unwatch は観戦をやめる。対局者には効かない（投了ではないので）。
+func (c *GameClient) Unwatch() {
+	c.mu.Lock()
+	s, seat := c.session, c.seat
+	if s == nil || seat >= 0 {
+		c.mu.Unlock()
+		return
+	}
+	c.session = nil
+	c.mu.Unlock()
+	s.detach(c, seat)
+}
+
+// ListLive は観戦できる進行中の対局一覧。観戦者数はメモリ上のセッションから埋める。
+func (u *GameUsecase) ListLive(ctx context.Context, limit, offset int) ([]LiveMatch, int, error) {
+	matches, total, err := u.repo.ListLiveMatches(ctx, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	for i := range matches {
+		if s, ok := u.sessions[matches[i].MatchID]; ok {
+			s.mu.Lock()
+			matches[i].Spectators = s.watchers
+			matches[i].MoveCount = s.game.MoveCount
+			s.mu.Unlock()
+		}
+	}
+	return matches, total, nil
+}
+
+// sessionByID はメモリ上のセッションを探し、無ければ DB から復元する。
+func (u *GameUsecase) sessionByID(ctx context.Context, matchID uuid.UUID) (*gameSession, error) {
+	u.mu.Lock()
+	if s, ok := u.sessions[matchID]; ok {
+		u.mu.Unlock()
+		return s, nil
+	}
+	u.mu.Unlock()
+
+	stored, err := u.repo.FindActiveMatchByID(ctx, matchID)
+	if err != nil {
+		return nil, err
+	}
+	s, err := u.buildSession(stored)
+	if err != nil {
+		return nil, err
+	}
+
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	if existing, ok := u.sessions[matchID]; ok {
+		return existing, nil
+	}
+	u.register(s)
+	return s, nil
+}
+
 // LeaveQueue は待機列から抜ける。並んでいなければ何もしない。
 func (c *GameClient) LeaveQueue() {
 	u := c.u
@@ -488,6 +585,7 @@ type gameSession struct {
 	ratingAfter  *[2]int // 決着後のレーティング。中断や未決着なら nil
 	subs         map[*GameClient]struct{}
 	conns        [2]int // 座席ごとの接続数
+	watchers     int    // 観戦者の接続数
 	turnTimer    *time.Timer
 	graceTimers  [2]*time.Timer
 	turnDeadline time.Time
@@ -547,11 +645,35 @@ func (s *gameSession) broadcastState() {
 	s.broadcastExcept(nil, GameEvent{Type: GameEventState, State: view})
 }
 
+// attachWatcher は観戦者を合流させる。座席は持たせず、配信先にだけ加える。
+// 観戦者数が変わったので、全員へ盤面（観戦者数入り）を配り直す。
+func (s *gameSession) attachWatcher(c *GameClient) {
+	s.mu.Lock()
+	s.subs[c] = struct{}{}
+	s.watchers++
+	s.mu.Unlock()
+
+	c.mu.Lock()
+	c.session = s
+	c.seat = -1
+	c.mu.Unlock()
+
+	s.broadcastState()
+}
+
 // detach は接続の離脱。座席の接続が 0 になったら相手に知らせて猶予タイマーを起こす。
+// 観戦者（seat < 0）は数を減らして周知するだけ。
 func (s *gameSession) detach(c *GameClient, seat int) {
 	s.mu.Lock()
+	if _, subscribed := s.subs[c]; !subscribed {
+		s.mu.Unlock()
+		return
+	}
 	delete(s.subs, c)
-	if seat >= 0 {
+	watcherLeft := seat < 0
+	if watcherLeft {
+		s.watchers--
+	} else {
 		s.conns[seat]--
 	}
 	lastConn := seat >= 0 && s.conns[seat] == 0 && !s.game.Finished()
@@ -566,6 +688,16 @@ func (s *gameSession) detach(c *GameClient, seat int) {
 			GraceSeconds: int(ReconnectGrace / time.Second),
 		})
 	}
+	if watcherLeft && !s.closedForBroadcast() {
+		s.broadcastState()
+	}
+}
+
+// closedForBroadcast は決着済みで配る意味がないかどうか。
+func (s *gameSession) closedForBroadcast() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.game.Finished()
 }
 
 // act は 1 操作の本体。適用できたら全員に新しい盤面を配る。
@@ -850,6 +982,7 @@ func (s *gameSession) viewLocked() *GameStateView {
 		TurnDeadline: s.turnDeadline,
 		Players:      s.players,
 		Connected:    [2]bool{s.conns[0] > 0, s.conns[1] > 0},
+		Spectators:   s.watchers,
 	}
 	if !view.Finished {
 		view.LegalMoves = s.game.LegalPawnMoves(s.game.Turn)
