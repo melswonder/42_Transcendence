@@ -195,7 +195,8 @@
       "mode": "Mode",
       "result": "Result",
       "daily": "Daily",
-      "weekly": "Weekly"
+      "weekly": "Weekly",
+      "opponent": "Opponent"
     },
     "outcomes": {
       "win": "Win",
@@ -232,8 +233,14 @@
         "name": "First Victory",
         "description": "Win your first game"
       },
-      "win_10": { "name": "Winner", "description": "Win 10 games in total" },
-      "win_50": { "name": "Veteran", "description": "Win 50 games in total" },
+      "win_10": {
+        "name": "Winner",
+        "description": "Win 10 games in total"
+      },
+      "win_50": {
+        "name": "Veteran",
+        "description": "Win 50 games in total"
+      },
       "win_100": {
         "name": "Champion",
         "description": "Win 100 games in total"
@@ -242,14 +249,26 @@
         "name": "Hat-trick",
         "description": "Win 3 games in a row"
       },
-      "streak_5": { "name": "Unbeaten", "description": "Win 5 games in a row" },
+      "streak_5": {
+        "name": "Unbeaten",
+        "description": "Win 5 games in a row"
+      },
       "streak_10": {
         "name": "Unshakeable",
         "description": "Win 10 games in a row"
       },
-      "played_10": { "name": "Regular", "description": "Play 10 games" },
-      "played_50": { "name": "Seasoned", "description": "Play 50 games" },
-      "played_100": { "name": "Devoted", "description": "Play 100 games" },
+      "played_10": {
+        "name": "Regular",
+        "description": "Play 10 games"
+      },
+      "played_50": {
+        "name": "Seasoned",
+        "description": "Play 50 games"
+      },
+      "played_100": {
+        "name": "Devoted",
+        "description": "Play 100 games"
+      },
       "rating_1300": {
         "name": "Advanced",
         "description": "Reach a rating of 1300"

@@ -221,6 +221,9 @@ func (r *MatchRepo) matchQuery(ctx context.Context, userID uuid.UUID, f usecase.
 	if f.Outcome != "" {
 		q = q.Where("mp.outcome = ?", f.Outcome)
 	}
+	if f.Opponent != nil {
+		q = q.Where("opp.user_id = ?", *f.Opponent)
+	}
 
 	return q
 }

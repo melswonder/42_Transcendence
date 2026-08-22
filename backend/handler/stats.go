@@ -244,3 +244,42 @@ func toLeaderboardEntry(e domain.LeaderboardEntry) leaderboardEntryResponse {
 		WinRate: e.WinRate(),
 	}
 }
+
+type opponentResponse struct {
+	ID          string `json:"id"`
+	DisplayName string `json:"display_name"`
+	Handle      string `json:"handle"`
+}
+
+type opponentListResponse struct {
+	Items []opponentResponse `json:"items"`
+}
+
+// Opponents - GET /stats/opponents
+// 「相手」フィルタの選択肢。対戦したことのある相手だけを返す。
+func (h *StatsHandler) Opponents(w http.ResponseWriter, r *http.Request) {
+	user, err := h.currentUser(r)
+	if err != nil {
+		writeJSONError(w, http.StatusUnauthorized, "unauthorized")
+
+		return
+	}
+
+	opponents, err := h.uc.Opponents(r.Context(), user.ID)
+	if err != nil {
+		log.Printf("stats opponents: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
+
+		return
+	}
+
+	items := make([]opponentResponse, 0, len(opponents))
+	for _, o := range opponents {
+		items = append(items, opponentResponse{
+			ID:          o.ID.String(),
+			DisplayName: o.DisplayName,
+			Handle:      o.Handle,
+		})
+	}
+	writeJSON(w, http.StatusOK, opponentListResponse{Items: items})
+}

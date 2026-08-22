@@ -195,7 +195,8 @@
       "mode": "モード",
       "result": "結果",
       "daily": "日別",
-      "weekly": "週別"
+      "weekly": "週別",
+      "opponent": "相手"
     },
     "outcomes": {
       "win": "勝ち",
@@ -228,16 +229,46 @@
     "unlockedCount": "{unlocked} / {total} 解除",
     "progressAria": "{name} の進捗",
     "items": {
-      "first_win": { "name": "初勝利", "description": "はじめて対戦に勝つ" },
-      "win_10": { "name": "常勝", "description": "通算 10 勝する" },
-      "win_50": { "name": "百戦錬磨", "description": "通算 50 勝する" },
-      "win_100": { "name": "覇者", "description": "通算 100 勝する" },
-      "streak_3": { "name": "三連覇", "description": "3 連勝する" },
-      "streak_5": { "name": "無敗", "description": "5 連勝する" },
-      "streak_10": { "name": "不動", "description": "10 連勝する" },
-      "played_10": { "name": "常連", "description": "10 戦する" },
-      "played_50": { "name": "歴戦", "description": "50 戦する" },
-      "played_100": { "name": "求道者", "description": "100 戦する" },
+      "first_win": {
+        "name": "初勝利",
+        "description": "はじめて対戦に勝つ"
+      },
+      "win_10": {
+        "name": "常勝",
+        "description": "通算 10 勝する"
+      },
+      "win_50": {
+        "name": "百戦錬磨",
+        "description": "通算 50 勝する"
+      },
+      "win_100": {
+        "name": "覇者",
+        "description": "通算 100 勝する"
+      },
+      "streak_3": {
+        "name": "三連覇",
+        "description": "3 連勝する"
+      },
+      "streak_5": {
+        "name": "無敗",
+        "description": "5 連勝する"
+      },
+      "streak_10": {
+        "name": "不動",
+        "description": "10 連勝する"
+      },
+      "played_10": {
+        "name": "常連",
+        "description": "10 戦する"
+      },
+      "played_50": {
+        "name": "歴戦",
+        "description": "50 戦する"
+      },
+      "played_100": {
+        "name": "求道者",
+        "description": "100 戦する"
+      },
       "rating_1300": {
         "name": "上級者",
         "description": "レーティング 1300 に到達する"

@@ -95,6 +95,7 @@ func NewRouter(handlers Handlers) http.Handler {
 	mux.HandleFunc("GET /stats/me/timeseries", handlers.Stats.Timeseries)
 	mux.HandleFunc("GET /stats/me/breakdown", handlers.Stats.Breakdown)
 	mux.HandleFunc("GET /leaderboard", handlers.Stats.Leaderboard)
+	mux.HandleFunc("GET /stats/opponents", handlers.Stats.Opponents)
 
 	mux.HandleFunc("GET /achievements/me", handlers.Achievements.List)
 	mux.HandleFunc("GET /stats/stream", handlers.Achievements.Stream)

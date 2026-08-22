@@ -17,7 +17,7 @@ export function ExportButtons() {
   // 画面で絞った条件をそのまま CSV にも効かせる。
   // ページングは付けない（サーバー側が全件を返す）。
   const params = new URLSearchParams();
-  for (const key of ["from", "to", "mode", "outcome"]) {
+  for (const key of ["from", "to", "mode", "outcome", "opponent"]) {
     const value = searchParams.get(key);
     if (value) params.set(key, value);
   }
