@@ -14,6 +14,7 @@ var (
 	ErrHandleUnavailable = errors.New("could not allocate a unique handle")
 
 	ErrInvalidMatchMode    = errors.New("invalid match mode")
+	ErrInvalidOpponent     = errors.New("invalid opponent id")
 	ErrInvalidResultType   = errors.New("invalid result type")
 	ErrInvalidMatchPeriod  = errors.New("finished_at is before started_at")
 	ErrInvalidParticipants = errors.New("a match must have exactly two distinct participants")

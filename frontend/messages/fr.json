@@ -201,7 +201,8 @@
       "mode": "Mode",
       "result": "Résultat",
       "daily": "Par jour",
-      "weekly": "Par semaine"
+      "weekly": "Par semaine",
+      "opponent": "Adversaire"
     },
     "outcomes": {
       "win": "Victoire",

@@ -22,6 +22,8 @@ type StatsRepository interface {
 	Breakdown(ctx context.Context, userID uuid.UUID, f MatchFilter) (domain.Breakdown, error)
 	Leaderboard(ctx context.Context, limit, offset int) ([]domain.LeaderboardEntry, int, error)
 	LeaderboardEntryOf(ctx context.Context, userID uuid.UUID) (*domain.LeaderboardEntry, error)
+	// Opponents は対戦したことのある相手の一覧。フィルタの選択肢用。
+	Opponents(ctx context.Context, userID uuid.UUID) ([]domain.User, error)
 }
 
 // StatsUsecase は統計の取得を進める。書き込みは一切しない。
@@ -83,4 +85,9 @@ func (u *StatsUsecase) Leaderboard(
 	}
 
 	return entries, me, total, nil
+}
+
+// Opponents は「相手」フィルタの選択肢になる、対戦済みの相手一覧を返す。
+func (u *StatsUsecase) Opponents(ctx context.Context, userID uuid.UUID) ([]domain.User, error) {
+	return u.repo.Opponents(ctx, userID)
 }

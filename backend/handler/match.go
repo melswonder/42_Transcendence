@@ -307,6 +307,7 @@ func writeMatchError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrInvalidOutcome),
 		errors.Is(err, domain.ErrInconsistentOutcome),
 		errors.Is(err, domain.ErrInvalidDateRange),
+		errors.Is(err, domain.ErrInvalidOpponent),
 		errors.Is(err, errInvalidQuery):
 		writeJSONError(w, http.StatusBadRequest, err.Error())
 	default:

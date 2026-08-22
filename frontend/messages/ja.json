@@ -201,7 +201,8 @@
       "mode": "モード",
       "result": "結果",
       "daily": "日別",
-      "weekly": "週別"
+      "weekly": "週別",
+      "opponent": "相手"
     },
     "outcomes": {
       "win": "勝ち",
