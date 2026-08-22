@@ -6,7 +6,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
 	"transcendence-backend/handler"
@@ -27,25 +29,36 @@ var allowedWSOrigins = []string{
 	"frontend:3000",
 }
 
-// CORSミドルウェア
-func cors(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		origin := r.Header.Get("Origin")
+// corsMiddleware は許可したオリジンにだけ CORS ヘッダを付ける Gin ミドルウェア。
+func corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
 		if allowedOrigins[origin] {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
-			w.Header().Set("Access-Control-Allow-Methods", "*")
-			w.Header().Set("Access-Control-Allow-Headers", "*")
+			c.Header("Access-Control-Allow-Origin", origin)
+			c.Header("Access-Control-Allow-Credentials", "true")
+			c.Header("Access-Control-Allow-Methods", "*")
+			c.Header("Access-Control-Allow-Headers", "*")
 		}
 
 		// プリフライトリクエスト
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
 
-		next.ServeHTTP(w, r)
-	})
+		c.Next()
+	}
+}
+
+// accessLog は 1 リクエスト 1 行のアクセスログ。
+// SSE / WebSocket のような張りっぱなしの接続もあるので、接続が閉じたときに出る。
+func accessLog() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		c.Next()
+		log.Printf("%s %s -> %d (%s)",
+			c.Request.Method, c.Request.URL.Path, c.Writer.Status(), time.Since(start).Round(time.Millisecond))
+	}
 }
 
 // 必要な環境変数を入れる
@@ -143,7 +156,9 @@ func newApplicationHandler(db *gorm.DB, cfg config) http.Handler {
 	services := usecase.NewServices(repositories.Dependencies())
 	handlers := handler.NewHandlers(services, cfg.handler, repositories.Events, repositories.Presence)
 
-	return cors(handler.NewRouter(handlers))
+	// ミドルウェアは Gin のチェーンで通す。
+	// recovery を最初に置き、パニックでもプロセスを落とさない。
+	return handler.NewRouter(handlers, gin.Recovery(), accessLog(), corsMiddleware())
 }
 
 func main() {
