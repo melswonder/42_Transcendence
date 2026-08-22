@@ -125,7 +125,7 @@ func newApplicationHandler(db *gorm.DB, cfg config) http.Handler {
 		log.Fatalf("failed to build repositories: %v", err)
 	}
 	services := usecase.NewServices(repositories.Dependencies())
-	handlers := handler.NewHandlers(services, cfg.handler, repositories.Events)
+	handlers := handler.NewHandlers(services, cfg.handler, repositories.Events, repositories.Presence)
 
 	return cors(handler.NewRouter(handlers))
 }

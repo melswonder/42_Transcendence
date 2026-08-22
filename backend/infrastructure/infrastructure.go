@@ -33,7 +33,10 @@ type Repositories struct {
 	User         usecase.UserRepository
 	Media        usecase.MediaRepository
 	MediaFiles   usecase.FileStore
+	Friend       usecase.FriendRepository
 	GoogleOAuth  usecase.OAuthProvider
+	// Presence は「最後に見かけた時刻」のメモリ上の記録。オンライン表示に使う。
+	Presence *PresenceHub
 	// Events は SSE の配信元。リポジトリではないが、組み立てる場所が同じなのでここで持つ。
 	Events *EventHub
 }
@@ -54,8 +57,10 @@ func NewRepositories(db *gorm.DB, cfg Config) (Repositories, error) {
 		User:         NewUserRepo(db),
 		Media:        NewMediaRepo(db),
 		MediaFiles:   files,
+		Friend:       NewFriendRepo(db),
 		GoogleOAuth:  NewGoogleOAuth(cfg.Google),
 		Events:       NewEventHub(),
+		Presence:     NewPresenceHub(),
 	}, nil
 }
 
@@ -71,6 +76,8 @@ func (r Repositories) Dependencies() usecase.Dependencies {
 		UserRepository:        r.User,
 		MediaRepository:       r.Media,
 		MediaFileStore:        r.MediaFiles,
+		FriendRepository:      r.Friend,
+		Presence:              r.Presence,
 		GoogleOAuth:           r.GoogleOAuth,
 		MatchNotifier:         r.Events,
 	}

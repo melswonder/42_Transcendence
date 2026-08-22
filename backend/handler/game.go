@@ -31,15 +31,19 @@ type GameHandler struct {
 	uc          *usecase.GameUsecase
 	currentUser func(*http.Request) (*domain.User, error)
 	cfg         GameConfig
+	presence    PresenceToucher
 }
 
-func NewGameHandler(uc *usecase.GameUsecase, currentUser func(*http.Request) (*domain.User, error), cfg GameConfig) *GameHandler {
-	return &GameHandler{uc: uc, currentUser: currentUser, cfg: cfg}
+func NewGameHandler(uc *usecase.GameUsecase, currentUser func(*http.Request) (*domain.User, error), cfg GameConfig, presence PresenceToucher) *GameHandler {
+	return &GameHandler{uc: uc, currentUser: currentUser, cfg: cfg, presence: presence}
 }
 
 // クライアント → サーバー。
 type wsClientMessage struct {
-	Type string `json:"type"` // join_queue | leave_queue | action
+	Type string `json:"type"` // join_queue | leave_queue | action | watch | unwatch
+
+	// Type == watch のとき。観戦したい対局。
+	MatchID string `json:"matchId"`
 
 	// Type == action のとき。
 	ActionID        string `json:"actionId"`
@@ -81,6 +85,7 @@ type wsGameState struct {
 	TurnDeadline time.Time   `json:"turnDeadline"`
 	Players      [2]wsPlayer `json:"players"`
 	Connected    [2]bool     `json:"connected"`
+	Spectators   int         `json:"spectators"`
 }
 
 type wsCell struct {
@@ -159,6 +164,10 @@ func (h *GameHandler) writePump(ctx context.Context, conn *websocket.Conn, clien
 			if err := conn.Ping(ctx); err != nil {
 				return
 			}
+			// 対局中は HTTP を叩かないので、keep-alive を presence の材料にする。
+			if h.presence != nil {
+				h.presence.Touch(client.UserID())
+			}
 		case <-client.Done():
 			return
 		case <-ctx.Done():
@@ -175,6 +184,17 @@ func (h *GameHandler) dispatch(ctx context.Context, conn *websocket.Conn, client
 		}
 	case "leave_queue":
 		client.LeaveQueue()
+	case "watch":
+		matchID, err := uuid.Parse(msg.MatchID)
+		if err != nil {
+			h.writeError(ctx, conn, domain.ErrMatchNotFound)
+			return
+		}
+		if err := client.Watch(ctx, matchID); err != nil {
+			h.writeError(ctx, conn, err)
+		}
+	case "unwatch":
+		client.Unwatch()
 	case "action":
 		input, err := toActionInput(msg)
 		if err != nil {
@@ -237,6 +257,7 @@ func toWSGameState(v *usecase.GameStateView, seat int) *wsGameState {
 		RatingAfter:  v.RatingAfter,
 		TurnDeadline: v.TurnDeadline,
 		Connected:    v.Connected,
+		Spectators:   v.Spectators,
 	}
 	for _, w := range v.Walls {
 		state.Walls = append(state.Walls, wsWall{Orientation: w.Orientation, Row: w.Row, Col: w.Col})
@@ -295,4 +316,62 @@ func (h *GameHandler) writeError(ctx context.Context, conn *websocket.Conn, err 
 		log.Printf("game ws: %v", err)
 	}
 	_ = wsjson.Write(ctx, conn, wsServerMessage{Type: "error", Code: code, Message: err.Error()})
+}
+
+// ライブ一覧の 1 行。
+type liveMatchResponse struct {
+	MatchID    string      `json:"match_id"`
+	Mode       string      `json:"mode"`
+	StartedAt  time.Time   `json:"started_at"`
+	Players    [2]wsPlayer `json:"players"`
+	MoveCount  int         `json:"move_count"`
+	Spectators int         `json:"spectators"`
+}
+
+type liveMatchListResponse struct {
+	Items []liveMatchResponse `json:"items"`
+	pagination
+}
+
+// Live - GET /game/live
+// 観戦できる進行中の対局一覧。
+func (h *GameHandler) Live(w http.ResponseWriter, r *http.Request) {
+	if _, err := h.currentUser(r); err != nil {
+		writeJSONError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	q := r.URL.Query()
+	limit := parseBoundedInt(q.Get("limit"), defaultLimit, 1, maxLimit)
+	offset := parseBoundedInt(q.Get("offset"), 0, 0, 0)
+
+	matches, total, err := h.uc.ListLive(r.Context(), limit, offset)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "failed to list live matches")
+		return
+	}
+
+	items := make([]liveMatchResponse, 0, len(matches))
+	for _, m := range matches {
+		item := liveMatchResponse{
+			MatchID:    m.MatchID.String(),
+			Mode:       m.Mode,
+			StartedAt:  m.StartedAt,
+			MoveCount:  m.MoveCount,
+			Spectators: m.Spectators,
+		}
+		for i, p := range m.Players {
+			item.Players[i] = wsPlayer{
+				ID:          p.UserID.String(),
+				DisplayName: p.DisplayName,
+				Handle:      p.Handle,
+				Rating:      p.Rating,
+			}
+		}
+		items = append(items, item)
+	}
+	writeJSON(w, http.StatusOK, liveMatchListResponse{
+		Items:      items,
+		pagination: pagination{Total: total, Limit: limit, Offset: offset},
+	})
 }

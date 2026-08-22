@@ -178,6 +178,53 @@ func (r *GameRepo) FindActiveMatch(ctx context.Context, userID uuid.UUID) (*usec
 	return r.loadStored(ctx, &match)
 }
 
+// FindActiveMatchByID は進行中の対局を ID で引く。観戦の入り口。
+func (r *GameRepo) FindActiveMatchByID(ctx context.Context, matchID uuid.UUID) (*usecase.StoredGame, error) {
+	var match Match
+	err := r.db.WithContext(ctx).
+		First(&match, "id = ? AND status = ?", matchID, gameStatusInProgress).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, domain.ErrMatchNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("find match: %w", err)
+	}
+	return r.loadStored(ctx, &match)
+}
+
+// ListLiveMatches は進行中の対局を開始の新しい順に返す。
+// 手数は match_actions の件数から数える（matches.total_moves は決着時にしか入らない）。
+func (r *GameRepo) ListLiveMatches(ctx context.Context, limit, offset int) ([]usecase.LiveMatch, int, error) {
+	base := r.db.WithContext(ctx).Model(&Match{}).Where("status = ?", gameStatusInProgress)
+
+	var total int64
+	if err := base.Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count live matches: %w", err)
+	}
+
+	var matches []Match
+	err := base.Order("started_at DESC").Limit(limit).Offset(offset).Find(&matches).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("list live matches: %w", err)
+	}
+
+	live := make([]usecase.LiveMatch, 0, len(matches))
+	for i := range matches {
+		stored, err := r.loadStored(ctx, &matches[i])
+		if err != nil {
+			return nil, 0, err
+		}
+		live = append(live, usecase.LiveMatch{
+			MatchID:   stored.MatchID,
+			Mode:      stored.Mode,
+			StartedAt: stored.StartedAt,
+			Players:   stored.Players,
+			MoveCount: len(stored.Actions),
+		})
+	}
+	return live, int(total), nil
+}
+
 func (r *GameRepo) loadStored(ctx context.Context, match *Match) (*usecase.StoredGame, error) {
 	var participants []MatchParticipant
 	err := r.db.WithContext(ctx).

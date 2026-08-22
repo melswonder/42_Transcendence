@@ -12,6 +12,9 @@ package handler
 import (
 	"net/http"
 
+	"github.com/google/uuid"
+
+	"transcendence-backend/domain"
 	"transcendence-backend/usecase"
 )
 
@@ -29,22 +32,41 @@ type Handlers struct {
 	Game         *GameHandler
 	User         *UserHandler
 	Media        *MediaHandler
+	Friend       *FriendHandler
 }
 
-func NewHandlers(services usecase.Services, cfg Config, events EventSubscriber) Handlers {
+// PresenceToucher は「このユーザーを見かけた」を記録する先。
+type PresenceToucher interface {
+	Touch(userID uuid.UUID)
+}
+
+func NewHandlers(services usecase.Services, cfg Config, events EventSubscriber, presence PresenceToucher) Handlers {
 	auth := NewAuthHandler(services.Auth, cfg.Auth)
 
+	// 認証は AuthHandler の実装をそのまま借りる。Cookie の読み方を 2 箇所に書かないため。
+	// 認証が通るたびに presence を更新して、フレンドのオンライン表示の材料にする。
+	currentUser := auth.currentUser
+	if presence != nil {
+		currentUser = func(r *http.Request) (*domain.User, error) {
+			user, err := auth.currentUser(r)
+			if err == nil {
+				presence.Touch(user.ID)
+			}
+			return user, err
+		}
+	}
+
 	return Handlers{
-		Ping: NewPingHandler(services.Ping),
-		Auth: auth,
-		// 認証は AuthHandler の実装をそのまま借りる。Cookie の読み方を 2 箇所に書かないため。
-		Match:        NewMatchHandler(services.Match, auth.currentUser),
-		Stats:        NewStatsHandler(services.Stats, auth.currentUser),
-		Achievements: NewAchievementHandler(services.Achievements, events, auth.currentUser),
+		Ping:         NewPingHandler(services.Ping),
+		Auth:         auth,
+		Match:        NewMatchHandler(services.Match, currentUser),
+		Stats:        NewStatsHandler(services.Stats, currentUser),
+		Achievements: NewAchievementHandler(services.Achievements, events, currentUser),
 		// WebSocket のハンドシェイクも Cookie セッションで認証する。
-		Game:  NewGameHandler(services.Game, auth.currentUser, cfg.Game),
-		User:  NewUserHandler(services.User, auth.currentUser),
-		Media: NewMediaHandler(services.Media, auth.currentUser),
+		Game:   NewGameHandler(services.Game, currentUser, cfg.Game, presence),
+		User:   NewUserHandler(services.User, currentUser),
+		Media:  NewMediaHandler(services.Media, currentUser),
+		Friend: NewFriendHandler(services.Friend, currentUser),
 	}
 }
 
@@ -74,6 +96,7 @@ func NewRouter(handlers Handlers) http.Handler {
 	mux.HandleFunc("GET /stats/stream", handlers.Achievements.Stream)
 
 	mux.HandleFunc("GET /game/ws", handlers.Game.WS)
+	mux.HandleFunc("GET /game/live", handlers.Game.Live)
 
 	// /users/me はリテラル優先で {userId} と共存できる。
 	mux.HandleFunc("GET /users/me", handlers.User.Me)
@@ -86,6 +109,12 @@ func NewRouter(handlers Handlers) http.Handler {
 	mux.HandleFunc("GET /media/{assetId}", handlers.Media.Get)
 	mux.HandleFunc("DELETE /media/{assetId}", handlers.Media.Delete)
 	mux.HandleFunc("GET /media/{assetId}/file", handlers.Media.File)
+
+	mux.HandleFunc("GET /friends", handlers.Friend.List)
+	mux.HandleFunc("GET /friends/requests", handlers.Friend.ListRequests)
+	mux.HandleFunc("POST /friends/requests", handlers.Friend.CreateRequest)
+	mux.HandleFunc("PATCH /friends/requests/{userId}", handlers.Friend.Decide)
+	mux.HandleFunc("DELETE /friends/{userId}", handlers.Friend.Remove)
 
 	return mux
 }

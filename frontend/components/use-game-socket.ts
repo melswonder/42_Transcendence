@@ -42,6 +42,8 @@ export interface GameState {
   turnDeadline: string;
   players: [GamePlayer, GamePlayer];
   connected: [boolean, boolean];
+  /** いま観戦している人数。 */
+  spectators: number;
 }
 
 type ServerMessage =
@@ -108,14 +110,21 @@ export function useGameSocket() {
             setState(null);
             setOpponentGrace(null);
             break;
-          case "state":
+          case "state": {
             setQueued(false);
             setState(msg.state);
             // 相手が繋がっている、または決着したら切断表示は要らない。
-            if (msg.state.finished || msg.state.connected[1 - msg.state.seat]) {
+            // 観戦（seat -1）では相手という概念が無いので常に消す。
+            const oppSeat = msg.state.seat >= 0 ? 1 - msg.state.seat : -1;
+            if (
+              msg.state.finished ||
+              oppSeat < 0 ||
+              msg.state.connected[oppSeat]
+            ) {
               setOpponentGrace(null);
             }
             break;
+          }
           case "opponent_disconnected":
             setOpponentGrace(msg.graceSeconds);
             break;
@@ -199,6 +208,22 @@ export function useGameSocket() {
 
   const resign = useCallback(() => act({ action: "resign" }), [act]);
 
+  /** 進行中の対局を観戦する。サーバーが最新盤面を送り返してくる。 */
+  const watch = useCallback(
+    (matchId: string) => {
+      setLastError(null);
+      send({ type: "watch", matchId });
+    },
+    [send],
+  );
+
+  /** 観戦をやめる。盤面表示も手元で片付ける。 */
+  const unwatch = useCallback(() => {
+    send({ type: "unwatch" });
+    setState(null);
+    setOpponentGrace(null);
+  }, [send]);
+
   return {
     status,
     queued,
@@ -210,5 +235,7 @@ export function useGameSocket() {
     movePawn,
     placeWall,
     resign,
+    watch,
+    unwatch,
   };
 }
