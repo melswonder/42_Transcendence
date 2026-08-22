@@ -1,5 +1,69 @@
 basePath: /api/v1
 definitions:
+  apispec.APIKeyCreateRequest:
+    properties:
+      expires_at:
+        description: 省略で無期限
+        type: string
+      name:
+        example: my analytics bot
+        type: string
+      scopes:
+        description: read / write
+        example:
+        - read
+        items:
+          type: string
+        type: array
+    required:
+    - name
+    - scopes
+    type: object
+  apispec.APIKeyCreatedResponse:
+    properties:
+      api_key:
+        example: tsc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        type: string
+      key:
+        $ref: '#/definitions/apispec.APIKeyResponse'
+    type: object
+  apispec.APIKeyListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/apispec.APIKeyResponse'
+        type: array
+    type: object
+  apispec.APIKeyResponse:
+    properties:
+      created_at:
+        type: string
+      expires_at:
+        description: null なら無期限
+        type: string
+      id:
+        format: uuid
+        type: string
+      key_prefix:
+        description: どのキーか見分ける用。認証には使えない
+        example: tsc_a1b2c3
+        type: string
+      last_used_at:
+        type: string
+      name:
+        example: my analytics bot
+        type: string
+      revoked_at:
+        type: string
+      scopes:
+        description: read / write
+        example:
+        - read
+        - write
+        items:
+          type: string
+        type: array
+    type: object
   apispec.Achievement:
     properties:
       category:
@@ -475,6 +539,21 @@ definitions:
         example: 9f8e7d6c5b4a
         type: string
     type: object
+  apispec.PublicProfileUpdateRequest:
+    properties:
+      display_name:
+        example: Alice
+        type: string
+      handle:
+        example: alice_42
+        type: string
+      preferred_locale:
+        enum:
+        - ja
+        - en
+        - fr
+        type: string
+    type: object
   apispec.RegisterRequest:
     properties:
       display_name:
@@ -798,6 +877,75 @@ paths:
       summary: 自分の実績
       tags:
       - achievements
+  /apikeys:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.APIKeyListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      summary: API キー一覧
+      tags:
+      - apikeys
+    post:
+      consumes:
+      - application/json
+      description: raw key はこのレスポンスで一度だけ返す。DB にはハッシュしか保存しない。
+      parameters:
+      - description: 作成内容
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/apispec.APIKeyCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apispec.APIKeyCreatedResponse'
+        "400":
+          description: 名前・スコープ・期限が不正
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: 未ログイン（管理は Cookie セッション）
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      summary: API キーを発行する
+      tags:
+      - apikeys
+  /apikeys/{keyId}:
+    delete:
+      description: 行は消さず revoked_at を立てる。以後そのキーのリクエストは 401 になる。
+      parameters:
+      - description: キー ID
+        format: uuid
+        in: path
+        name: keyId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "404":
+          description: 自分のキーに存在しない
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      summary: API キーを失効させる
+      tags:
+      - apikeys
   /auth/login:
     post:
       consumes:
@@ -1970,6 +2118,329 @@ paths:
       summary: 自分のプロフィールを更新
       tags:
       - users
+  /v1/friends:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.FriendshipListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: フレンド一覧（Public API）
+      tags:
+      - public
+  /v1/friends/{userId}:
+    delete:
+      parameters:
+      - description: 相手のユーザー ID
+        format: uuid
+        in: path
+        name: userId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "404":
+          description: friend_not_found
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: フレンド解除（Public API）
+      tags:
+      - public
+  /v1/friends/requests:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 申請先
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/apispec.FriendRequestCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apispec.FriendshipResponse'
+        "400":
+          description: friend_self
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "403":
+          description: insufficient_scope / friend_blocked
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "404":
+          description: user_not_found
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "409":
+          description: friend_already_requested / already_friends
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: フレンド申請（Public API）
+      tags:
+      - public
+  /v1/leaderboard:
+    get:
+      parameters:
+      - default: 20
+        description: 件数
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: 開始位置
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.LeaderboardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: ランキング（Public API）
+      tags:
+      - public
+  /v1/matches:
+    get:
+      parameters:
+      - description: この日時以降（RFC3339 か YYYY-MM-DD）
+        in: query
+        name: from
+        type: string
+      - description: この日時まで
+        in: query
+        name: to
+        type: string
+      - description: モード
+        enum:
+        - ranked
+        - casual
+        - ai
+        - friend
+        in: query
+        name: mode
+        type: string
+      - description: 勝敗
+        enum:
+        - win
+        - loss
+        - draw
+        in: query
+        name: outcome
+        type: string
+      - default: 20
+        description: 件数
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: 開始位置
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.MatchListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 対戦履歴（Public API）
+      tags:
+      - public
+  /v1/profile:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.UserPrivate'
+        "401":
+          description: invalid_api_key / api_key_expired / api_key_revoked
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "403":
+          description: insufficient_scope（read が必要）
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "429":
+          description: rate_limited
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 自分のプロフィール（Public API）
+      tags:
+      - public
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 変更内容
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/apispec.PublicProfileUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.UserPrivate'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "403":
+          description: insufficient_scope（write が必要）
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "409":
+          description: handle_taken
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "429":
+          description: rate_limited
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: プロフィール編集（Public API）
+      tags:
+      - public
+  /v1/stats:
+    get:
+      parameters:
+      - description: この日時以降
+        in: query
+        name: from
+        type: string
+      - description: この日時まで
+        in: query
+        name: to
+        type: string
+      - description: モード
+        enum:
+        - ranked
+        - casual
+        - ai
+        - friend
+        in: query
+        name: mode
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apispec.StatsSummary'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/apispec.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 統計サマリー（Public API）
+      tags:
+      - public
 schemes:
 - http
 - https
