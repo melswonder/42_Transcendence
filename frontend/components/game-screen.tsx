@@ -246,8 +246,7 @@ export function GameScreen() {
                   <Text size="sm" c="dimmed">
                     総手数 {state.moveCount}
                   </Text>
-                  <Button onClick={joinQueue}>もう一度対戦する</Button>
-                  <Button component={Link} href="/" variant="subtle">
+                  <Button component={Link} href="/">
                     ホームへ戻る
                   </Button>
                 </Stack>
