@@ -100,6 +100,8 @@ func NewRouter(handlers Handlers, middleware ...gin.HandlerFunc) http.Handler {
 	{
 		auth.GET("/google", wrapF(handlers.Auth.Start))
 		auth.GET("/google/callback", wrapF(handlers.Auth.Callback))
+		auth.POST("/register", wrapF(handlers.Auth.Register))
+		auth.POST("/login", wrapF(handlers.Auth.Login))
 		auth.GET("/me", wrapF(handlers.Auth.Me))
 		auth.POST("/logout", wrapF(handlers.Auth.Logout))
 	}

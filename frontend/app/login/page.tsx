@@ -1,10 +1,11 @@
-import { Alert, Text } from "@mantine/core";
+import { Alert, Divider, Text } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 
 import { AuthCard } from "@/components/auth-card";
 import { AuthLink } from "@/components/auth-link";
 import { GoogleLoginButton } from "@/components/google-login-button";
+import { PasswordAuthForm } from "@/components/password-auth-form";
 import { resolveLoginErrorKey } from "@/lib/login-error";
 
 export default async function LoginPage({
@@ -24,6 +25,10 @@ export default async function LoginPage({
           {message}
         </Alert>
       )}
+
+      <PasswordAuthForm mode="login" />
+
+      <Divider label={t("or")} labelPosition="center" />
 
       <GoogleLoginButton />
 

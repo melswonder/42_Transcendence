@@ -117,13 +117,7 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, userResponse{
-		ID:          user.ID.String(),
-		Email:       user.Email,
-		DisplayName: user.DisplayName,
-		Handle:      user.Handle,
-		Level:       user.Level,
-	})
+	writeJSON(w, http.StatusOK, toUserResponse(user))
 }
 
 // Logout - POST /auth/logout
@@ -136,6 +130,81 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 	h.clearCookie(w, sessionCookie)
 	w.WriteHeader(http.StatusNoContent)
+}
+
+type registerRequest struct {
+	Email           string `json:"email"`
+	Password        string `json:"password"`
+	DisplayName     string `json:"display_name"`
+	Handle          string `json:"handle"`
+	PreferredLocale string `json:"preferred_locale"`
+}
+
+type loginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// Register - POST /auth/register
+// メール+パスワードでの新規登録。成功したらそのままセッション Cookie を配る。
+func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
+	var req registerRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	result, err := h.uc.Register(r.Context(), usecase.RegisterInput{
+		Email:           req.Email,
+		Password:        req.Password,
+		DisplayName:     req.DisplayName,
+		Handle:          req.Handle,
+		PreferredLocale: req.PreferredLocale,
+	})
+	switch {
+	case err == nil:
+		h.setCookie(w, sessionCookie, result.SessionToken, time.Until(result.ExpiresAt))
+		writeJSON(w, http.StatusCreated, toUserResponse(result.User))
+	case errors.Is(err, domain.ErrEmailTaken):
+		writeJSONErrorCode(w, http.StatusConflict, "email_taken", "email already registered")
+	case errors.Is(err, domain.ErrHandleTaken):
+		writeJSONErrorCode(w, http.StatusConflict, "handle_taken", "handle already taken")
+	case errors.Is(err, domain.ErrInvalidEmail):
+		writeJSONErrorCode(w, http.StatusBadRequest, "invalid_email", "invalid email address")
+	case errors.Is(err, domain.ErrWeakPassword):
+		writeJSONErrorCode(w, http.StatusBadRequest, "weak_password", "password must be 8-72 characters")
+	case errors.Is(err, domain.ErrInvalidDisplayName):
+		writeJSONErrorCode(w, http.StatusBadRequest, "invalid_display_name", "invalid display name")
+	case errors.Is(err, domain.ErrInvalidHandle):
+		writeJSONErrorCode(w, http.StatusBadRequest, "invalid_handle", "invalid handle")
+	case errors.Is(err, domain.ErrInvalidLocale):
+		writeJSONErrorCode(w, http.StatusBadRequest, "invalid_locale", "unsupported locale")
+	default:
+		log.Printf("register: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "failed to register")
+	}
+}
+
+// Login - POST /auth/login
+// メール+パスワードでのログイン。失敗理由は区別せず invalid_credentials に丸める。
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var req loginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	result, err := h.uc.LoginWithPassword(r.Context(), req.Email, req.Password)
+	switch {
+	case err == nil:
+		h.setCookie(w, sessionCookie, result.SessionToken, time.Until(result.ExpiresAt))
+		writeJSON(w, http.StatusOK, toUserResponse(result.User))
+	case errors.Is(err, domain.ErrInvalidCredentials):
+		writeJSONErrorCode(w, http.StatusUnauthorized, "invalid_credentials", "invalid email or password")
+	default:
+		log.Printf("login: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "failed to log in")
+	}
 }
 
 // currentUser は Cookie からログイン中のユーザーを引く。他のハンドラからも使える。
@@ -204,6 +273,16 @@ type userResponse struct {
 	DisplayName string  `json:"display_name"`
 	Handle      string  `json:"handle"`
 	Level       int     `json:"level"`
+}
+
+func toUserResponse(user *domain.User) userResponse {
+	return userResponse{
+		ID:          user.ID.String(),
+		Email:       user.Email,
+		DisplayName: user.DisplayName,
+		Handle:      user.Handle,
+		Level:       user.Level,
+	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, body any) {

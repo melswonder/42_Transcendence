@@ -4,9 +4,11 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // 対応する外部プロバイダ。oauth_accounts.provider の CHECK 制約と同じ値にする。
@@ -76,4 +78,51 @@ func NewSession(userID uuid.UUID, rawToken string, now time.Time) Session {
 //	nonce: 「この id_token は自分が今出したリクエストへの返答か」を確かめる
 func NewOAuthState() (state, nonce string) {
 	return rand.Text(), rand.Text()
+}
+
+// パスワードの長さ制限。上限は bcrypt が 72 バイトまでしか見ないため。
+const (
+	PasswordMinLen = 8
+	PasswordMaxLen = 72
+)
+
+// ValidateEmail は形式だけを軽く確かめる。厳密な検証はしない
+// （本人確認はメール到達でしかできず、一意性は DB の制約が守る）。
+func ValidateEmail(email string) error {
+	at := strings.IndexByte(email, '@')
+	if at < 1 || at == len(email)-1 || len(email) > 254 || strings.ContainsAny(email, " \t") {
+		return ErrInvalidEmail
+	}
+	return nil
+}
+
+// ValidatePassword は長さだけを見る。文字種の強制はしない（長さが最も効く）。
+func ValidatePassword(password string) error {
+	if len(password) < PasswordMinLen || len(password) > PasswordMaxLen {
+		return ErrWeakPassword
+	}
+	return nil
+}
+
+// HashPassword は保存用のハッシュを作る。bcrypt はソルトを内包する。
+func HashPassword(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
+}
+
+// CheckPassword はハッシュと平文を照合する。
+func CheckPassword(hash, password string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
+}
+
+// dummyPasswordHash は存在しないユーザーへのログイン試行でも
+// 同じだけ時間を使うためのダミー。ユーザーの有無を応答時間で悟らせない。
+var dummyPasswordHash, _ = HashPassword("dummy password for timing")
+
+// CheckPasswordDummy はダミー照合。結果は常に false。
+func CheckPasswordDummy() {
+	_ = CheckPassword(dummyPasswordHash, "not the password")
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"transcendence-backend/domain"
@@ -26,6 +28,12 @@ type OAuthProvider interface {
 type AuthRepository interface {
 	FindUserByOAuth(ctx context.Context, provider, providerAccountID string) (*domain.User, error)
 	CreateUserWithOAuth(ctx context.Context, profile domain.OAuthProfile, handle string) (*domain.User, error)
+	// CreateUserWithPassword はメール登録のユーザーを作る。
+	// メール重複は domain.ErrEmailTaken、handle 重複は domain.ErrHandleTaken。
+	CreateUserWithPassword(ctx context.Context, email, passwordHash, displayName, handle, locale string) (*domain.User, error)
+	// FindUserWithPasswordByEmail はメールからユーザーとパスワードハッシュを引く。
+	// OAuth 専用ユーザーはハッシュが nil で返る。無ければ domain.ErrUserNotFound。
+	FindUserWithPasswordByEmail(ctx context.Context, email string) (*domain.User, *string, error)
 	CreateSession(ctx context.Context, session domain.Session) error
 	FindUserBySessionToken(ctx context.Context, tokenHash string) (*domain.User, error)
 	RevokeSession(ctx context.Context, tokenHash string) error
@@ -93,6 +101,11 @@ func (u *AuthUsecase) CompleteLogin(ctx context.Context, code, nonce string) (Lo
 		return LoginResult{}, err
 	}
 
+	return u.issueSession(ctx, user)
+}
+
+// issueSession はログイン成立後のセッション発行。OAuth とメール認証で共用する。
+func (u *AuthUsecase) issueSession(ctx context.Context, user *domain.User) (LoginResult, error) {
 	rawToken := domain.NewSessionToken()
 	session := domain.NewSession(user.ID, rawToken, u.now())
 	if err := u.repo.CreateSession(ctx, session); err != nil {
@@ -104,6 +117,65 @@ func (u *AuthUsecase) CompleteLogin(ctx context.Context, code, nonce string) (Lo
 		SessionToken: rawToken,
 		ExpiresAt:    session.ExpiresAt,
 	}, nil
+}
+
+// RegisterInput はメール+パスワードでの新規登録の入力。
+type RegisterInput struct {
+	Email           string
+	Password        string
+	DisplayName     string
+	Handle          string
+	PreferredLocale string
+}
+
+// Register はメール+パスワードでアカウントを作り、そのままログイン状態にする。
+func (u *AuthUsecase) Register(ctx context.Context, in RegisterInput) (LoginResult, error) {
+	if err := domain.ValidateEmail(in.Email); err != nil {
+		return LoginResult{}, err
+	}
+	if err := domain.ValidatePassword(in.Password); err != nil {
+		return LoginResult{}, err
+	}
+	displayName := strings.TrimSpace(in.DisplayName)
+	if displayName == "" || len([]rune(displayName)) > domain.DisplayNameMaxLen {
+		return LoginResult{}, domain.ErrInvalidDisplayName
+	}
+	if err := domain.ValidateHandle(in.Handle); err != nil {
+		return LoginResult{}, err
+	}
+	locale := in.PreferredLocale
+	if locale == "" {
+		locale = "ja"
+	}
+	if !slices.Contains(domain.SupportedLocales, locale) {
+		return LoginResult{}, domain.ErrInvalidLocale
+	}
+
+	hash, err := domain.HashPassword(in.Password)
+	if err != nil {
+		return LoginResult{}, fmt.Errorf("hash password: %w", err)
+	}
+
+	user, err := u.repo.CreateUserWithPassword(ctx, in.Email, hash, displayName, in.Handle, locale)
+	if err != nil {
+		return LoginResult{}, err
+	}
+	return u.issueSession(ctx, user)
+}
+
+// LoginWithPassword はメール+パスワードでのログイン。
+// ユーザーの有無・OAuth 専用・パスワード不一致はすべて同じエラーに丸め、
+// ダミー照合で応答時間も揃える（アカウントの存在を悟らせない）。
+func (u *AuthUsecase) LoginWithPassword(ctx context.Context, email, password string) (LoginResult, error) {
+	user, hash, err := u.repo.FindUserWithPasswordByEmail(ctx, email)
+	if err != nil || hash == nil {
+		domain.CheckPasswordDummy()
+		return LoginResult{}, domain.ErrInvalidCredentials
+	}
+	if !domain.CheckPassword(*hash, password) {
+		return LoginResult{}, domain.ErrInvalidCredentials
+	}
+	return u.issueSession(ctx, user)
 }
 
 // Authenticate は Cookie の生トークンからユーザーを引く。認証ミドルウェア用。

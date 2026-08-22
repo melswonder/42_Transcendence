@@ -168,7 +168,11 @@
     "already_friends": "Vous êtes déjà amis.",
     "friend_not_found": "Demande introuvable.",
     "user_not_found": "Utilisateur introuvable.",
-    "media_not_found": "Image introuvable."
+    "media_not_found": "Image introuvable.",
+    "email_taken": "Cette adresse e-mail est déjà utilisée.",
+    "invalid_email": "Veuillez saisir une adresse e-mail valide.",
+    "weak_password": "Le mot de passe doit contenir 8 à 72 caractères.",
+    "invalid_credentials": "E-mail ou mot de passe incorrect."
   },
   "stats": {
     "title": "Statistiques",
@@ -383,5 +387,19 @@
     "memberSince": "Inscrit le {date}",
     "level": "Niveau",
     "xp": "XP"
+  },
+  "auth": {
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "passwordConfirm": "Confirmer le mot de passe",
+    "passwordHint": "Au moins 8 caractères",
+    "displayName": "Nom affiché",
+    "handle": "Identifiant",
+    "handleHint": "Minuscules, chiffres et tirets bas, 3 à 30 caractères",
+    "signupSubmit": "Créer le compte",
+    "loginSubmit": "Se connecter",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "failed": "Une erreur est survenue.",
+    "or": "ou"
   }
 }
