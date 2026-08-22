@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -64,6 +65,19 @@ func mustEnv(key string) string {
 	return v
 }
 
+// envIntOr は整数の環境変数。無効な値や未設定は fallback。
+func envIntOr(key string, fallback int) int {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil || n <= 0 {
+		return fallback
+	}
+	return n
+}
+
 // 環境変数が存在しない場合は fallbackを入れる
 func envOr(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
@@ -81,6 +95,8 @@ func loadConfig() config {
 	return config{
 		infrastructure: infrastructure.Config{
 			MediaDir: envOr("MEDIA_DIR", "./uploads"),
+			// Public API の流量。デモしやすいよう環境変数で下げられる。
+			PublicRateLimit: envIntOr("PUBLIC_API_RATE_LIMIT", 60),
 			Google: infrastructure.GoogleOAuthConfig{
 				ClientID:     mustEnv("GOOGLE_CLIENT_ID"),
 				ClientSecret: mustEnv("GOOGLE_CLIENT_SECRET"),
