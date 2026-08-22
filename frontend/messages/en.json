@@ -26,7 +26,9 @@
       "missing_code": "We did not receive an authorization code. Please try again.",
       "login_failed": "Sign-in failed. Please try again in a moment.",
       "fallback": "Could not sign you in."
-    }
+    },
+    "noAccount": "Don't have an account?",
+    "signupLink": "Sign up"
   },
   "home": {
     "newMatch": "New match",
@@ -300,5 +302,12 @@
   },
   "common": {
     "cancel": "Cancel"
+  },
+  "signup": {
+    "tagline": "Create an account and start playing",
+    "googleButton": "Sign up with Google",
+    "disclaimer": "Register with your Google account. Your account is created on first sign-in, using your display name, email address and profile picture.",
+    "haveAccount": "Already have an account?",
+    "loginLink": "Log in"
   }
 }
