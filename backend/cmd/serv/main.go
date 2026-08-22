@@ -80,6 +80,7 @@ func loadConfig() config {
 
 	return config{
 		infrastructure: infrastructure.Config{
+			MediaDir: envOr("MEDIA_DIR", "./uploads"),
 			Google: infrastructure.GoogleOAuthConfig{
 				ClientID:     mustEnv("GOOGLE_CLIENT_ID"),
 				ClientSecret: mustEnv("GOOGLE_CLIENT_SECRET"),
@@ -119,7 +120,10 @@ func mustConnectDB() *gorm.DB {
 // newApplicationHandler は composition root。
 // 具体的な infrastructure の実装を選び、内側の層へ繋ぐのはここだけ。
 func newApplicationHandler(db *gorm.DB, cfg config) http.Handler {
-	repositories := infrastructure.NewRepositories(db, cfg.infrastructure)
+	repositories, err := infrastructure.NewRepositories(db, cfg.infrastructure)
+	if err != nil {
+		log.Fatalf("failed to build repositories: %v", err)
+	}
 	services := usecase.NewServices(repositories.Dependencies())
 	handlers := handler.NewHandlers(services, cfg.handler, repositories.Events)
 

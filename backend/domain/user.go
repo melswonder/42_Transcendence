@@ -2,6 +2,7 @@ package domain
 
 import (
 	"crypto/rand"
+	"slices"
 	"strings"
 	"time"
 
@@ -11,14 +12,70 @@ import (
 // User はアプリケーションが扱うユーザーそのもの。
 // カラムの型や GORM のタグは infrastructure.User が持つ。この層は DB を知らない。
 type User struct {
-	ID          uuid.UUID
-	Email       *string
-	DisplayName string
-	Handle      string
-	Status      string
-	Level       int
-	Rating      int
-	CreatedAt   time.Time
+	ID               uuid.UUID
+	Email            *string
+	DisplayName      string
+	Handle           string
+	Status           string
+	Level            int
+	ExperiencePoints int
+	Rating           int
+	PreferredLocale  string
+	AvatarAssetID    *uuid.UUID // 未設定ならデフォルトアバター
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
+// Profile は自分のプロフィール表示に足す、User 本体の外にある情報。
+type Profile struct {
+	User
+	HasPassword     bool     // password_hash の有無だけ公開する
+	LinkedProviders []string // 連携済みの OAuth プロバイダ
+}
+
+// 対応するロケール。users.preferred_locale に入れる値。
+var SupportedLocales = []string{"ja", "en", "fr"}
+
+// ProfileUpdate はプロフィール編集の入力。nil のフィールドは変更しない。
+// AvatarAssetID だけは「null で外す」があるので AvatarSet で有無を区別する。
+type ProfileUpdate struct {
+	DisplayName     *string
+	Handle          *string
+	PreferredLocale *string
+	AvatarSet       bool
+	AvatarAssetID   *uuid.UUID // AvatarSet かつ nil ならアバターを外す
+}
+
+// Validate は形式だけを確かめる。handle の一意性は DB の制約に任せる。
+func (u ProfileUpdate) Validate() error {
+	if u.DisplayName != nil {
+		name := strings.TrimSpace(*u.DisplayName)
+		if name == "" || len([]rune(name)) > DisplayNameMaxLen {
+			return ErrInvalidDisplayName
+		}
+	}
+	if u.Handle != nil {
+		if err := ValidateHandle(*u.Handle); err != nil {
+			return err
+		}
+	}
+	if u.PreferredLocale != nil && !slices.Contains(SupportedLocales, *u.PreferredLocale) {
+		return ErrInvalidLocale
+	}
+	return nil
+}
+
+// ValidateHandle は handle として使える形かを確かめる。
+func ValidateHandle(handle string) error {
+	if len(handle) < handleMinLen || len(handle) > HandleMaxLen {
+		return ErrInvalidHandle
+	}
+	for _, r := range handle {
+		if !isHandleRune(r) {
+			return ErrInvalidHandle
+		}
+	}
+	return nil
 }
 
 // DB のカラム長に合わせた上限 (users.display_name / users.handle)。

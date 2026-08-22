@@ -27,6 +27,8 @@ type Handlers struct {
 	Stats        *StatsHandler
 	Achievements *AchievementHandler
 	Game         *GameHandler
+	User         *UserHandler
+	Media        *MediaHandler
 }
 
 func NewHandlers(services usecase.Services, cfg Config, events EventSubscriber) Handlers {
@@ -40,7 +42,9 @@ func NewHandlers(services usecase.Services, cfg Config, events EventSubscriber) 
 		Stats:        NewStatsHandler(services.Stats, auth.currentUser),
 		Achievements: NewAchievementHandler(services.Achievements, events, auth.currentUser),
 		// WebSocket のハンドシェイクも Cookie セッションで認証する。
-		Game: NewGameHandler(services.Game, auth.currentUser, cfg.Game),
+		Game:  NewGameHandler(services.Game, auth.currentUser, cfg.Game),
+		User:  NewUserHandler(services.User, auth.currentUser),
+		Media: NewMediaHandler(services.Media, auth.currentUser),
 	}
 }
 
@@ -70,6 +74,18 @@ func NewRouter(handlers Handlers) http.Handler {
 	mux.HandleFunc("GET /stats/stream", handlers.Achievements.Stream)
 
 	mux.HandleFunc("GET /game/ws", handlers.Game.WS)
+
+	// /users/me はリテラル優先で {userId} と共存できる。
+	mux.HandleFunc("GET /users/me", handlers.User.Me)
+	mux.HandleFunc("PATCH /users/me", handlers.User.UpdateMe)
+	mux.HandleFunc("GET /users", handlers.User.List)
+	mux.HandleFunc("GET /users/{userId}", handlers.User.Get)
+
+	mux.HandleFunc("POST /media/avatars", handlers.Media.UploadAvatar)
+	mux.HandleFunc("GET /media", handlers.Media.List)
+	mux.HandleFunc("GET /media/{assetId}", handlers.Media.Get)
+	mux.HandleFunc("DELETE /media/{assetId}", handlers.Media.Delete)
+	mux.HandleFunc("GET /media/{assetId}/file", handlers.Media.File)
 
 	return mux
 }

@@ -18,6 +18,8 @@ import (
 // Config は infrastructure 層が外の世界と話すために要る設定。
 type Config struct {
 	Google GoogleOAuthConfig
+	// MediaDir はアップロードされたファイルの保存先ディレクトリ。
+	MediaDir string
 }
 
 type Repositories struct {
@@ -28,12 +30,19 @@ type Repositories struct {
 	Stats        usecase.StatsRepository
 	Achievements usecase.AchievementRepository
 	Game         usecase.GameRepository
+	User         usecase.UserRepository
+	Media        usecase.MediaRepository
+	MediaFiles   usecase.FileStore
 	GoogleOAuth  usecase.OAuthProvider
 	// Events は SSE の配信元。リポジトリではないが、組み立てる場所が同じなのでここで持つ。
 	Events *EventHub
 }
 
-func NewRepositories(db *gorm.DB, cfg Config) Repositories {
+func NewRepositories(db *gorm.DB, cfg Config) (Repositories, error) {
+	files, err := NewLocalFileStore(cfg.MediaDir)
+	if err != nil {
+		return Repositories{}, err
+	}
 	return Repositories{
 		db:           db,
 		Ping:         NewPingRepo(),
@@ -42,9 +51,12 @@ func NewRepositories(db *gorm.DB, cfg Config) Repositories {
 		Stats:        NewStatsRepo(db),
 		Achievements: NewAchievementRepo(db),
 		Game:         NewGameRepo(db),
+		User:         NewUserRepo(db),
+		Media:        NewMediaRepo(db),
+		MediaFiles:   files,
 		GoogleOAuth:  NewGoogleOAuth(cfg.Google),
 		Events:       NewEventHub(),
-	}
+	}, nil
 }
 
 // Dependencies は各リポジトリを usecase 側の受け口へ詰め替える。
@@ -56,6 +68,9 @@ func (r Repositories) Dependencies() usecase.Dependencies {
 		StatsRepository:       r.Stats,
 		AchievementRepository: r.Achievements,
 		GameRepository:        r.Game,
+		UserRepository:        r.User,
+		MediaRepository:       r.Media,
+		MediaFileStore:        r.MediaFiles,
 		GoogleOAuth:           r.GoogleOAuth,
 		MatchNotifier:         r.Events,
 	}
