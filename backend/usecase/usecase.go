@@ -25,8 +25,6 @@ type Dependencies struct {
 	MediaFileStore        FileStore
 	FriendRepository      FriendRepository
 	Presence              PresenceTracker
-	APIKeyRepository      APIKeyRepository
-	RateLimiter           RateLimiter
 	GoogleOAuth           OAuthProvider
 	MatchNotifier         MatchNotifier
 }
@@ -41,7 +39,6 @@ type Services struct {
 	User         *UserUsecase
 	Media        *MediaUsecase
 	Friend       *FriendUsecase
-	APIKey       *APIKeyUsecase
 }
 
 func NewServices(dependencies Dependencies) Services {
@@ -59,6 +56,5 @@ func NewServices(dependencies Dependencies) Services {
 		User:         NewUserUsecase(dependencies.UserRepository),
 		Media:        NewMediaUsecase(dependencies.MediaRepository, dependencies.MediaFileStore),
 		Friend:       NewFriendUsecase(dependencies.FriendRepository, dependencies.Presence),
-		APIKey:       NewAPIKeyUsecase(dependencies.APIKeyRepository, dependencies.RateLimiter),
 	}
 }

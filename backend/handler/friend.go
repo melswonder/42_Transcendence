@@ -144,11 +144,6 @@ func (h *FriendHandler) CreateRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	friendship, err := h.uc.Request(r.Context(), user.ID, otherID)
-	writeFriendRequestResult(w, friendship, err)
-}
-
-// writeFriendRequestResult は申請の結果をコード付きで書く。Public API とも共用する。
-func writeFriendRequestResult(w http.ResponseWriter, friendship *domain.Friendship, err error) {
 	switch {
 	case err == nil:
 		writeJSON(w, http.StatusCreated, toFriendshipResponse(*friendship))

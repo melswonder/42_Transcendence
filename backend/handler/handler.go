@@ -33,8 +33,6 @@ type Handlers struct {
 	User         *UserHandler
 	Media        *MediaHandler
 	Friend       *FriendHandler
-	APIKey       *APIKeyHandler
-	Public       *PublicHandler
 }
 
 // PresenceToucher は「このユーザーを見かけた」を記録する先。
@@ -69,8 +67,6 @@ func NewHandlers(services usecase.Services, cfg Config, events EventSubscriber, 
 		User:   NewUserHandler(services.User, currentUser),
 		Media:  NewMediaHandler(services.Media, currentUser),
 		Friend: NewFriendHandler(services.Friend, currentUser),
-		APIKey: NewAPIKeyHandler(services.APIKey, currentUser),
-		Public: NewPublicHandler(services.APIKey, services.User, services.Match, services.Stats, services.Friend),
 	}
 }
 
@@ -119,14 +115,6 @@ func NewRouter(handlers Handlers) http.Handler {
 	mux.HandleFunc("POST /friends/requests", handlers.Friend.CreateRequest)
 	mux.HandleFunc("PATCH /friends/requests/{userId}", handlers.Friend.Decide)
 	mux.HandleFunc("DELETE /friends/{userId}", handlers.Friend.Remove)
-
-	// API キー管理は Cookie セッションで守る。キー自身でキーは作れない。
-	mux.HandleFunc("POST /apikeys", handlers.APIKey.Create)
-	mux.HandleFunc("GET /apikeys", handlers.APIKey.List)
-	mux.HandleFunc("DELETE /apikeys/{keyId}", handlers.APIKey.Revoke)
-
-	// Public API（/v1）は API キーで認証する。
-	handlers.Public.Register(mux)
 
 	return mux
 }

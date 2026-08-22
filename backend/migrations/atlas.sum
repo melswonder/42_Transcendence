@@ -1,7 +1,6 @@
-h1:uIW1j8fE+1NT/tlgm4h/+wL/IuDmkbS/yRV6EPBRm8A=
+h1:tmWY8LaLdmti5opoE3aqj03pSGmf9luzuw02WxUKbSw=
 20260803000000_enable_citext.sql h1:DnspVE/n7zqG5Z/5OwVilvE73D3Nu36jXPD49mOOLQo=
 20260803061441_init.sql h1:Y3xZHdnQumb64vQ1fEHTCBobdxnVS4jfbw2jon3cqUc=
 20260816105207_add_users_unique_indexes.sql h1:SP7J9z7bAyXjGe11Llrx6wP02ucfus7w50K3hkhliXw=
 20260820080429_add_matches_and_achievements.sql h1:pefnFXRDUKbhKFTP6YmjetVPKLxTcDt6Iky95HnjN3s=
 20260821172805_add_match_actions.sql h1:ZQcVjit0X8+s6QZf4+8nMDwiUTnE32A2r2A1iZWeW78=
-20260822091834_add_api_keys.sql h1:vcNfhTBQA1PKEAgqpg8SPR63/R9yrr89IbFFna8nKAc=

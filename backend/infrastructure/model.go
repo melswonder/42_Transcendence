@@ -191,27 +191,6 @@ type MatchAction struct {
 
 func (MatchAction) TableName() string { return "match_actions" }
 
-// APIKey - api_keys
-//
-// Public API のキー。raw key は保存せずハッシュだけを持つ（sessions と同じ考え方）。
-// key_prefix は raw の先頭数文字で、一覧からどのキーか見分けるためだけの値。
-type APIKey struct {
-	ID         uuid.UUID  `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()"`
-	UserID     uuid.UUID  `gorm:"column:user_id;type:uuid;not null;index"`
-	Name       string     `gorm:"column:name;type:varchar(50);not null"`
-	KeyPrefix  string     `gorm:"column:key_prefix;type:varchar(16);not null"`
-	KeyHash    string     `gorm:"column:key_hash;type:char(64);not null;uniqueIndex"`
-	Scopes     string     `gorm:"column:scopes;type:varchar(100);not null"` // カンマ区切り（read,write）
-	ExpiresAt  *time.Time `gorm:"column:expires_at;type:timestamptz"`
-	RevokedAt  *time.Time `gorm:"column:revoked_at;type:timestamptz"`
-	LastUsedAt *time.Time `gorm:"column:last_used_at;type:timestamptz"`
-	CreatedAt  time.Time  `gorm:"column:created_at;type:timestamptz;not null;autoCreateTime"`
-
-	User *User `gorm:"foreignKey:UserID;references:ID"`
-}
-
-func (APIKey) TableName() string { return "api_keys" }
-
 // UserAchievement - user_achievements
 //
 // 解除済みの実績だけを持つ。実績の定義（名前・説明・達成条件）は

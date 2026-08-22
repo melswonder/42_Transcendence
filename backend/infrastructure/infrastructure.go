@@ -20,8 +20,6 @@ type Config struct {
 	Google GoogleOAuthConfig
 	// MediaDir はアップロードされたファイルの保存先ディレクトリ。
 	MediaDir string
-	// PublicRateLimit は Public API のキーごとの流量（リクエスト/分）。
-	PublicRateLimit int
 }
 
 type Repositories struct {
@@ -36,8 +34,6 @@ type Repositories struct {
 	Media        usecase.MediaRepository
 	MediaFiles   usecase.FileStore
 	Friend       usecase.FriendRepository
-	APIKeys      usecase.APIKeyRepository
-	RateLimit    usecase.RateLimiter
 	GoogleOAuth  usecase.OAuthProvider
 	// Presence は「最後に見かけた時刻」のメモリ上の記録。オンライン表示に使う。
 	Presence *PresenceHub
@@ -62,8 +58,6 @@ func NewRepositories(db *gorm.DB, cfg Config) (Repositories, error) {
 		Media:        NewMediaRepo(db),
 		MediaFiles:   files,
 		Friend:       NewFriendRepo(db),
-		APIKeys:      NewAPIKeyRepo(db),
-		RateLimit:    NewFixedWindowLimiter(cfg.PublicRateLimit),
 		GoogleOAuth:  NewGoogleOAuth(cfg.Google),
 		Events:       NewEventHub(),
 		Presence:     NewPresenceHub(),
@@ -84,8 +78,6 @@ func (r Repositories) Dependencies() usecase.Dependencies {
 		MediaFileStore:        r.MediaFiles,
 		FriendRepository:      r.Friend,
 		Presence:              r.Presence,
-		APIKeyRepository:      r.APIKeys,
-		RateLimiter:           r.RateLimit,
 		GoogleOAuth:           r.GoogleOAuth,
 		MatchNotifier:         r.Events,
 	}
