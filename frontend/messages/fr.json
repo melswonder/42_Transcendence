@@ -144,6 +144,7 @@
   },
   "apiErrors": {
     "requestFailed": "La requête a échoué ({status})",
+    "unauthorized": "Votre session a expiré. Veuillez vous reconnecter.",
     "handle_taken": "Cet identifiant est déjà pris.",
     "invalid_display_name": "Le nom affiché doit faire de 1 à 50 caractères.",
     "invalid_handle": "L'identifiant doit faire 3 à 30 caractères (minuscules, chiffres, tirets bas).",

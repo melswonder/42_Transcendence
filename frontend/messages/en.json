@@ -144,6 +144,7 @@
   },
   "apiErrors": {
     "requestFailed": "Request failed ({status})",
+    "unauthorized": "Your session has expired. Please log in again.",
     "handle_taken": "That handle is already taken.",
     "invalid_display_name": "Display name must be 1–50 characters.",
     "invalid_handle": "Handle must be 3–30 lowercase letters, digits or underscores.",

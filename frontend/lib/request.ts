@@ -21,9 +21,14 @@ export async function requestJSON(path: string, init?: RequestInit) {
       error?: string;
       code?: string;
     } | null;
+    // code の無い 401 はセッション切れ。画面ごとに生の "unauthorized" を
+    // 出しても打つ手が無いので、ログインへ送り返す。
+    if (res.status === 401 && !body?.code && typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
     throw new ApiError(
       res.status,
-      body?.code,
+      body?.code ?? (res.status === 401 ? "unauthorized" : undefined),
       body?.error ?? `HTTP ${res.status}`,
     );
   }
