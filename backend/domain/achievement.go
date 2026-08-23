@@ -80,6 +80,13 @@ func EvaluateAchievements(s StatsSummary, unlockedAt map[string]time.Time) []Ach
 	for _, def := range Achievements {
 		progress := progressFor(def, s)
 
+		// レーティングは全員 InitialRating から始まるため、絶対値のままだと
+		// 初期状態で進捗バーがほぼ埋まって見える。初期値からの伸びに換算する。
+		if def.Category == CategoryRating {
+			progress = max(progress-InitialRating, 0)
+			def.Target -= InitialRating
+		}
+
 		achievement := Achievement{
 			AchievementDef: def,
 			// 進捗バーが Target を超えないよう頭を打っておく。
