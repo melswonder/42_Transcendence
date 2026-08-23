@@ -117,7 +117,9 @@ services:
     image: caddy:2-alpine
     container_name: caddy
     ports:
-      - "443:443"   # https://localhost      -> frontend
+      # 443 を bind できない環境（rootless Docker 等）は .env の
+      # FRONTEND_HTTPS_PORT を 4443 などに変え、FRONTEND_URL も合わせる。
+      - "${FRONTEND_HTTPS_PORT:-443}:443" # https://localhost -> frontend
       - "8443:8443" # https://localhost:8443 -> backend (API / WSS)
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
