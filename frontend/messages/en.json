@@ -87,8 +87,6 @@
       "no_active_match": "You are not in a game.",
       "not_connected": "Not connected to the server."
     },
-    "viewResult": "View result",
-    "viewBoard": "View board",
     "resignConfirmTitle": "Resign?",
     "resignConfirmMessage": "This game will be recorded as a loss for you."
   },

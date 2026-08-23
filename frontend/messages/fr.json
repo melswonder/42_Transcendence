@@ -16,8 +16,8 @@
     "settings": "Paramètres",
     "logout": "Se déconnecter",
     "level": "Niv. {level}",
-    "logoutConfirmTitle": "Se déconnecter ?",
-    "logoutConfirmMessage": ""
+    "logoutConfirmMessage": "",
+    "logoutConfirmTitle": "Se déconnecter ?"
   },
   "login": {
     "tagline": "Connectez-vous pour jouer",
@@ -87,8 +87,6 @@
       "no_active_match": "Vous n'êtes dans aucune partie.",
       "not_connected": "Non connecté au serveur."
     },
-    "viewResult": "Voir le résultat",
-    "viewBoard": "Voir le plateau",
     "resignConfirmTitle": "Abandonner ?",
     "resignConfirmMessage": "Cette partie sera comptée comme une défaite pour vous."
   },

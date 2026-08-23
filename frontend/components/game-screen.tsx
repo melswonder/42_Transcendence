@@ -180,14 +180,9 @@ export function GameScreen() {
             />
 
             {state.finished ? (
-              <Stack gap="sm">
-                <Button onClick={() => setDismissedFor(null)}>
-                  {t("viewResult")}
-                </Button>
-                <Button component={Link} href="/" variant="subtle">
-                  {t("backHome")}
-                </Button>
-              </Stack>
+              <Button component={Link} href="/">
+                {t("backHome")}
+              </Button>
             ) : (
               <Button
                 color="red"
@@ -228,13 +223,7 @@ export function GameScreen() {
                 </Text>
               </Text>
             )}
-            <Group justify="flex-end" gap="sm">
-              <Button
-                variant="default"
-                onClick={() => setDismissedFor(state.matchId)}
-              >
-                {t("viewBoard")}
-              </Button>
+            <Group justify="flex-end">
               <Button component={Link} href="/">
                 {t("backHome")}
               </Button>

@@ -16,8 +16,8 @@
     "settings": "設定",
     "logout": "ログアウト",
     "level": "Lv.{level}",
-    "logoutConfirmTitle": "ログアウトしますか？",
-    "logoutConfirmMessage": ""
+    "logoutConfirmMessage": "",
+    "logoutConfirmTitle": "ログアウトしますか？"
   },
   "login": {
     "tagline": "サインインしてプレイ",
@@ -87,8 +87,6 @@
       "no_active_match": "参加中の対局がありません。",
       "not_connected": "サーバーと接続できていません。"
     },
-    "viewResult": "結果を見る",
-    "viewBoard": "盤面を見る",
     "resignConfirmTitle": "投了しますか？",
     "resignConfirmMessage": "この対局はあなたの負けとして記録されます。"
   },

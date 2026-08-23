@@ -58,7 +58,6 @@ export function LogoutButton({ iconOnly = false }: { iconOnly?: boolean }) {
         onClose={() => setConfirmOpen(false)}
         onConfirm={logout}
         title={t("logoutConfirmTitle")}
-        message={t("logoutConfirmMessage")}
         confirmLabel={t("logout")}
         color="red"
         loading={loading}
