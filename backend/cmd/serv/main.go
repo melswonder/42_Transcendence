@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -114,6 +115,13 @@ func envOr(key, fallback string) string {
 // 　リクエストが来てエラーになるより、サーバーを構築する前にエラーにしたほうが安全
 func loadConfig() config {
 	frontendURL := envOr("FRONTEND_URL", "http://localhost:3000")
+
+	// FRONTEND_URL が別ポートや公開ドメインでも、.env の変更だけで
+	// CORS と WebSocket の許可が追従するようにする。
+	allowedOrigins[frontendURL] = true
+	if u, err := url.Parse(frontendURL); err == nil && u.Host != "" {
+		allowedWSOrigins = append(allowedWSOrigins, u.Host)
+	}
 
 	return config{
 		infrastructure: infrastructure.Config{
