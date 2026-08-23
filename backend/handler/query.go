@@ -103,7 +103,7 @@ func parseBoundedInt(v string, fallback, minValue, maxValue int) int {
 
 func isKnownMode(v string) bool {
 	switch v {
-	case domain.ModeRanked, domain.ModeCasual, domain.ModeAI, domain.ModeFriend:
+	case domain.ModeRanked, domain.ModeCasual:
 		return true
 	}
 

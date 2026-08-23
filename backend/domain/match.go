@@ -10,8 +10,6 @@ import (
 const (
 	ModeRanked = "ranked"
 	ModeCasual = "casual"
-	ModeAI     = "ai"
-	ModeFriend = "friend"
 )
 
 // 決着のつき方。matches.result_type の CHECK 制約と同じ値にする。
@@ -129,7 +127,7 @@ func ValidateMatchInput(mode, resultType string, startedAt, finishedAt time.Time
 
 func isValidMode(v string) bool {
 	switch v {
-	case ModeRanked, ModeCasual, ModeAI, ModeFriend:
+	case ModeRanked, ModeCasual:
 		return true
 	}
 
