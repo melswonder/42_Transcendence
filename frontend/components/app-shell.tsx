@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
-import { ScrollArea, Stack, Title } from "@mantine/core";
+import Image from "next/image";
+import { Group, ScrollArea, Stack, Title } from "@mantine/core";
+import { useTranslations } from "next-intl";
 
 import { LegalLinks } from "@/components/legal-links";
 import { LocaleSwitcher } from "@/components/locale-switcher";
@@ -17,16 +19,23 @@ export function AppShell({
   user: User;
   children: ReactNode;
 }) {
+  const t = useTranslations("common");
+
   return (
     <div className="flex min-h-dvh flex-col bg-body md:flex-row">
       <aside className="flex shrink-0 flex-col gap-4 border-default-border bg-dark-600 p-4 max-md:border-b md:w-64 md:border-r">
-        <Title
-          order={1}
-          c="emerald"
-          className="px-2 py-3 text-xl tracking-[0.2em]"
-        >
-          QUORIDOR
-        </Title>
+        <Group gap="sm" className="px-2 py-3" wrap="nowrap">
+          <Image
+            src="/icon.png"
+            alt=""
+            width={28}
+            height={28}
+            className="rounded-lg"
+          />
+          <Title order={1} c="emerald" className="text-xl tracking-[0.2em]">
+            {t("appName")}
+          </Title>
+        </Group>
 
         <Stack gap={4} className="flex-1">
           <SideNav />
