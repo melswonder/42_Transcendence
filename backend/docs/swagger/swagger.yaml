@@ -2423,8 +2423,8 @@ paths:
       tags:
       - public
 schemes:
-- http
 - https
+- http
 securityDefinitions:
   BearerAuth:
     description: '`Bearer {api_key}` 形式で指定する。キーは POST /apikeys で発行し、/v1 の Public API

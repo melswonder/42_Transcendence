@@ -3623,7 +3623,7 @@ var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
 	BasePath:         "/",
-	Schemes:          []string{"http", "https"},
+	Schemes:          []string{"https", "http"},
 	Title:            "ft_transcendence API",
 	Description:      "セッション Cookie で使う通常 API と、外部開発者向け Public API（/v1）の仕様。\n通常 API はログインで発行されるセッション Cookie でのみ利用できる。\nPublic API は API キー（Bearer）でのみ利用でき、Cookie では利用できない。",
 	InfoInstanceName: "swagger",

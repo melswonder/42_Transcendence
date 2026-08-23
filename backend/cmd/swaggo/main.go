@@ -27,7 +27,7 @@ import (
 // @license.name	MIT
 //
 // @BasePath	/
-// @schemes	http https
+// @schemes	https http
 //
 // @securityDefinitions.apikey	BearerAuth
 // @in							header
