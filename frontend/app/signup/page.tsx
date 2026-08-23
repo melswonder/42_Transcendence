@@ -15,12 +15,13 @@ export default async function SignupPage() {
   if (user) redirect("/");
 
   const t = await getTranslations("signup");
+  const tAuth = await getTranslations("auth");
 
   return (
     <AuthCard tagline={t("tagline")}>
       <PasswordAuthForm mode="signup" />
 
-      <Divider label={t("or")} labelPosition="center" />
+      <Divider label={tAuth("or")} labelPosition="center" />
 
       <GoogleLoginButton mode="signup" />
 
