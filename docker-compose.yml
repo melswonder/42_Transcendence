@@ -66,6 +66,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # air のビルドが終わって実際に HTTP 応答するまでを「起動完了」とみなす。
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4000/"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+      start_period: 15s
     volumes:
       - ./backend:/app
       # アップロードされたアバター画像。bind mount の外に置いて repo を汚さない。
@@ -89,7 +96,15 @@ services:
       # frontend 自身を指すので、サービス名で backend を呼ぶ。
       API_URL: http://backend:4000
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    # 初回アクセスの Turbopack コンパイルもここで済ませて、開いた瞬間から表示できるようにする。
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      interval: 3s
+      timeout: 15s
+      retries: 40
+      start_period: 10s
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -108,8 +123,10 @@ services:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
     depends_on:
-      - frontend
-      - backend
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
     networks:
       - transcendence-network
 
