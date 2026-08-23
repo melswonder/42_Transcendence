@@ -4,6 +4,8 @@
     "title": "コリドール"
   },
   "nav": {
+    "menu": "メニュー",
+    "closeMenu": "メニューを閉じる",
     "play": "プレイ",
     "watch": "観戦",
     "stats": "統計",
@@ -15,7 +17,7 @@
     "logout": "ログアウト",
     "level": "Lv.{level}",
     "logoutConfirmTitle": "ログアウトしますか？",
-    "logoutConfirmMessage": "またいつでもログインし直せます。"
+    "logoutConfirmMessage": ""
   },
   "login": {
     "tagline": "サインインしてプレイ",

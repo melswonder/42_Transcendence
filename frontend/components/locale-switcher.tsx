@@ -15,10 +15,19 @@ import { apiUrl } from "@/lib/api";
 export function LocaleSwitcher({ loggedIn = false }: { loggedIn?: boolean }) {
   const router = useRouter();
   const locale = useLocale();
-  const [value, setValue] = useState(locale);
+  // 正本は Cookie（= useLocale）だが、router.refresh() が返るまで 1 往復あるので
+  // 押した瞬間の選択を pending として先に見せる。refresh が反映された時点で捨てる。
+  // サイドバーと Drawer に 2 つ並ぶため、片方の選択が残って食い違わないようにする。
+  const [pending, setPending] = useState<string | null>(null);
+  const [seenLocale, setSeenLocale] = useState(locale);
+  if (locale !== seenLocale) {
+    setSeenLocale(locale);
+    setPending(null);
+  }
+  const value = pending ?? locale;
 
   const change = (next: string) => {
-    setValue(next);
+    setPending(next);
     document.cookie = `${localeCookie}=${next}; path=/; max-age=31536000; samesite=lax`;
     if (loggedIn) {
       // 失敗しても Cookie だけで言語は切り替わるので握りつぶす。

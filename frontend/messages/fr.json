@@ -4,6 +4,8 @@
     "title": "Quoridor"
   },
   "nav": {
+    "menu": "Menu",
+    "closeMenu": "Fermer le menu",
     "play": "Jouer",
     "watch": "Regarder",
     "stats": "Statistiques",
@@ -15,7 +17,7 @@
     "logout": "Se déconnecter",
     "level": "Niv. {level}",
     "logoutConfirmTitle": "Se déconnecter ?",
-    "logoutConfirmMessage": "Vous pourrez vous reconnecter à tout moment."
+    "logoutConfirmMessage": ""
   },
   "login": {
     "tagline": "Connectez-vous pour jouer",

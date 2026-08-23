@@ -4,6 +4,8 @@
     "title": "Quoridor"
   },
   "nav": {
+    "menu": "Menu",
+    "closeMenu": "Close menu",
     "play": "Play",
     "watch": "Spectate",
     "stats": "Stats",
@@ -15,7 +17,7 @@
     "logout": "Log out",
     "level": "Lv.{level}",
     "logoutConfirmTitle": "Log out?",
-    "logoutConfirmMessage": "You can sign back in at any time."
+    "logoutConfirmMessage": ""
   },
   "login": {
     "tagline": "Sign in to play",
