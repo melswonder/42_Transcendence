@@ -1,0 +1,17 @@
+# Render 等の「1 サービス = 1 ポート」なホスティング用の内部ルータ。
+# TLS はホスティング側の edge が終端するので、ここは平文 HTTP でよい。
+{
+	auto_https off
+	admin off
+}
+
+:{$PORT:8080} {
+	# /api/* は Go バックエンドへ（プレフィックスを剥がして渡す）
+	handle_path /api/* {
+		reverse_proxy 127.0.0.1:4000
+	}
+	# それ以外は Next.js へ
+	handle {
+		reverse_proxy 127.0.0.1:3000
+	}
+}

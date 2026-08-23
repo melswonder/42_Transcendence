@@ -1,0 +1,23 @@
+# Render Blueprint: リポジトリを Render に接続して「New > Blueprint」を選ぶと
+# この定義で無料の Web サービスが 1 つ作られる。DB は Supabase (無料) を使い、
+# 環境変数はダッシュボードで入力する（sync: false のもの）。
+services:
+  - type: web
+    name: quoridor
+    runtime: docker
+    plan: free
+    dockerfilePath: ./deploy/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: DATABASE_URL # Supabase の Session pooler の URL (?sslmode=require 付き)
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URL # https://<app>.onrender.com/api/auth/google/callback
+        sync: false
+      - key: FRONTEND_URL # https://<app>.onrender.com
+        sync: false
+      - key: NEXT_PUBLIC_API_URL # https://<app>.onrender.com/api （ビルド時に使用）
+        sync: false
