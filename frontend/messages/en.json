@@ -14,8 +14,7 @@
     "settings": "Settings",
     "logout": "Log out",
     "level": "Lv.{level}",
-    "logoutConfirmTitle": "Log out?",
-    "logoutConfirmMessage": "You can sign back in at any time."
+    "logoutConfirmTitle": "Log out?"
   },
   "login": {
     "tagline": "Sign in to play",
@@ -85,8 +84,6 @@
       "no_active_match": "You are not in a game.",
       "not_connected": "Not connected to the server."
     },
-    "viewResult": "View result",
-    "viewBoard": "View board",
     "resignConfirmTitle": "Resign?",
     "resignConfirmMessage": "This game will be recorded as a loss for you."
   },
