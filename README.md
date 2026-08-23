@@ -176,7 +176,7 @@ sessions
 
 matches
   id           UUID (PK)
-  mode         CHECK(ranked / casual / ai / friend)
+  mode         CHECK(ranked / casual)
   status       CHECK(in_progress / finished / aborted)
   result_type  CHECK(goal / resign / timeout / draw / abort), nullable
   total_moves  INTEGER
