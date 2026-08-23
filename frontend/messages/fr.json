@@ -19,7 +19,6 @@
   "login": {
     "tagline": "Connectez-vous pour jouer",
     "googleButton": "Se connecter avec Google",
-    "disclaimer": "En continuant, nous recevrons le nom, l'adresse e-mail et la photo de profil de votre compte Google.",
     "errors": {
       "access_denied": "Vous avez annulé sur l'écran de consentement Google.",
       "invalid_state": "La vérification de connexion a échoué. La demande a peut-être expiré — veuillez réessayer.",
@@ -310,7 +309,6 @@
   "signup": {
     "tagline": "Créez un compte et commencez à jouer",
     "googleButton": "S'inscrire avec Google",
-    "disclaimer": "Inscrivez-vous avec votre compte Google. Votre compte est créé à la première connexion, avec votre nom, votre adresse e-mail et votre photo de profil.",
     "haveAccount": "Vous avez déjà un compte ?",
     "loginLink": "Se connecter"
   },

@@ -25,10 +25,6 @@ export default async function SignupPage() {
 
       <GoogleLoginButton mode="signup" />
 
-      <Text size="xs" c="dimmed" ta="center">
-        {t("disclaimer")}
-      </Text>
-
       <Text size="sm" ta="center">
         {t("haveAccount")} <AuthLink href="/login">{t("loginLink")}</AuthLink>
       </Text>

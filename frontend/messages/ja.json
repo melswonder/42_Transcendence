@@ -19,7 +19,6 @@
   "login": {
     "tagline": "サインインしてプレイ",
     "googleButton": "Google でログイン",
-    "disclaimer": "続行すると、Google アカウントの表示名・メールアドレス・プロフィール画像を取得します。",
     "errors": {
       "access_denied": "Google の同意画面でキャンセルされました。",
       "invalid_state": "ログインの照合に失敗しました。時間が経ちすぎた可能性があります。もう一度お試しください。",
@@ -310,7 +309,6 @@
   "signup": {
     "tagline": "アカウントを作成して対戦を始めよう",
     "googleButton": "Google で登録",
-    "disclaimer": "Google アカウントで登録します。初回ログイン時にアカウントが自動で作成され、表示名・メールアドレス・プロフィール画像を取得します。",
     "haveAccount": "既にアカウントをお持ちの方は",
     "loginLink": "ログイン"
   },

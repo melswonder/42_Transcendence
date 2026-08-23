@@ -19,7 +19,6 @@
   "login": {
     "tagline": "Sign in to play",
     "googleButton": "Sign in with Google",
-    "disclaimer": "By continuing, we will receive your Google account's display name, email address and profile picture.",
     "errors": {
       "access_denied": "You cancelled on the Google consent screen.",
       "invalid_state": "Sign-in verification failed. The request may have expired — please try again.",
@@ -310,7 +309,6 @@
   "signup": {
     "tagline": "Create an account and start playing",
     "googleButton": "Sign up with Google",
-    "disclaimer": "Register with your Google account. Your account is created on first sign-in, using your display name, email address and profile picture.",
     "haveAccount": "Already have an account?",
     "loginLink": "Log in"
   },

@@ -33,10 +33,6 @@ export default async function LoginPage({
 
       <GoogleLoginButton />
 
-      <Text size="xs" c="dimmed" ta="center">
-        {t("disclaimer")}
-      </Text>
-
       <Text size="sm" ta="center">
         {t("noAccount")} <AuthLink href="/signup">{t("signupLink")}</AuthLink>
       </Text>
