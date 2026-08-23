@@ -1,5 +1,7 @@
 # public.match_participants
 
+## Description
+
 ## Columns
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |

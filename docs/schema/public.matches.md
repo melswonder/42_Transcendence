@@ -1,5 +1,7 @@
 # public.matches
 
+## Description
+
 ## Columns
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
@@ -19,7 +21,7 @@
 | ---- | ---- | ---------- |
 | chk_matches_finished_after_started | CHECK | CHECK (((finished_at IS NULL) OR (finished_at >= started_at))) |
 | chk_matches_finished_has_result | CHECK | CHECK ((((status)::text <> 'finished'::text) OR ((result_type IS NOT NULL) AND (finished_at IS NOT NULL)))) |
-| chk_matches_mode | CHECK | CHECK (((mode)::text = ANY (ARRAY[('ranked'::character varying)::text, ('casual'::character varying)::text, ('ai'::character varying)::text, ('friend'::character varying)::text]))) |
+| chk_matches_mode | CHECK | CHECK (((mode)::text = ANY (ARRAY[('ranked'::character varying)::text, ('casual'::character varying)::text]))) |
 | chk_matches_result_type | CHECK | CHECK (((result_type IS NULL) OR ((result_type)::text = ANY (ARRAY[('goal'::character varying)::text, ('resign'::character varying)::text, ('timeout'::character varying)::text, ('draw'::character varying)::text, ('abort'::character varying)::text])))) |
 | chk_matches_status | CHECK | CHECK (((status)::text = ANY (ARRAY[('in_progress'::character varying)::text, ('finished'::character varying)::text, ('aborted'::character varying)::text]))) |
 | chk_matches_total_moves | CHECK | CHECK ((total_moves >= 0)) |

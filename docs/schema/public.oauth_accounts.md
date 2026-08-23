@@ -1,5 +1,7 @@
 # public.oauth_accounts
 
+## Description
+
 ## Columns
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
