@@ -1,4 +1,4 @@
-basePath: /api/v1
+basePath: /
 definitions:
   apispec.APIKeyCreateRequest:
     properties:
@@ -839,14 +839,13 @@ definitions:
         example: active
         type: string
     type: object
-host: localhost:4000
 info:
   contact:
     name: 42 Transcendence
   description: |-
-    ユーザー・認証・フレンド・ブロック・アバターを扱う公開 API の仕様。
-    外部クライアントから叩けるよう、認証は Cookie ではなく Bearer トークンで行う。
-    現時点では仕様のみで、エンドポイントの実装はこれから追加される。
+    セッション Cookie で使う通常 API と、外部開発者向け Public API（/v1）の仕様。
+    通常 API はログインで発行されるセッション Cookie でのみ利用できる。
+    Public API は API キー（Bearer）でのみ利用でき、Cookie では利用できない。
   license:
     name: MIT
   title: ft_transcendence API
@@ -2428,7 +2427,8 @@ schemes:
 - https
 securityDefinitions:
   BearerAuth:
-    description: '`Bearer {access_token}` 形式で指定する。トークンは POST /auth/login などで発行する。'
+    description: '`Bearer {api_key}` 形式で指定する。キーは POST /apikeys で発行し、/v1 の Public API
+      でのみ有効。'
     in: header
     name: Authorization
     type: apiKey
