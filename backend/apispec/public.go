@@ -119,7 +119,7 @@ func PublicUpdateProfile() {}
 //	@Security	BearerAuth
 //	@Param		from	query	string	false	"この日時以降（RFC3339 か YYYY-MM-DD）"
 //	@Param		to		query	string	false	"この日時まで"
-//	@Param		mode	query	string	false	"モード"	Enums(ranked, casual, ai, friend)
+//	@Param		mode	query	string	false	"モード"	Enums(ranked, casual)
 //	@Param		outcome	query	string	false	"勝敗"	Enums(win, loss, draw)
 //	@Param		limit	query	int	false	"件数"	default(20)	minimum(1)	maximum(100)
 //	@Param		offset	query	int	false	"開始位置"	default(0)	minimum(0)
@@ -138,7 +138,7 @@ func PublicListMatches() {}
 //	@Security	BearerAuth
 //	@Param		from	query	string	false	"この日時以降"
 //	@Param		to		query	string	false	"この日時まで"
-//	@Param		mode	query	string	false	"モード"	Enums(ranked, casual, ai, friend)
+//	@Param		mode	query	string	false	"モード"	Enums(ranked, casual)
 //	@Success	200	{object}	StatsSummary
 //	@Failure	401	{object}	ErrorResponse
 //	@Failure	403	{object}	ErrorResponse
