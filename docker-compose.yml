@@ -98,6 +98,8 @@ services:
       # Server Component から呼ぶとき用。コンテナ内では localhost は
       # frontend 自身を指すので、サービス名で backend を呼ぶ。
       API_URL: http://backend:4000
+      # 別 PC からアクセスさせるときの追加ホスト（next.config の allowedDevOrigins）。
+      PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
     depends_on:
       backend:
         condition: service_healthy
@@ -120,6 +122,9 @@ services:
   caddy:
     image: caddy:2-alpine
     container_name: caddy
+    environment:
+      # 別 PC からアクセスさせたいときにこのホスト（LAN の IP 等）でも配信する。
+      PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
     ports:
       # 443 を bind できない環境（rootless Docker 等）は .env の
       # FRONTEND_HTTPS_PORT を 4443 などに変え、FRONTEND_URL も合わせる。

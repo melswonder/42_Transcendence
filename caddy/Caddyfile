@@ -1,17 +1,22 @@
 # ブラウザからの接続を HTTPS / WSS にするためのリバースプロキシ。
 # 証明書は Caddy のローカル CA による自己署名（開発・評価用）。
 # コンテナ間の内側の通信は平文のままでよい（課題の要件どおり）。
+#
+# PUBLIC_HOST に LAN の IP や別ホスト名を入れると、localhost に加えて
+# そのアドレスでも配信する（別 PC からのアクセス用）。
 
 {
 	local_certs
+	# IP 直打ちのアクセスは SNI が無いので、証明書の選択先を明示する。
+	default_sni {$PUBLIC_HOST:localhost}
 }
 
 # フロントエンド
-https://localhost {
+https://localhost, https://{$PUBLIC_HOST:localhost} {
 	reverse_proxy frontend:3000
 }
 
 # バックエンド API（WebSocket / SSE もこのまま通る）
-https://localhost:8443 {
+https://localhost:8443, https://{$PUBLIC_HOST:localhost}:8443 {
 	reverse_proxy backend:4000
 }
