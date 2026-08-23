@@ -32,18 +32,9 @@
   "home": {
     "newMatch": "New match",
     "recentMatches": "Recent matches",
-    "comingSoon": "Coming soon",
     "quickMatch": {
       "title": "Quick match",
       "description": "Start a ranked game against an opponent of similar skill."
-    },
-    "vsAi": {
-      "title": "Play vs computer",
-      "description": "Practice against an AI opponent."
-    },
-    "vsFriend": {
-      "title": "Play a friend",
-      "description": "Create a room with a passphrase."
     }
   },
   "game": {
@@ -216,9 +207,7 @@
     },
     "modes": {
       "ranked": "Ranked",
-      "casual": "Casual",
-      "ai": "Vs AI",
-      "friend": "Friendly"
+      "casual": "Casual"
     },
     "results": {
       "goal": "Goal reached",

@@ -32,18 +32,9 @@
   "home": {
     "newMatch": "新しい対戦",
     "recentMatches": "最近の対戦",
-    "comingSoon": "準備中",
     "quickMatch": {
       "title": "クイックマッチ",
       "description": "同じくらいの実力の相手とランク戦を始めます。"
-    },
-    "vsAi": {
-      "title": "コンピュータ対戦",
-      "description": "AI を相手に練習します。"
-    },
-    "vsFriend": {
-      "title": "フレンド対戦",
-      "description": "合言葉を使って部屋を作ります。"
     }
   },
   "game": {
@@ -216,9 +207,7 @@
     },
     "modes": {
       "ranked": "ランク戦",
-      "casual": "カジュアル",
-      "ai": "AI 対戦",
-      "friend": "フレンド戦"
+      "casual": "カジュアル"
     },
     "results": {
       "goal": "ゴール到達",
