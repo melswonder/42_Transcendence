@@ -129,7 +129,7 @@ export function SettingsForm({ user }: { user: User }) {
   };
 
   return (
-    <Stack gap="lg" maw={560}>
+    <Stack gap="lg">
       {error && (
         <Alert
           color="red"
