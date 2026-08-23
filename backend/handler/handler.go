@@ -93,7 +93,9 @@ func NewRouter(handlers Handlers, middleware ...gin.HandlerFunc) http.Handler {
 	router := gin.New()
 	router.Use(middleware...)
 
-	// 未マッチのパスは疎通確認の ping に落とす。
+	// 疎通確認。NoRoute 側は Gin が先に 404 を確定させるため、
+	// 200 を返す入口としてルートパスを明示的に登録する。
+	router.GET("/", wrapF(handlers.Ping.Ping))
 	router.NoRoute(wrapF(handlers.Ping.Ping))
 
 	auth := router.Group("/auth")
