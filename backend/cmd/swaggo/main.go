@@ -1,8 +1,8 @@
-// Swagger UI の確認用サーバー。
+// Swagger UI の確認用スタンドアロンサーバー（本体を起動せず spec だけ見たいとき用）。
 //
 // spec 本体は apispec（手書きのアノテーション）から `make swagger` で生成される。
-// ここは生成済み spec を表示するだけで、API の実装は持たない。
-// 実装は cmd/serv 側に入る予定なので、そちらが出来たらこのコマンドは役目を終える。
+// 本体サーバー（cmd/serv）も /swagger/index.html で同じ UI を配信している。
+// swag init -g はこのファイルを指しているため、API 全体の説明はここに書く。
 package main
 
 import (
@@ -19,21 +19,20 @@ import (
 
 // @title			ft_transcendence API
 // @version		1.0
-// @description	ユーザー・認証・フレンド・ブロック・アバターを扱う公開 API の仕様。
-// @description	外部クライアントから叩けるよう、認証は Cookie ではなく Bearer トークンで行う。
-// @description	現時点では仕様のみで、エンドポイントの実装はこれから追加される。
+// @description	セッション Cookie で使う通常 API と、外部開発者向け Public API（/v1）の仕様。
+// @description	通常 API はログインで発行されるセッション Cookie でのみ利用できる。
+// @description	Public API は API キー（Bearer）でのみ利用でき、Cookie では利用できない。
 //
 // @contact.name	42 Transcendence
 // @license.name	MIT
 //
-// @host		localhost:4000
-// @BasePath	/api/v1
+// @BasePath	/
 // @schemes	http https
 //
 // @securityDefinitions.apikey	BearerAuth
 // @in							header
 // @name						Authorization
-// @description				`Bearer {access_token}` 形式で指定する。トークンは POST /auth/login などで発行する。
+// @description				`Bearer {api_key}` 形式で指定する。キーは POST /apikeys で発行し、/v1 の Public API でのみ有効。
 func main() {
 	r := gin.Default()
 

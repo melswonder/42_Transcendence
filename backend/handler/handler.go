@@ -13,6 +13,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
+	// swag init が生成した spec を副作用で登録する（無いと UI が spec を読めない）
+	_ "transcendence-backend/docs/swagger"
+
 	"github.com/google/uuid"
 
 	"transcendence-backend/domain"
@@ -97,6 +103,9 @@ func NewRouter(handlers Handlers, middleware ...gin.HandlerFunc) http.Handler {
 	// 200 を返す入口としてルートパスを明示的に登録する。
 	router.GET("/", wrapF(handlers.Ping.Ping))
 	router.NoRoute(wrapF(handlers.Ping.Ping))
+
+	// API 仕様書（Public API を含む全エンドポイント）。外部開発者への公開ドキュメント。
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	auth := router.Group("/auth")
 	{

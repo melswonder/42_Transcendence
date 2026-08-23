@@ -3610,7 +3610,7 @@ const docTemplate = `{
     },
     "securityDefinitions": {
         "BearerAuth": {
-            "description": "` + "`" + `Bearer {access_token}` + "`" + ` 形式で指定する。トークンは POST /auth/login などで発行する。",
+            "description": "` + "`" + `Bearer {api_key}` + "`" + ` 形式で指定する。キーは POST /apikeys で発行し、/v1 の Public API でのみ有効。",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"
@@ -3621,11 +3621,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:4000",
-	BasePath:         "/api/v1",
+	Host:             "",
+	BasePath:         "/",
 	Schemes:          []string{"http", "https"},
 	Title:            "ft_transcendence API",
-	Description:      "ユーザー・認証・フレンド・ブロック・アバターを扱う公開 API の仕様。\n外部クライアントから叩けるよう、認証は Cookie ではなく Bearer トークンで行う。\n現時点では仕様のみで、エンドポイントの実装はこれから追加される。",
+	Description:      "セッション Cookie で使う通常 API と、外部開発者向け Public API（/v1）の仕様。\n通常 API はログインで発行されるセッション Cookie でのみ利用できる。\nPublic API は API キー（Bearer）でのみ利用でき、Cookie では利用できない。",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
