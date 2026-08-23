@@ -6,7 +6,11 @@ set -e
 : "${DATABASE_URL:?DATABASE_URL is required}"
 
 i=1
-until atlas migrate apply --dir "file:///app/migrations" --url "$DATABASE_URL"; do
+# マネージド DB (Supabase 等) は auth などの独自スキーマを持つため、
+# 管理対象を public に限定し、revision テーブルの置き場所を明示する。
+# DATABASE_URL には &search_path=public を付けておくこと。
+until atlas migrate apply --dir "file:///app/migrations" \
+	--revisions-schema atlas_schema_revisions --url "$DATABASE_URL"; do
 	if [ "$i" -ge 10 ]; then
 		echo "migrate: failed after $i attempts" >&2
 		exit 1

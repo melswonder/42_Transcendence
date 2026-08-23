@@ -17,6 +17,7 @@ DB: Supabase の無料 Postgres
 1. https://supabase.com で無料アカウントを作り、プロジェクトを作成
 2. Connect → **Session pooler** の接続文字列をコピーし、末尾に `?sslmode=require` を付ける
    （Direct connection は IPv6 のみのため Render からは繋がらない。Pooler を使う）
+3. パスワードに記号がある場合は URL エンコードする（例: `?` → `%3F`）。さらに `&search_path=public` も付ける
 
 ### 2. Render（アプリ・無料）
 1. https://render.com で無料アカウントを作成（GitHub 連携）
@@ -24,7 +25,7 @@ DB: Supabase の無料 Postgres
 3. 環境変数を入力:
    | 変数 | 値 |
    |---|---|
-   | `DATABASE_URL` | 手順 1 の URL |
+   | `DATABASE_URL` | 手順 1 の URL（末尾は `?sslmode=require&search_path=public`） |
    | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | ローカルと同じ値 |
    | `GOOGLE_REDIRECT_URL` | `https://<app>.onrender.com/api/auth/google/callback` |
    | `FRONTEND_URL` | `https://<app>.onrender.com` |
