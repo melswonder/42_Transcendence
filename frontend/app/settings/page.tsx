@@ -15,7 +15,7 @@ export default async function SettingsPage() {
 
   return (
     <AppShell user={user}>
-      <Stack gap="lg" maw={900} mx="auto">
+      <Stack gap="lg" maw={560} mx="auto">
         <Title order={2} size="h3">
           {t("title")}
         </Title>
