@@ -1,6 +1,7 @@
 {
   "meta": {
-    "description": "Play Quoridor online in your browser"
+    "description": "Play Quoridor online in your browser",
+    "title": "Quoridor"
   },
   "nav": {
     "play": "Play",
@@ -294,7 +295,8 @@
     "alt": "{name}'s avatar"
   },
   "common": {
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "appName": "Quoridor"
   },
   "signup": {
     "tagline": "Create an account and start playing",
@@ -389,5 +391,10 @@
     "passwordMismatch": "Passwords do not match.",
     "failed": "Something went wrong.",
     "or": "or"
+  },
+  "landing": {
+    "tagline": "Play Quoridor online",
+    "login": "Log in",
+    "signup": "Sign up"
   }
 }

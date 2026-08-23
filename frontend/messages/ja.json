@@ -1,6 +1,7 @@
 {
   "meta": {
-    "description": "ブラウザで対戦できるコリドール（Quoridor）"
+    "description": "ブラウザで対戦できるコリドール（Quoridor）",
+    "title": "コリドール"
   },
   "nav": {
     "play": "プレイ",
@@ -294,7 +295,8 @@
     "alt": "{name} のアバター"
   },
   "common": {
-    "cancel": "キャンセル"
+    "cancel": "キャンセル",
+    "appName": "コリドール"
   },
   "signup": {
     "tagline": "アカウントを作成して対戦を始めよう",
@@ -389,5 +391,10 @@
     "passwordMismatch": "パスワードが一致しません。",
     "failed": "処理に失敗しました。",
     "or": "または"
+  },
+  "landing": {
+    "tagline": "オンライン対戦コリドール",
+    "login": "ログイン",
+    "signup": "新規登録"
   }
 }

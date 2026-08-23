@@ -1,6 +1,7 @@
 {
   "meta": {
-    "description": "Jouez au Quoridor en ligne dans votre navigateur"
+    "description": "Jouez au Quoridor en ligne dans votre navigateur",
+    "title": "Quoridor"
   },
   "nav": {
     "play": "Jouer",
@@ -294,7 +295,8 @@
     "alt": "Avatar de {name}"
   },
   "common": {
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "appName": "Quoridor"
   },
   "signup": {
     "tagline": "Créez un compte et commencez à jouer",
@@ -389,5 +391,10 @@
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "failed": "Une erreur est survenue.",
     "or": "ou"
+  },
+  "landing": {
+    "tagline": "Jouez au Quoridor en ligne",
+    "login": "Se connecter",
+    "signup": "S'inscrire"
   }
 }
