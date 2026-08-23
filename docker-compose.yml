@@ -69,10 +69,13 @@ services:
     # air のビルドが終わって実際に HTTP 応答するまでを「起動完了」とみなす。
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:4000/"]
-      interval: 3s
+      # 起動中(start_period)は start_interval で細かく見て早く healthy にし、
+      # 起動後は interval に落としてアクセスログを 200 で埋めないようにする。
+      interval: 60s
       timeout: 5s
-      retries: 40
-      start_period: 15s
+      retries: 3
+      start_period: 120s
+      start_interval: 2s
     volumes:
       - ./backend:/app
       # アップロードされたアバター画像。bind mount の外に置いて repo を汚さない。
@@ -101,10 +104,11 @@ services:
     # 初回アクセスの Turbopack コンパイルもここで済ませて、開いた瞬間から表示できるようにする。
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
-      interval: 3s
+      interval: 60s
       timeout: 15s
-      retries: 40
-      start_period: 10s
+      retries: 3
+      start_period: 120s
+      start_interval: 2s
     volumes:
       - ./frontend:/app
       - /app/node_modules
