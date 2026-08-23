@@ -15,6 +15,7 @@ export default async function LoginPage({
 }) {
   const { error } = await searchParams;
   const t = await getTranslations("login");
+  const tAuth = await getTranslations("auth");
   const errorKey = resolveLoginErrorKey(error);
   const message = errorKey ? t(`errors.${errorKey}`) : null;
 
@@ -28,7 +29,7 @@ export default async function LoginPage({
 
       <PasswordAuthForm mode="login" />
 
-      <Divider label={t("or")} labelPosition="center" />
+      <Divider label={tAuth("or")} labelPosition="center" />
 
       <GoogleLoginButton />
 
