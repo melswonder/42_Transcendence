@@ -144,6 +144,7 @@
   },
   "apiErrors": {
     "requestFailed": "リクエストに失敗しました ({status})",
+    "unauthorized": "セッションが切れました。もう一度ログインしてください。",
     "handle_taken": "そのハンドルは既に使われています。",
     "invalid_display_name": "表示名は 1〜50 文字で入力してください。",
     "invalid_handle": "ハンドルは英小文字・数字・アンダースコアの 3〜30 文字です。",
