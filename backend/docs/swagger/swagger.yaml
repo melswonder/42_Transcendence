@@ -311,8 +311,6 @@ definitions:
         enum:
         - ranked
         - casual
-        - ai
-        - friend
         example: ranked
         type: string
       participants:
@@ -395,14 +393,10 @@ definitions:
         enum:
         - ranked
         - casual
-        - ai
-        - friend
         example: ranked
         type: string
       opponent:
-        allOf:
-        - $ref: '#/definitions/apispec.UserPublic'
-        description: AI 戦では handle が "bot" のダミーを返す
+        $ref: '#/definitions/apispec.UserPublic'
       outcome:
         description: 自分から見た勝敗
         enum:
@@ -1548,8 +1542,6 @@ paths:
         enum:
         - ranked
         - casual
-        - ai
-        - friend
         in: query
         name: mode
         type: string
@@ -1651,8 +1643,6 @@ paths:
         enum:
         - ranked
         - casual
-        - ai
-        - friend
         in: query
         name: mode
         type: string
@@ -1837,8 +1827,6 @@ paths:
         enum:
         - ranked
         - casual
-        - ai
-        - friend
         in: query
         name: mode
         type: string
@@ -1914,8 +1902,6 @@ paths:
         enum:
         - ranked
         - casual
-        - ai
-        - friend
         in: query
         name: mode
         type: string
@@ -2279,8 +2265,6 @@ paths:
         enum:
         - ranked
         - casual
-        - ai
-        - friend
         in: query
         name: mode
         type: string
@@ -2412,8 +2396,6 @@ paths:
         enum:
         - ranked
         - casual
-        - ai
-        - friend
         in: query
         name: mode
         type: string

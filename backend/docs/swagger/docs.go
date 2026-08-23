@@ -1093,9 +1093,7 @@ const docTemplate = `{
                     {
                         "enum": [
                             "ranked",
-                            "casual",
-                            "ai",
-                            "friend"
+                            "casual"
                         ],
                         "type": "string",
                         "description": "対戦モード",
@@ -1241,9 +1239,7 @@ const docTemplate = `{
                     {
                         "enum": [
                             "ranked",
-                            "casual",
-                            "ai",
-                            "friend"
+                            "casual"
                         ],
                         "type": "string",
                         "description": "対戦モード",
@@ -1525,9 +1521,7 @@ const docTemplate = `{
                     {
                         "enum": [
                             "ranked",
-                            "casual",
-                            "ai",
-                            "friend"
+                            "casual"
                         ],
                         "type": "string",
                         "description": "対戦モード",
@@ -1643,9 +1637,7 @@ const docTemplate = `{
                     {
                         "enum": [
                             "ranked",
-                            "casual",
-                            "ai",
-                            "friend"
+                            "casual"
                         ],
                         "type": "string",
                         "description": "対戦モード",
@@ -2210,9 +2202,7 @@ const docTemplate = `{
                     {
                         "enum": [
                             "ranked",
-                            "casual",
-                            "ai",
-                            "friend"
+                            "casual"
                         ],
                         "type": "string",
                         "description": "モード",
@@ -2414,9 +2404,7 @@ const docTemplate = `{
                     {
                         "enum": [
                             "ranked",
-                            "casual",
-                            "ai",
-                            "friend"
+                            "casual"
                         ],
                         "type": "string",
                         "description": "モード",
@@ -2906,9 +2894,7 @@ const docTemplate = `{
                     "type": "string",
                     "enum": [
                         "ranked",
-                        "casual",
-                        "ai",
-                        "friend"
+                        "casual"
                     ],
                     "example": "ranked"
                 },
@@ -3011,19 +2997,12 @@ const docTemplate = `{
                     "type": "string",
                     "enum": [
                         "ranked",
-                        "casual",
-                        "ai",
-                        "friend"
+                        "casual"
                     ],
                     "example": "ranked"
                 },
                 "opponent": {
-                    "description": "AI 戦では handle が \"bot\" のダミーを返す",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/apispec.UserPublic"
-                        }
-                    ]
+                    "$ref": "#/definitions/apispec.UserPublic"
                 },
                 "outcome": {
                     "description": "自分から見た勝敗",

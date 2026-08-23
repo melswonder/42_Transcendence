@@ -82,8 +82,6 @@ export function StatsFilters({
           data={[
             { value: "ranked", label: t("modes.ranked") },
             { value: "casual", label: t("modes.casual") },
-            { value: "ai", label: t("modes.ai") },
-            { value: "friend", label: t("modes.friend") },
           ]}
           clearable
           w={150}

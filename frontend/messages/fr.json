@@ -32,18 +32,9 @@
   "home": {
     "newMatch": "Nouvelle partie",
     "recentMatches": "Parties récentes",
-    "comingSoon": "Bientôt disponible",
     "quickMatch": {
       "title": "Partie rapide",
       "description": "Lancez une partie classée contre un adversaire de votre niveau."
-    },
-    "vsAi": {
-      "title": "Contre l'ordinateur",
-      "description": "Entraînez-vous contre une IA."
-    },
-    "vsFriend": {
-      "title": "Contre un ami",
-      "description": "Créez un salon avec un mot de passe."
     }
   },
   "game": {
@@ -216,9 +207,7 @@
     },
     "modes": {
       "ranked": "Classée",
-      "casual": "Amicale",
-      "ai": "Contre l'IA",
-      "friend": "Entre amis"
+      "casual": "Amicale"
     },
     "results": {
       "goal": "Objectif atteint",

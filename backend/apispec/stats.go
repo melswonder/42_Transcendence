@@ -74,7 +74,7 @@ type StatsUpdatedEvent struct {
 //	@Security		BearerAuth
 //	@Param			from	query		string	false	"集計対象の開始日時"	format(date-time)
 //	@Param			to		query		string	false	"集計対象の終了日時"	format(date-time)
-//	@Param			mode	query		string	false	"対戦モード"			Enums(ranked, casual, ai, friend)
+//	@Param			mode	query		string	false	"対戦モード"			Enums(ranked, casual)
 //	@Success		200		{object}	StatsSummary
 //	@Failure		400		{object}	ErrorResponse
 //	@Failure		401		{object}	ErrorResponse
@@ -90,7 +90,7 @@ func GetMyStats() {}
 //	@Security		BearerAuth
 //	@Param			from		query		string	false	"集計対象の開始日時"	format(date-time)
 //	@Param			to			query		string	false	"集計対象の終了日時"	format(date-time)
-//	@Param			mode		query		string	false	"対戦モード"			Enums(ranked, casual, ai, friend)
+//	@Param			mode		query		string	false	"対戦モード"			Enums(ranked, casual)
 //	@Param			interval	query		string	false	"刻み幅"				Enums(day, week)	default(day)
 //	@Success		200			{object}	TimeseriesResponse
 //	@Failure		400			{object}	ErrorResponse

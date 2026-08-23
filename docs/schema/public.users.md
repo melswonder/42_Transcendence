@@ -1,10 +1,12 @@
 # public.users
 
+## Description
+
 ## Columns
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | uuid | gen_random_uuid() | false | [public.blocks](public.blocks.md) [public.friendships](public.friendships.md) [public.media_assets](public.media_assets.md) [public.oauth_accounts](public.oauth_accounts.md) [public.sessions](public.sessions.md) [public.match_participants](public.match_participants.md) [public.user_achievements](public.user_achievements.md) |  |  |
+| id | uuid | gen_random_uuid() | false | [public.blocks](public.blocks.md) [public.friendships](public.friendships.md) [public.media_assets](public.media_assets.md) [public.oauth_accounts](public.oauth_accounts.md) [public.sessions](public.sessions.md) [public.match_participants](public.match_participants.md) [public.user_achievements](public.user_achievements.md) [public.api_keys](public.api_keys.md) |  |  |
 | email | citext |  | true |  |  |  |
 | password_hash | text |  | true |  |  |  |
 | display_name | varchar(50) |  | false |  |  |  |

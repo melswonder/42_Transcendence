@@ -890,7 +890,7 @@
         {
           "name": "chk_matches_mode",
           "type": "CHECK",
-          "def": "CHECK (((mode)::text = ANY (ARRAY[('ranked'::character varying)::text, ('casual'::character varying)::text, ('ai'::character varying)::text, ('friend'::character varying)::text])))",
+          "def": "CHECK (((mode)::text = ANY (ARRAY[('ranked'::character varying)::text, ('casual'::character varying)::text])))",
           "table": "public.matches",
           "referenced_table": "",
           "columns": [
@@ -1271,6 +1271,114 @@
           ]
         }
       ]
+    },
+    {
+      "name": "public.api_keys",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "varchar(50)",
+          "nullable": false
+        },
+        {
+          "name": "key_prefix",
+          "type": "varchar(16)",
+          "nullable": false
+        },
+        {
+          "name": "key_hash",
+          "type": "character(64)",
+          "nullable": false
+        },
+        {
+          "name": "scopes",
+          "type": "varchar(100)",
+          "nullable": false
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        },
+        {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        },
+        {
+          "name": "last_used_at",
+          "type": "timestamp with time zone",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "api_keys_pkey",
+          "def": "CREATE UNIQUE INDEX api_keys_pkey ON public.api_keys USING btree (id)",
+          "table": "public.api_keys",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "idx_api_keys_key_hash",
+          "def": "CREATE UNIQUE INDEX idx_api_keys_key_hash ON public.api_keys USING btree (key_hash)",
+          "table": "public.api_keys",
+          "columns": [
+            "key_hash"
+          ]
+        },
+        {
+          "name": "idx_api_keys_user_id",
+          "def": "CREATE INDEX idx_api_keys_user_id ON public.api_keys USING btree (user_id)",
+          "table": "public.api_keys",
+          "columns": [
+            "user_id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_api_keys_user",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (user_id) REFERENCES users(id)",
+          "table": "public.api_keys",
+          "referenced_table": "users",
+          "columns": [
+            "user_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "api_keys_pkey",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "public.api_keys",
+          "referenced_table": "",
+          "columns": [
+            "id"
+          ]
+        }
+      ]
     }
   ],
   "relations": [
@@ -1416,6 +1524,19 @@
       ],
       "parent_cardinality": "exactly_one",
       "def": "FOREIGN KEY (match_id) REFERENCES matches(id)"
+    },
+    {
+      "table": "public.api_keys",
+      "columns": [
+        "user_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "public.users",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (user_id) REFERENCES users(id)"
     }
   ],
   "functions": [

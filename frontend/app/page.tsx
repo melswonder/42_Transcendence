@@ -1,12 +1,10 @@
 import { redirect } from "next/navigation";
-import { Group, SimpleGrid, Stack, Title } from "@mantine/core";
+import { Group, Stack, Title } from "@mantine/core";
 import {
   IconActivity,
   IconChevronRight,
   IconPlayerPlay,
-  IconRobot,
   IconSearch,
-  IconUsers,
 } from "@tabler/icons-react";
 
 import { AppShell } from "@/components/app-shell";
@@ -41,27 +39,13 @@ export default async function HomePage() {
             </Title>
           </Group>
 
-          <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
-            <GameModeCard
-              featured
-              icon={<IconSearch size={24} />}
-              title={t("quickMatch.title")}
-              description={t("quickMatch.description")}
-              href="/game"
-            />
-            <GameModeCard
-              icon={<IconRobot size={24} />}
-              title={t("vsAi.title")}
-              description={t("vsAi.description")}
-              comingSoon
-            />
-            <GameModeCard
-              icon={<IconUsers size={24} />}
-              title={t("vsFriend.title")}
-              description={t("vsFriend.description")}
-              comingSoon
-            />
-          </SimpleGrid>
+          <GameModeCard
+            featured
+            icon={<IconSearch size={24} />}
+            title={t("quickMatch.title")}
+            description={t("quickMatch.description")}
+            href="/game"
+          />
         </section>
 
         <section>

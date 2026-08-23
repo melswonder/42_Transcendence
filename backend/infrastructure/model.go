@@ -126,7 +126,7 @@ func (Block) TableName() string { return "blocks" }
 // @migration CHECK (status <> 'finished' OR (result_type IS NOT NULL AND finished_at IS NOT NULL))
 type Match struct {
 	ID         uuid.UUID  `gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()"`
-	Mode       string     `gorm:"column:mode;type:varchar(20);not null;check:mode IN ('ranked','casual','ai','friend')"`
+	Mode       string     `gorm:"column:mode;type:varchar(20);not null;check:mode IN ('ranked','casual')"`
 	Status     string     `gorm:"column:status;type:varchar(20);not null;default:in_progress;index:idx_matches_status_finished,priority:1;check:status IN ('in_progress','finished','aborted')"`
 	ResultType *string    `gorm:"column:result_type;type:varchar(20);check:result_type IS NULL OR result_type IN ('goal','resign','timeout','draw','abort')"` // 決着のつき方
 	TotalMoves int        `gorm:"column:total_moves;type:integer;not null;default:0;check:total_moves >= 0"`

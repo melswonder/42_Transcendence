@@ -10,8 +10,8 @@ import "time"
 // MatchResponse は自分から見た 1 対戦。
 type MatchResponse struct {
 	ID           string     `json:"id"            format:"uuid"`
-	Mode         string     `json:"mode"          enums:"ranked,casual,ai,friend" example:"ranked"`
-	Opponent     UserPublic `json:"opponent"`                                                            // AI 戦では handle が "bot" のダミーを返す
+	Mode         string     `json:"mode"          enums:"ranked,casual" example:"ranked"`
+	Opponent     UserPublic `json:"opponent"`
 	Outcome      string     `json:"outcome"       enums:"win,loss,draw"           example:"win"`         // 自分から見た勝敗
 	ResultType   string     `json:"result_type"   enums:"goal,resign,timeout,draw,abort" example:"goal"` // 決着のつき方
 	RatingBefore int        `json:"rating_before" example:"1432"`
@@ -41,7 +41,7 @@ type MatchParticipantInput struct {
 // レーティングと XP はサーバー側で計算するのでクライアントからは受け取らない。
 // 申告された値をそのまま保存すると、いくらでも詐称できてしまうため。
 type MatchCreateRequest struct {
-	Mode         string                  `json:"mode"         binding:"required" enums:"ranked,casual,ai,friend" example:"ranked"`
+	Mode         string                  `json:"mode"         binding:"required" enums:"ranked,casual" example:"ranked"`
 	ResultType   string                  `json:"result_type"  binding:"required" enums:"goal,resign,timeout,draw,abort" example:"goal"`
 	TotalMoves   int                     `json:"total_moves"  example:"42" minimum:"0"`
 	StartedAt    time.Time               `json:"started_at"   binding:"required"`
@@ -58,7 +58,7 @@ type MatchCreateRequest struct {
 //	@Security		BearerAuth
 //	@Param			from	query		string	false	"この日時以降に終了した対戦"	format(date-time)
 //	@Param			to		query		string	false	"この日時以前に終了した対戦"	format(date-time)
-//	@Param			mode	query		string	false	"対戦モード"					Enums(ranked, casual, ai, friend)
+//	@Param			mode	query		string	false	"対戦モード"					Enums(ranked, casual)
 //	@Param			outcome	query		string	false	"自分から見た勝敗"			Enums(win, loss, draw)
 //	@Param			limit	query		int		false	"取得件数 (1-100)"			default(20)	minimum(1)	maximum(100)
 //	@Param			offset	query		int		false	"取得開始位置"				default(0)	minimum(0)
@@ -78,7 +78,7 @@ func ListMatches() {}
 //	@Security		BearerAuth
 //	@Param			from	query		string	false	"この日時以降に終了した対戦"	format(date-time)
 //	@Param			to		query		string	false	"この日時以前に終了した対戦"	format(date-time)
-//	@Param			mode	query		string	false	"対戦モード"					Enums(ranked, casual, ai, friend)
+//	@Param			mode	query		string	false	"対戦モード"					Enums(ranked, casual)
 //	@Param			outcome	query		string	false	"自分から見た勝敗"			Enums(win, loss, draw)
 //	@Success		200		{string}	string			"CSV 本文"
 //	@Failure		400		{object}	ErrorResponse
