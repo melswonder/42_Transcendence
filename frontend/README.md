@@ -149,7 +149,7 @@ Placement rules:
 
 ```tsx
 import { apiUrl } from "@/lib/api";
-import { QuoridorMark } from "@/components/quoridor-mark";
+import { LinkButton } from "@/components/link-button";
 ```
 
 ## Types and schema

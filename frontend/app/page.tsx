@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
-import { Group, Stack, Title } from "@mantine/core";
+import Image from "next/image";
+import { Group, Stack, Text, Title } from "@mantine/core";
 import {
   IconActivity,
   IconChevronRight,
@@ -9,7 +9,9 @@ import {
 
 import { AppShell } from "@/components/app-shell";
 import { GameModeCard } from "@/components/game-mode-card";
+import { LegalLinks } from "@/components/legal-links";
 import { LinkButton } from "@/components/link-button";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 import { MatchHistory } from "@/components/match-history";
 import { StatsStream } from "@/components/use-stats-stream";
 import { getTranslations } from "next-intl/server";
@@ -22,7 +24,7 @@ const RECENT_LIMIT = 5;
 
 export default async function HomePage() {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) return <Landing />;
   const t = await getTranslations("home");
 
   const recent = await getMatches({ limit: `${RECENT_LIMIT}` });
@@ -70,5 +72,42 @@ export default async function HomePage() {
         </section>
       </Stack>
     </AppShell>
+  );
+}
+
+/** 未ログインで / に来た人向けの入口。ログインか新規登録かをここで選ぶ。 */
+async function Landing() {
+  const t = await getTranslations("landing");
+  const tCommon = await getTranslations("common");
+
+  return (
+    <main className="flex min-h-dvh items-center justify-center bg-body p-4">
+      <Stack align="center" gap="lg">
+        <Image
+          src="/icon.png"
+          alt=""
+          width={140}
+          height={140}
+          priority
+          className="rounded-[2rem]"
+        />
+        <Stack align="center" gap={4}>
+          <Title order={1} className="text-4xl tracking-[0.15em]">
+            {tCommon("appName")}
+          </Title>
+          <Text c="dimmed">{t("tagline")}</Text>
+        </Stack>
+        <Group gap="sm">
+          <LinkButton href="/login" size="md" variant="default" miw={140}>
+            {t("login")}
+          </LinkButton>
+          <LinkButton href="/signup" size="md" miw={140}>
+            {t("signup")}
+          </LinkButton>
+        </Group>
+        <LocaleSwitcher />
+        <LegalLinks />
+      </Stack>
+    </main>
   );
 }
