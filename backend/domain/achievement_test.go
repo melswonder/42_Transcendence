@@ -78,3 +78,28 @@ func TestNewlyUnlocked(t *testing.T) {
 		t.Errorf("%s が新規解除に含まれていない", code)
 	}
 }
+
+// レーティング実績は初期レートからの伸びで進捗を測る。
+func TestRatingAchievementProgressStartsAtZero(t *testing.T) {
+	t.Parallel()
+
+	got := EvaluateAchievements(StatsSummary{Rating: 1250}, nil)
+
+	byCode := map[string]Achievement{}
+	for _, a := range got {
+		byCode[a.Code] = a
+	}
+
+	if a := byCode["rating_1300"]; a.Progress != 50 || a.Target != 100 {
+		t.Errorf("rating_1300: progress=%d target=%d, want 50 / 100", a.Progress, a.Target)
+	}
+	if a := byCode["rating_1500"]; a.Progress != 50 || a.Target != 300 {
+		t.Errorf("rating_1500: progress=%d target=%d, want 50 / 300", a.Progress, a.Target)
+	}
+	// 初期レートちょうどなら進捗 0 から始まる。
+	for _, a := range EvaluateAchievements(StatsSummary{Rating: InitialRating}, nil) {
+		if a.Category == CategoryRating && a.Progress != 0 {
+			t.Errorf("%s: 初期レートでの進捗 = %d, want 0", a.Code, a.Progress)
+		}
+	}
+}
