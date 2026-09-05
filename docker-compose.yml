@@ -92,9 +92,10 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # クライアントサイド（ブラウザ）からのアクセス用
-      # ブラウザから実行されるため、localhost を使用
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://localhost:8443}
+      # ブラウザから見た API の入口。Caddy がフロントと同一オリジンの /api を
+      # backend へ流す。別オリジンにすると Cookie がクロスサイト扱いになり、
+      # ブラウザ側の判定次第でセッションが保存されない。
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://localhost/api}
       # Server Component から呼ぶとき用。コンテナ内では localhost は
       # frontend 自身を指すので、サービス名で backend を呼ぶ。
       API_URL: http://backend:4000

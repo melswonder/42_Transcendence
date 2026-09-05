@@ -11,12 +11,23 @@
 	default_sni {$PUBLIC_HOST:localhost}
 }
 
-# フロントエンド
+# フロントと API を同じオリジンに載せる。
+# 別オリジンにするとセッション Cookie がクロスサイト扱いになり、
+# ブラウザ側の CORS / トラッキング防止の判定次第で保存されない。
+# 同一オリジンならその判定自体が起きない（deploy/Caddyfile と同じ構成）。
 https://localhost, https://{$PUBLIC_HOST:localhost} {
-	reverse_proxy frontend:3000
+	# /api/* は backend へ。プレフィックスは剥がして渡す。
+	# WebSocket / SSE もこのまま通る。
+	handle_path /api/* {
+		reverse_proxy backend:4000
+	}
+	handle {
+		reverse_proxy frontend:3000
+	}
 }
 
-# バックエンド API（WebSocket / SSE もこのまま通る）
+# 旧来の別オリジン入口。Google Cloud Console に登録済みの
+# https://localhost:8443/auth/google/callback を動かし続けるために残す。
 https://localhost:8443, https://{$PUBLIC_HOST:localhost}:8443 {
 	reverse_proxy backend:4000
 }

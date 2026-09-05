@@ -87,15 +87,15 @@ any spectators.
     make
     ```
 
-5. Open **https://localhost** and **https://localhost:8443** once each and accept
-   the locally-generated certificate (Caddy issues a self-signed local CA), then
-   sign up and play.
+5. Open **https://localhost** and accept the locally-generated certificate
+   (Caddy issues a self-signed local CA), then sign up and play. The API lives
+   on the same origin under `/api`, so there is only one certificate to trust.
 
 ### Services
 
 | Service            | Port       | Description                                       |
 | ------------------ | ---------- | ------------------------------------------------- |
-| Caddy              | 443 / 8443 | HTTPS entrypoints: frontend (443), API/WSS (8443) |
+| Caddy              | 443 / 8443 | HTTPS entrypoint: `/api/*` -> backend, rest -> frontend (8443 kept for the Google OAuth callback) |
 | Frontend (Next.js) | 3000       | Web application UI (direct dev access)            |
 | Backend (Go + Gin) | 4000       | REST API + WebSocket + SSE (direct dev access)    |
 | PostgreSQL         | 5432       | Database                                          |
