@@ -64,18 +64,13 @@ any spectators.
     cp .env.example .env
     ```
 
-3. Configure the `.env` file with your settings:
+3. Configure the `.env` file with your settings. Only the Google OAuth
+   credentials are required — every other variable falls back to the default
+   in `docker-compose.yml`:
 
     ```env
-    POSTGRES_DB=transcendence
-    POSTGRES_USER=postgres
-    POSTGRES_PASSWORD=<your-secure-password>
-    DATABASE_URL=postgresql://<user>:<password>@localhost:5432/<database>
-
     GOOGLE_CLIENT_ID=<your-client-id>.apps.googleusercontent.com
     GOOGLE_CLIENT_SECRET=<your-client-secret>
-
-    NEXT_PUBLIC_API_URL=https://localhost:8443
     ```
 
     For Google sign-in, register the authorized redirect URI in the
