@@ -6,9 +6,8 @@
 //	go run ./cmd/migrate            # DDLを標準出力へ
 //	atlas migrate diff --env gorm   # migrationファイルを生成
 //
-// 注意: ここで出力されるDDLは docs/database-design.md の完成形ではない。
 // partial unique index、CREATE EXTENSION citext、循環FK は GORM のタグでは
-// 表現できないため、手書きSQL migration で補う（docs/database-design.md §13）。
+// 表現できないため、手書きSQL migration で補う。
 package main
 
 import (
@@ -22,7 +21,6 @@ import (
 )
 
 func main() {
-	// GORMのStructからAtlas用のDDL（SQLスキーマ情報）をロード
 	stmts, err := gormschema.New("postgres").Load(
 		&infrastructure.User{},
 		&infrastructure.MediaAsset{},

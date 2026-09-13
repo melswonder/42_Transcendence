@@ -5,7 +5,6 @@ set -euo pipefail
 GO_VERSION=1.26.5
 GO_REQUIRED_MINOR=26   # backend/go.mod の go ディレクティブに合わせる（1.x の x）
 
-# CPU アーキテクチャを判定
 case "$(uname -m)" in
   x86_64)        GOARCH=amd64 ;;
   aarch64|arm64) GOARCH=arm64 ;;
@@ -55,12 +54,10 @@ else
   GO_BIN_DIR="$PREFIX/go/bin"
 fi
 
-# 現在のシェルで PATH を通す
-# 新しい go を「先頭」に置くのが重要（/usr/bin/go など古いものに負けないように）
+# 新しい go を先頭に置く（/usr/bin/go など古いものに負けないように）
 export PATH="$GO_BIN_DIR:$PATH:$("$GO_BIN_DIR/go" env GOPATH)/bin"
 
-# シェル設定ファイルに永続化（未追記なら）
-# ログインシェルが zsh のこともあるので $SHELL を見て振り分ける
+# ログインシェルが zsh のこともあるので $SHELL で書き込み先の rc を選ぶ
 case "$(basename "${SHELL:-bash}")" in
   zsh) RC_FILE="$HOME/.zshrc" ;;
   *)   RC_FILE="$HOME/.bashrc" ;;
@@ -70,7 +67,6 @@ if ! grep -qsF "$GO_BIN_DIR" "$RC_FILE" 2>/dev/null; then
   echo "📝 $RC_FILE に PATH を追記しました"
 fi
 
-# air（ホットリロード）
 echo "⬇️  air をインストール中..."
 go install github.com/air-verse/air@latest
 

@@ -20,7 +20,6 @@ const (
 
 var APIScopes = []string{APIScopeRead, APIScopeWrite}
 
-// APIKeyNameMaxLen は api_keys.name の上限。
 const APIKeyNameMaxLen = 50
 
 // apiKeyPrefix は raw key の先頭に付く目印。ログや issue に紛れても見分けられる。

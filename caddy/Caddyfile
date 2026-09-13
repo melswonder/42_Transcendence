@@ -11,10 +11,8 @@
 	default_sni {$PUBLIC_HOST:localhost}
 }
 
-# フロントと API を同じオリジンに載せる。
-# 別オリジンにするとセッション Cookie がクロスサイト扱いになり、
-# ブラウザ側の CORS / トラッキング防止の判定次第で保存されない。
-# 同一オリジンならその判定自体が起きない（deploy/Caddyfile と同じ構成）。
+# フロントと API を同じオリジンに載せる。別オリジンだとセッション Cookie が
+# クロスサイト扱いになり、ブラウザの CORS / トラッキング防止の判定次第で保存されない。
 https://localhost, https://{$PUBLIC_HOST:localhost} {
 	# /api/* は backend へ。プレフィックスは剥がして渡す。
 	# WebSocket / SSE もこのまま通る。

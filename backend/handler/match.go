@@ -19,8 +19,7 @@ import (
 // errInvalidQuery はクエリの形式そのものが読めないとき。
 var errInvalidQuery = errors.New("invalid query parameter")
 
-// currentUserFunc は Cookie からログイン中のユーザーを引く。
-// AuthHandler が持っている実装をそのまま渡す。認証の仕組みを 2 箇所に書かないため。
+// currentUserFunc は Cookie からログイン中のユーザーを引く。実体は AuthHandler.currentUser。
 type currentUserFunc func(r *http.Request) (*domain.User, error)
 
 type MatchHandler struct {

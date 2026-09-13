@@ -1,5 +1,5 @@
-# deploy/Dockerfile はリポジトリのルートを context にするための除外設定。
-# backend/ frontend/ 直下の Dockerfile はそれぞれの .dockerignore を使う。
+# リポジトリのルートを context にするビルド用。
+# backend/ frontend/ はそれぞれの .dockerignore を使う。
 frontend/node_modules/
 frontend/.next/
 backend/tmp/

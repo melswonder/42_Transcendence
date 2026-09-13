@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   // dev サーバーには影響させない。
   output: process.env.NEXT_STANDALONE === "1" ? "standalone" : undefined,
   // 別 PC から（Caddy 経由で）dev サーバーを見るときのホスト。
-  // 未設定なら localhost だけで、従来と同じ挙動になる。
+  // 未設定なら localhost だけ。
   allowedDevOrigins: process.env.PUBLIC_HOST ? [process.env.PUBLIC_HOST] : [],
 };
 

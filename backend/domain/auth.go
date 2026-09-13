@@ -19,8 +19,6 @@ const (
 )
 
 // OAuthProfile は外部プロバイダから受け取った本人確認の結果。ライブラリの型を内側へ持ち込まないための、こちら側の言葉。
-// SafeDisplayName は表示名を users.display_name に収まる形へ整える。空なら既定値。
-// TrustedEmail は「確認済み」と言えるメールだけを返す。未確認なら nil。
 type OAuthProfile struct {
 	Provider          string  // "google"
 	ProviderAccountID string  // Google の sub
@@ -42,7 +40,6 @@ type Session struct {
 	LastSeenAt time.Time
 }
 
-// SessionTTL はログインが保たれる期間。
 const SessionTTL = 7 * 24 * time.Hour
 
 // NewSessionToken は Cookie に載せる生トークンを作る。
@@ -61,7 +58,6 @@ func HashSessionToken(raw string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// NewSession は生トークンから保存用のセッションを組み立てる。
 func NewSession(userID uuid.UUID, rawToken string, now time.Time) Session {
 	return Session{
 		ID:         uuid.New(),
@@ -104,7 +100,7 @@ func ValidatePassword(password string) error {
 	return nil
 }
 
-// HashPassword は保存用のハッシュを作る。bcrypt はソルトを内包する。
+// bcrypt はソルトを内包するので、別に保存しなくてよい。
 func HashPassword(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -113,7 +109,6 @@ func HashPassword(password string) (string, error) {
 	return string(hash), nil
 }
 
-// CheckPassword はハッシュと平文を照合する。
 func CheckPassword(hash, password string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
 }
@@ -122,7 +117,7 @@ func CheckPassword(hash, password string) bool {
 // 同じだけ時間を使うためのダミー。ユーザーの有無を応答時間で悟らせない。
 var dummyPasswordHash, _ = HashPassword("dummy password for timing")
 
-// CheckPasswordDummy はダミー照合。結果は常に false。
+// CheckPasswordDummy はユーザーが見つからないときに呼び、照合と同じ時間を使う。
 func CheckPasswordDummy() {
 	_ = CheckPassword(dummyPasswordHash, "not the password")
 }

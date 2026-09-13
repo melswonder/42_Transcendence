@@ -41,7 +41,6 @@ if ! grep -qsF 'go env GOPATH' "$HOME/.zshrc" 2>/dev/null; then
   echo "📝 ~/.zshrc に PATH を追記しました"
 fi
 
-# air（ホットリロード）
 echo "⬇️  air をインストール中..."
 go install github.com/air-verse/air@latest
 

@@ -7,7 +7,6 @@ import { getTranslations } from "next-intl/server";
 
 import { getCurrentUser } from "@/lib/auth";
 
-/** 設定画面。プロフィールの編集とアバターの管理。 */
 export default async function SettingsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");

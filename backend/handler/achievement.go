@@ -122,8 +122,7 @@ func (h *AchievementHandler) Stream(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	// nginx などが間に入ったときにバッファされないようにする。
-	// 溜め込まれると「リアルタイム」でなくなる。
+	// 間に入るプロキシ（nginx など）にバッファさせない。
 	w.Header().Set("X-Accel-Buffering", "no")
 	w.WriteHeader(http.StatusOK)
 	flusher.Flush()
@@ -137,7 +136,6 @@ func (h *AchievementHandler) Stream(w http.ResponseWriter, r *http.Request) {
 	for {
 		select {
 		case <-r.Context().Done():
-			// クライアントが閉じた。unsubscribe は defer で走る。
 			return
 
 		case event, ok := <-events:

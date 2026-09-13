@@ -109,7 +109,6 @@ func TestRegisterAndLoginWithPassword(t *testing.T) {
 		t.Error("パスワードがハッシュ化されていない")
 	}
 
-	// 正しい資格情報でログインできる。
 	if _, err := uc.LoginWithPassword(ctx, "alice@example.com", "correct horse battery staple"); err != nil {
 		t.Errorf("ログインできるはず: %v", err)
 	}

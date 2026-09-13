@@ -21,8 +21,6 @@ export interface User {
  *
  * Server Component からの fetch には Cookie が自動では乗らないので、
  * ブラウザから届いたものをそのまま backend へ転送する。
- * セッション Cookie は :4000 が発行したものだが、Cookie はポートを区別しないので
- * :3000 にも届いている。
  */
 export async function getCurrentUser(): Promise<User | null> {
   const cookie = (await cookies()).toString();

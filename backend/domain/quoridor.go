@@ -80,8 +80,7 @@ func NewQuoridor() *Quoridor {
 	}
 }
 
-// Clone は局面の複製を返す。
-// 「先に複製へ適用し、永続化に成功してから差し替える」使い方のためにある。
+// Clone は「先に複製へ適用し、永続化に成功してから差し替える」ためにある。
 func (q *Quoridor) Clone() *Quoridor {
 	c := *q
 	c.Walls = slices.Clone(q.Walls)
@@ -96,7 +95,6 @@ func GoalRow(seat int) int {
 	return 0
 }
 
-// Finished は決着済みかどうか。
 func (q *Quoridor) Finished() bool {
 	return q.Winner >= 0
 }
@@ -231,7 +229,7 @@ func (q *Quoridor) validateWall(w Wall) error {
 func wallsConflict(a, b Wall) bool {
 	if a.Orientation == b.Orientation {
 		if a.Row == b.Row && a.Col == b.Col {
-			return true // 完全に同じ位置
+			return true
 		}
 		// 同じ向きで 1 マスずれた壁は半分重なる。
 		if a.Orientation == WallHorizontal {

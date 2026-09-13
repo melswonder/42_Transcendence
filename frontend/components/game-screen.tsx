@@ -196,7 +196,6 @@ export function GameScreen() {
         </div>
       )}
 
-      {/* 勝敗モーダル。共通モーダルの中身を差し替えて使う。 */}
       {state !== null && (
         <AppModal
           opened={state.finished && !resultDismissed}
@@ -232,7 +231,6 @@ export function GameScreen() {
         </AppModal>
       )}
 
-      {/* 投了の確認。 */}
       <ConfirmModal
         opened={resignOpen}
         onClose={() => setResignOpen(false)}

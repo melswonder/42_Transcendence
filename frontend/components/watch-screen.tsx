@@ -83,7 +83,6 @@ export function WatchScreen() {
     void reload();
   };
 
-  // ---- 観戦中 ----
   if (state !== null) {
     return (
       <Stack gap="lg" maw={900} mx="auto">
@@ -163,7 +162,6 @@ export function WatchScreen() {
     );
   }
 
-  // ---- 一覧 ----
   return (
     <Stack gap="lg" maw={720} mx="auto">
       <Group justify="space-between">

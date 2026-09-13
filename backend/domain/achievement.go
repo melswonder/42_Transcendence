@@ -24,9 +24,7 @@ type AchievementDef struct {
 }
 
 // Achievements は全実績の定義。順序は表示順を兼ねる。
-//
-// 追加するときはここに 1 行足すだけでよい。Code は解除済みの記録と
-// 突き合わせる鍵なので、一度出したものは変えないこと。
+// Code は解除済みの記録と突き合わせる鍵なので、一度出したものは変えないこと。
 var Achievements = []AchievementDef{
 	{"first_win", "初勝利", "はじめて対戦に勝つ", CategoryWins, 1},
 	{"win_10", "常勝", "通算 10 勝する", CategoryWins, 10},
@@ -53,7 +51,6 @@ type Achievement struct {
 	UnlockedAt *time.Time
 }
 
-// progressFor は指標ごとの現在値を返す。
 func progressFor(def AchievementDef, s StatsSummary) int {
 	switch def.Category {
 	case CategoryWins:

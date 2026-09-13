@@ -1,10 +1,7 @@
-# デフォルトのポート番号
 port?=4000
 
-# atlas は内部で lib/pq を使う。ローカルの Postgres は TLS を張っていないので明示的に無効化する。
-# 指定が無いと migrate-diff / migrate-apply が
-#   pq: SSL is not enabled on the server
-# で落ちる。
+# ローカルの Postgres は TLS 無し。指定しないと atlas（lib/pq）が
+# 「pq: SSL is not enabled on the server」で落ちる。
 PGSSLMODE ?= disable
 export PGSSLMODE
 
@@ -14,15 +11,13 @@ DATABASE_URL ?= postgresql://postgres:postgres@localhost:5432/transcendence
 
 all: start
 
-# 通常起動
 start:
 	PORT=$(port) go run ./cmd/serv
 
-# ホットリロード起動（air が必要: go install github.com/air-verse/air@latest）
+# air が必要: go install github.com/air-verse/air@latest
 dev:
 	PORT=$(port) air -c .air.toml
 
-# ビルド
 build:
 	go build -o ./tmp/main ./cmd/serv
 
@@ -40,7 +35,6 @@ migrate-diff:
 migrate-hash:
 	atlas migrate hash --env gorm
 
-# migrationをDBへ適用
 migrate-apply:
 	atlas migrate apply --env gorm --url "$(DATABASE_URL)"
 

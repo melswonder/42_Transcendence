@@ -1,5 +1,3 @@
-// 認証まわりの実装。Google とのやり取りと、DB への永続化の両方をここに置く。
-// usecase.OAuthProvider と usecase.AuthRepository の実装がある。
 package infrastructure
 
 import (
@@ -20,9 +18,6 @@ import (
 	"transcendence-backend/usecase"
 )
 
-// ----- Google OAuth 2.0 / OpenID Connect の具体的な手順 -----
-// ここだけが oauth2 / idtoken ライブラリと Google の仕様を知っている。
-
 // GoogleOAuthConfig は Google Cloud Console で発行した値。
 type GoogleOAuthConfig struct {
 	ClientID     string
@@ -31,8 +26,6 @@ type GoogleOAuthConfig struct {
 }
 
 // GoogleOAuth は usecase.OAuthProvider の Google 実装。
-// AuthCodeURL は accounts.google.com の同意画面 URL を組み立てる。
-// ExchangeCode は認可コードをトークンに交換し、id_token を検証してプロフィールに詰め替える。
 type GoogleOAuth struct {
 	cfg      *oauth2.Config
 	clientID string
@@ -55,7 +48,6 @@ func NewGoogleOAuth(c GoogleOAuthConfig) *GoogleOAuth {
 }
 
 // AuthCodeURL は accounts.google.com の同意画面 URL を組み立てる。
-// この画面は Google のものなので、こちらで作ることはない。
 func (g *GoogleOAuth) AuthCodeURL(state, nonce string) string {
 	return g.cfg.AuthCodeURL(
 		state,
@@ -132,12 +124,6 @@ func claimBool(claims map[string]any, key string) bool {
 	return b
 }
 
-// ----- 認証まわりの永続化 -----
-// ここだけが GORM と Postgres の都合を知っている。
-
-// AuthRepo は usecase.AuthRepository の実装。GORM 経由で Postgres を読み書きする。
-// FindUserByOAuth は oauth_accounts から (provider, sub) でユーザーを引く。退会済みは「いない」扱い。
-// CreateUserWithOAuth は users と oauth_accounts を 1 トランザクションで作る。
 // CreateUserWithPassword はメール登録のユーザーを作る。
 // メール・handle の一意性は部分ユニークインデックスが守り、衝突は domain のエラーに翻訳する。
 func (r *AuthRepo) CreateUserWithPassword(
@@ -171,9 +157,7 @@ func (r *AuthRepo) FindUserWithPasswordByEmail(ctx context.Context, email string
 	return toDomainUser(&user), user.PasswordHash, nil
 }
 
-// CreateSession は sessions に 1 行入れる。
-// FindUserBySessionToken は有効なセッションのユーザーを返し、最終アクセス時刻を更新する。
-// RevokeSession は revoked_at を埋めて失効させる。
+// AuthRepo は usecase.AuthRepository の GORM 実装。
 type AuthRepo struct {
 	db *gorm.DB
 }

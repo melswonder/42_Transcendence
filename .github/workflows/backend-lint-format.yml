@@ -33,27 +33,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Go のバージョンは backend/go.mod から読む
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version-file: backend/go.mod
-          # 標準ライブラリのみで go.sum が無いため、依存キャッシュは無効化する
           cache: false
 
       - name: Build
         run: go build ./...
 
-      # golangci-lint の設定は backend/.golangci.yml
-      # （standard セット + bodyclose / errorlint / misspell / revive / sqlclosecheck）
+      # 設定は backend/.golangci.yml
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
           version: v2.12.2
           working-directory: backend
 
-      # 上の action がインストールした golangci-lint を使って整形漏れを検出する
-      # （.golangci.yml の formatters: gofmt / goimports が対象）
+      # 上の action が入れた golangci-lint で整形漏れを検出する
       - name: Check formatting (gofmt / goimports)
         if: ${{ !cancelled() }}
         run: golangci-lint fmt --diff

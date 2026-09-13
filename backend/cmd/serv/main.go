@@ -17,7 +17,6 @@ import (
 	"transcendence-backend/usecase"
 )
 
-// CORSを許可するオリジン
 var allowedOrigins = map[string]bool{
 	"https://localhost":     true, // Caddy 経由の本来の入口
 	"http://localhost:3000": true, // ローカル開発環境（Caddy を通さない直アクセス）
@@ -43,7 +42,6 @@ func corsMiddleware() gin.HandlerFunc {
 			// ワイルドカード "*" を展開しない。preflight を通すため必ず明示する。
 			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 			if h := c.GetHeader("Access-Control-Request-Headers"); h != "" {
-				// preflight が尋ねてきたヘッダをそのまま許可して返す。
 				c.Header("Access-Control-Allow-Headers", h)
 			} else {
 				c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -51,7 +49,6 @@ func corsMiddleware() gin.HandlerFunc {
 			c.Header("Vary", "Origin")
 		}
 
-		// プリフライトリクエスト
 		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
@@ -72,14 +69,12 @@ func accessLog() gin.HandlerFunc {
 	}
 }
 
-// 必要な環境変数を入れる
 type config struct {
 	infrastructure infrastructure.Config
 	handler        handler.Config
 	port           string
 }
 
-// 環境変数から値を取り込むヘルパー関数
 func mustEnv(key string) string {
 	v := os.Getenv(key)
 	if v == "" {
@@ -89,7 +84,7 @@ func mustEnv(key string) string {
 	return v
 }
 
-// envIntOr は整数の環境変数。無効な値や未設定は fallback。
+// envIntOr は未設定・数値以外・0 以下なら fallback を返す。
 func envIntOr(key string, fallback int) int {
 	v := os.Getenv(key)
 	if v == "" {
@@ -102,7 +97,6 @@ func envIntOr(key string, fallback int) int {
 	return n
 }
 
-// 環境変数が存在しない場合は fallbackを入れる
 func envOr(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
@@ -111,8 +105,7 @@ func envOr(key, fallback string) string {
 	return fallback
 }
 
-// loadConfig は環境変数を読む、値が欠けていた場合にエラーにすることができる
-// 　リクエストが来てエラーになるより、サーバーを構築する前にエラーにしたほうが安全
+// loadConfig は起動時に環境変数を読み、必須の値が欠けていればリクエストを受ける前に落とす。
 func loadConfig() config {
 	frontendURL := envOr("FRONTEND_URL", "http://localhost:3000")
 
@@ -148,7 +141,6 @@ func loadConfig() config {
 	}
 }
 
-// dbの接続
 func mustConnectDB() *gorm.DB {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {

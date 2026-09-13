@@ -49,9 +49,8 @@ services:
     ports:
       - "4000:4000"
     environment:
-      # コンテナ内から見た DB のアドレス。ホスト名は localhost ではなく db。
-      # ルートの .env にある DATABASE_URL は「ホストから atlas / make が使う」用途で
-      # localhost:5432 を指しているため、ここでは展開しない（展開すると自分自身を指してしまう）。
+      # コンテナ内から見た DB。.env の DATABASE_URL はホストの atlas / make 用で
+      # localhost:5432 を指すため、ここでは展開しない（展開すると自分自身を指す）。
       DATABASE_URL: postgresql://postgres:postgres@db:5432/transcendence
       # TLSの要否は接続文字列に混ぜず、この変数で切り替える。
       PGSSLMODE: ${PGSSLMODE:-disable}

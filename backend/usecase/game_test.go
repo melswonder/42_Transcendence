@@ -287,7 +287,6 @@ func TestStaleVersionIsRejected(t *testing.T) {
 	if !errors.Is(err, domain.ErrStaleGameVersion) {
 		t.Errorf("古い版数は拒否されるはず: %v", err)
 	}
-	// 正しい版数なら通る。
 	if err := move(c2, 1, 7, 4); err != nil {
 		t.Errorf("正しい版数が拒否された: %v", err)
 	}
@@ -478,7 +477,6 @@ func TestSpectatorFlow(t *testing.T) {
 		t.Errorf("観戦者にも手が届くはず: v=%d", st.State.Version)
 	}
 
-	// 観戦者は操作できない。
 	err = c3.Act(context.Background(), GameActionInput{
 		ActionID:        uuid.New(),
 		ExpectedVersion: 1,
@@ -510,7 +508,6 @@ func TestMultipleSpectatorsAndListLive(t *testing.T) {
 
 	_, uc, _, _, state := startTestMatch(t)
 
-	// 観戦者 2 人。
 	for i := range 2 {
 		c, err := uc.Connect(context.Background(), testUser(fmt.Sprintf("watcher%d", i)))
 		if err != nil {

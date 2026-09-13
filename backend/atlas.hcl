@@ -24,9 +24,8 @@ data "external_schema" "gorm" {
 
 env "gorm" {
   src = data.external_schema.gorm.url
-  // バージョンは db/postgres/Dockerfile と揃える。
-  // sslmode=disable は必須。atlas-dev は TLS を張っていないため、
-  // 付けないと「pq: SSL is not enabled on the server」で差分生成が落ちる。
+  // atlas-dev の Postgres バージョンは db/postgres/Dockerfile と揃える。
+  // atlas-dev は TLS 無しなので sslmode=disable が必須。
   dev = "postgres://postgres:postgres@localhost:5433/atlas_dev?search_path=public&sslmode=disable"
 
   migration {

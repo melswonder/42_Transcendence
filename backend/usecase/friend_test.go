@@ -195,7 +195,6 @@ func TestFriendRequestFlow(t *testing.T) {
 		t.Errorf("成立済みへの申請は拒否されるはず: %v", err)
 	}
 
-	// 解除できる。
 	if err := uc.Remove(ctx, alice.ID, bob.ID); err != nil {
 		t.Fatalf("解除できるはず: %v", err)
 	}

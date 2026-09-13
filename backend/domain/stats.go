@@ -16,7 +16,6 @@ type StatsSummary struct {
 	XP            int
 }
 
-// TotalMatches は集計対象の対戦数。
 func (s StatsSummary) TotalMatches() int {
 	return s.Wins + s.Losses + s.Draws
 }
@@ -43,7 +42,6 @@ type TimeseriesPoint struct {
 	Rating  int // そのコマの最後の対戦を終えた時点のレーティング
 }
 
-// BreakdownSlice は内訳の 1 区分。
 type BreakdownSlice struct {
 	Key   string
 	Count int
@@ -56,7 +54,6 @@ type Breakdown struct {
 	ByOutcome    []BreakdownSlice
 }
 
-// LeaderboardEntry はランキングの 1 行。
 type LeaderboardEntry struct {
 	Rank   int
 	User   User

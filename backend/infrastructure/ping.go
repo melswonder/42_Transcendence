@@ -1,4 +1,3 @@
-// 最も外側の層。usecase が宣言した interface を実装する。
 package infrastructure
 
 import (
@@ -10,7 +9,6 @@ import (
 // Get は固定のメッセージ ("pong") を返す。
 type PingRepo struct{}
 
-// usecase.PingRepository を満たしているかコンパイル時に検査。
 var _ usecase.PingRepository = (*PingRepo)(nil)
 
 func NewPingRepo() *PingRepo {

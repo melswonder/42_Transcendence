@@ -8,7 +8,6 @@ trap 'echo "❌ フロントエンドのセットアップに失敗しました 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# nvm（未インストールなら導入）
 if [ ! -s "$HOME/.nvm/nvm.sh" ]; then
   echo "⬇️  nvm をインストール中..."
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
@@ -37,7 +36,6 @@ nvm alias default 22
 # pnpm（corepack 経由。バージョンは package.json の packageManager に従う）
 corepack enable pnpm
 
-# 依存関係インストール（絶対パスで frontend へ）
 cd "$ROOT_DIR/frontend"
 echo "⬇️  pnpm をインストール中（packageManager のピン留めを適用）..."
 corepack install

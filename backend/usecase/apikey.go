@@ -9,7 +9,6 @@ import (
 	"transcendence-backend/domain"
 )
 
-// APIKeyRepository は API キーの永続化。
 type APIKeyRepository interface {
 	CreateKey(ctx context.Context, key *domain.APIKey, keyHash string) error
 	ListKeys(ctx context.Context, userID uuid.UUID) ([]domain.APIKey, error)
@@ -34,7 +33,6 @@ type APIKeyIdentity struct {
 	Scopes []string
 }
 
-// APIKeyUsecase はキーの発行・失効と、Public API の認証を進める。
 type APIKeyUsecase struct {
 	repo    APIKeyRepository
 	limiter RateLimiter
@@ -68,18 +66,15 @@ func (u *APIKeyUsecase) Create(
 	return raw, key, nil
 }
 
-// List は自分のキー一覧。raw key は含まれない（もうどこにも無い）。
 func (u *APIKeyUsecase) List(ctx context.Context, userID uuid.UUID) ([]domain.APIKey, error) {
 	return u.repo.ListKeys(ctx, userID)
 }
 
-// Revoke はキーを失効させる。以後そのキーのリクエストは拒否される。
 func (u *APIKeyUsecase) Revoke(ctx context.Context, keyID, userID uuid.UUID) error {
 	return u.repo.RevokeKey(ctx, keyID, userID)
 }
 
-// Authenticate は raw key を検証して主体を返す。
-// 失効・期限切れは 401 相当の別々のエラーで返し、原因をクライアントに伝える。
+// Authenticate は失効・期限切れを別々のエラーで返し、原因をクライアントに伝える。
 func (u *APIKeyUsecase) Authenticate(ctx context.Context, raw string) (*APIKeyIdentity, error) {
 	if raw == "" {
 		return nil, domain.ErrAPIKeyInvalid

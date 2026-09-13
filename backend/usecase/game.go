@@ -36,7 +36,7 @@ const (
 	gameModeQuickMatch = domain.ModeRanked
 )
 
-// GamePlayer は対局に参加している 1 人。盤面と一緒にクライアントへ返す表示用の情報。
+// GamePlayer は盤面と一緒にクライアントへ返す表示用の情報。
 type GamePlayer struct {
 	UserID      uuid.UUID
 	DisplayName string
@@ -44,7 +44,6 @@ type GamePlayer struct {
 	Rating      int
 }
 
-// StoredAction は永続化された 1 手。
 type StoredAction struct {
 	Seq      int
 	ActionID uuid.UUID
@@ -62,7 +61,6 @@ type StoredGame struct {
 	StartedAt time.Time
 }
 
-// MatchActionRecord は永続化する 1 手。
 type MatchActionRecord struct {
 	MatchID  uuid.UUID
 	Seq      int
@@ -72,7 +70,6 @@ type MatchActionRecord struct {
 	Payload  []byte
 }
 
-// GameRepository は対局の永続化の受け口。
 type GameRepository interface {
 	// CreateMatch は matches 1 行と participants 2 行（未決着）を作る。
 	CreateMatch(ctx context.Context, mode string, userIDs [2]uuid.UUID) (*StoredGame, error)
@@ -84,7 +81,6 @@ type GameRepository interface {
 	FinishMatch(ctx context.Context, matchID uuid.UUID, resultType string, totalMoves int, participants []domain.MatchParticipant) error
 	// FindActiveMatch は user が参加している進行中の対局を返す。無ければ domain.ErrMatchNotFound。
 	FindActiveMatch(ctx context.Context, userID uuid.UUID) (*StoredGame, error)
-	// FindActiveMatchByID は進行中の対局を ID で引く。観戦の入り口。
 	FindActiveMatchByID(ctx context.Context, matchID uuid.UUID) (*StoredGame, error)
 	// ListLiveMatches は進行中の対局を開始の新しい順に返す。
 	ListLiveMatches(ctx context.Context, limit, offset int) ([]LiveMatch, int, error)
@@ -100,7 +96,6 @@ type LiveMatch struct {
 	Spectators int
 }
 
-// GameActionInput はクライアントから届いた 1 操作。
 type GameActionInput struct {
 	// ActionID はクライアントが生成する冪等キー。再送されても 1 回しか適用しない。
 	ActionID uuid.UUID
@@ -111,7 +106,6 @@ type GameActionInput struct {
 	Wall            domain.Wall
 }
 
-// クライアントへ流すイベントの種類。
 const (
 	GameEventQueued               = "queued"
 	GameEventState                = "state"
@@ -119,7 +113,6 @@ const (
 	GameEventOpponentReconnected  = "opponent_reconnected"
 )
 
-// GameEvent は 1 接続へ届ける 1 通。
 type GameEvent struct {
 	Type         string
 	State        *GameStateView // Type == state のとき
@@ -268,7 +261,6 @@ func (u *GameUsecase) findOrRestore(ctx context.Context, userID uuid.UUID) (*gam
 	return s, nil
 }
 
-// buildSession は保存された手を初期局面から順に適用して局面を復元する。
 func (u *GameUsecase) buildSession(stored *StoredGame) (*gameSession, error) {
 	game := domain.NewQuoridor()
 	applied := make(map[uuid.UUID]int, len(stored.Actions))
@@ -335,16 +327,14 @@ func (u *GameUsecase) evict(s *gameSession) {
 	}
 }
 
-// Events はこの接続へ流れるイベント。
 func (c *GameClient) Events() <-chan GameEvent { return c.events }
 
-// Done は Close されたら閉じる。イベント読み側の終了合図。
+// Done は Close されたら閉じる。
 func (c *GameClient) Done() <-chan struct{} { return c.done }
 
-// UserID はこの接続のユーザー。
 func (c *GameClient) UserID() uuid.UUID { return c.user.ID }
 
-// Seat はこの接続の座席。対局に入っていなければ -1。
+// Seat は対局に入っていなければ -1。
 func (c *GameClient) Seat() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -389,7 +379,6 @@ func (c *GameClient) JoinQueue(ctx context.Context) error {
 	u.mu.Unlock()
 
 	if err := u.startMatch(ctx, opponent, c); err != nil {
-		// 対戦を作れなかったら相手を列へ戻す。
 		u.mu.Lock()
 		u.waiting = append([]*GameClient{opponent}, u.waiting...)
 		u.mu.Unlock()
@@ -429,7 +418,6 @@ func (c *GameClient) Watch(ctx context.Context, matchID uuid.UUID) error {
 	c.mu.Unlock()
 	if current != nil {
 		if current.matchID == matchID {
-			// 同じ対局を観戦し直しただけ。最新の盤面を送り直す。
 			current.sendState(c)
 			return nil
 		}
@@ -457,7 +445,7 @@ func (c *GameClient) Unwatch() {
 	s.detach(c, seat)
 }
 
-// ListLive は観戦できる進行中の対局一覧。観戦者数はメモリ上のセッションから埋める。
+// ListLive の観戦者数と手数はメモリ上のセッションから埋める。
 func (u *GameUsecase) ListLive(ctx context.Context, limit, offset int) ([]LiveMatch, int, error) {
 	matches, total, err := u.repo.ListLiveMatches(ctx, limit, offset)
 	if err != nil {
@@ -476,7 +464,6 @@ func (u *GameUsecase) ListLive(ctx context.Context, limit, offset int) ([]LiveMa
 	return matches, total, nil
 }
 
-// sessionByID はメモリ上のセッションを探し、無ければ DB から復元する。
 func (u *GameUsecase) sessionByID(ctx context.Context, matchID uuid.UUID) (*gameSession, error) {
 	u.mu.Lock()
 	if s, ok := u.sessions[matchID]; ok {
@@ -503,7 +490,6 @@ func (u *GameUsecase) sessionByID(ctx context.Context, matchID uuid.UUID) (*game
 	return s, nil
 }
 
-// LeaveQueue は待機列から抜ける。並んでいなければ何もしない。
 func (c *GameClient) LeaveQueue() {
 	u := c.u
 	u.mu.Lock()
@@ -629,7 +615,6 @@ func (s *gameSession) attach(c *GameClient) {
 	}
 }
 
-// sendState はいまの盤面を 1 接続へ送る。
 func (s *gameSession) sendState(c *GameClient) {
 	s.mu.Lock()
 	view := s.viewLocked()
@@ -637,7 +622,6 @@ func (s *gameSession) sendState(c *GameClient) {
 	c.push(GameEvent{Type: GameEventState, State: view})
 }
 
-// broadcastState はいまの盤面を全接続へ送る。
 func (s *gameSession) broadcastState() {
 	s.mu.Lock()
 	view := s.viewLocked()
@@ -693,14 +677,12 @@ func (s *gameSession) detach(c *GameClient, seat int) {
 	}
 }
 
-// closedForBroadcast は決着済みで配る意味がないかどうか。
 func (s *gameSession) closedForBroadcast() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.game.Finished()
 }
 
-// act は 1 操作の本体。適用できたら全員に新しい盤面を配る。
 func (s *gameSession) act(ctx context.Context, from *GameClient, seat int, in GameActionInput) (finished bool, err error) {
 	s.mu.Lock()
 
@@ -796,15 +778,13 @@ func (s *gameSession) act(ctx context.Context, from *GameClient, seat int, in Ga
 	return false, nil
 }
 
-// onTurnTimeout は持ち時間切れ。手番側の負けで決着させる。
 func (s *gameSession) onTurnTimeout() {
 	s.forceFinish(func(s *gameSession) (loserSeat int, actionType, resultType string, skip bool) {
 		return s.game.Turn, domain.GameActionTimeout, domain.ResultTimeout, false
 	})
 }
 
-// onGraceExpired は再接続の猶予切れ。戻ってこなかった側の負け。
-// 両者とも居なければ中断として決着させる。
+// onGraceExpired は戻ってこなかった側の負け。両者とも居なければ中断にする。
 func (s *gameSession) onGraceExpired(seat int) {
 	s.forceFinish(func(s *gameSession) (loserSeat int, actionType, resultType string, skip bool) {
 		if s.conns[seat] > 0 {

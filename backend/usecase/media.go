@@ -24,7 +24,6 @@ import (
 	"transcendence-backend/domain"
 )
 
-// MediaRepository はアップロード済みファイルのメタ情報の永続化。
 type MediaRepository interface {
 	CreateAsset(ctx context.Context, asset *domain.MediaAsset, storageKey string) error
 	// GetOwnedAsset は owner のアセットを返す。他人のものは domain.ErrMediaNotFound。
@@ -36,13 +35,11 @@ type MediaRepository interface {
 	SoftDeleteAsset(ctx context.Context, assetID, ownerID uuid.UUID) error
 }
 
-// FileStore はファイル本体の置き場所。実装はローカルディスク。
 type FileStore interface {
 	Save(key string, data []byte) error
 	Open(key string) (io.ReadSeekCloser, error)
 }
 
-// MediaUsecase はアバター画像の受け入れ・配信・削除を進める。
 type MediaUsecase struct {
 	repo  MediaRepository
 	store FileStore
@@ -52,9 +49,7 @@ func NewMediaUsecase(repo MediaRepository, store FileStore) *MediaUsecase {
 	return &MediaUsecase{repo: repo, store: store}
 }
 
-// UploadAvatar は画像を検証してから保存する。
-//
-// 検証は申告された Content-Type ではなく中身で行う:
+// UploadAvatar の検証は申告された Content-Type ではなく中身で行う:
 // 1. サイズ上限（handler 側の MaxBytesReader が第一関門、ここは保険）
 // 2. 先頭バイトの sniff で MIME を判定し、許可リストと突き合わせる
 // 3. 実際に画像としてデコードできることを確かめ、寸法を取る
@@ -104,7 +99,7 @@ func (u *MediaUsecase) UploadAvatar(ctx context.Context, ownerID uuid.UUID, file
 	return asset, nil
 }
 
-// OpenAsset は配信用にファイルを開く。active なものだけ。
+// OpenAsset は active なものだけ開く。
 func (u *MediaUsecase) OpenAsset(ctx context.Context, assetID uuid.UUID) (*domain.MediaAsset, io.ReadSeekCloser, error) {
 	asset, storageKey, err := u.repo.GetActiveAsset(ctx, assetID)
 	if err != nil {
@@ -117,17 +112,15 @@ func (u *MediaUsecase) OpenAsset(ctx context.Context, assetID uuid.UUID) (*domai
 	return asset, file, nil
 }
 
-// GetOwned は自分のアセット 1 件。
 func (u *MediaUsecase) GetOwned(ctx context.Context, assetID, ownerID uuid.UUID) (*domain.MediaAsset, error) {
 	return u.repo.GetOwnedAsset(ctx, assetID, ownerID)
 }
 
-// List は自分のアップロード一覧。
 func (u *MediaUsecase) List(ctx context.Context, ownerID uuid.UUID, purpose string, limit, offset int) ([]domain.MediaAsset, int, error) {
 	return u.repo.ListAssets(ctx, ownerID, purpose, limit, offset)
 }
 
-// Delete は論理削除。使用中のアバターならデフォルトに戻る（repo が同一トランザクションで外す）。
+// Delete は論理削除。使用中のアバターなら repo が同一トランザクションで外す。
 // ファイル本体は消さない。配信は status を見て止まるので急がなくてよい。
 func (u *MediaUsecase) Delete(ctx context.Context, assetID, ownerID uuid.UUID) error {
 	return u.repo.SoftDeleteAsset(ctx, assetID, ownerID)

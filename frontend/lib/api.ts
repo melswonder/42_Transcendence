@@ -18,7 +18,6 @@ export function apiUrl(path: string): string {
   return `${API_BASE}/${path.replace(/^\/+/, "")}`;
 }
 
-/** サーバー側から呼ぶ版の apiUrl。 */
 export function serverApiUrl(path: string): string {
   return `${SERVER_API_BASE}/${path.replace(/^\/+/, "")}`;
 }

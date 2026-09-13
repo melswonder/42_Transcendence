@@ -43,7 +43,6 @@ export interface GameState {
   turnDeadline: string;
   players: [GamePlayer, GamePlayer];
   connected: [boolean, boolean];
-  /** いま観戦している人数。 */
   spectators: number;
 }
 

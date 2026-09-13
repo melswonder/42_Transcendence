@@ -23,7 +23,6 @@ func NewPresenceHub() *PresenceHub {
 	return &PresenceHub{seen: make(map[uuid.UUID]time.Time)}
 }
 
-// Touch はユーザーを見かけたことを記録する。
 func (h *PresenceHub) Touch(userID uuid.UUID) {
 	h.mu.Lock()
 	defer h.mu.Unlock()

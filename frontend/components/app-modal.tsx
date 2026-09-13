@@ -5,7 +5,6 @@ import { Modal, Text } from "@mantine/core";
 
 /** アプリ共通のモーダル。
  * 見た目（中央寄せ・角丸・オーバーレイ）をここで揃え、中身は children で差し替える。
- * 勝敗の表示や確認ダイアログなど、種類が増えてもこの殻だけを使い回す。
  */
 export function AppModal({
   opened,

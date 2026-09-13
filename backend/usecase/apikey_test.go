@@ -68,7 +68,6 @@ func (r *fakeAPIKeyRepo) RevokeKey(_ context.Context, keyID, userID uuid.UUID) e
 
 func (r *fakeAPIKeyRepo) TouchKey(_ context.Context, _ uuid.UUID) {}
 
-// allowAllLimiter はテスト用。常に許可する。
 type allowAllLimiter struct{}
 
 func (allowAllLimiter) Allow(uuid.UUID) (bool, int, int, time.Time) {

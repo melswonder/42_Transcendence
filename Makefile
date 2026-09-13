@@ -5,26 +5,21 @@ all: build up
 build:
 	docker compose -f $(COMPOSE_FILE) build
 
-# 構築 起動
 up:
 	docker compose -f $(COMPOSE_FILE) up
 
-# 停止 削除　ボリューム化してないものは消える
+# ボリューム化していないデータは消える
 down:
 	docker compose -f $(COMPOSE_FILE) down
 
-# 一時停止
 stop:
 	docker compose -f $(COMPOSE_FILE) stop
 
-# 再開
 start:
 	docker compose -f $(COMPOSE_FILE) start
 
-# 再起動
 restart: down up
 
-# 各コンテナの
 logs:
 	docker compose -f $(COMPOSE_FILE) logs -f
 
@@ -40,15 +35,12 @@ fclean: down
 
 re: fclean all
 
-# 状態
 status:
 	docker compose -f $(COMPOSE_FILE) ps
 
-# イメージ
 images:
 	docker images
 
-# shellに入る
 exec-db:
 	docker exec -it postgres psql -U postgres -d transcendence
 
@@ -58,8 +50,8 @@ exec-backend:
 exec-frontend:
 	docker exec -it frontend bash
 
-# --- 開発用: frontend をホットリロードの dev サーバーで動かす --------------
-# 既定（make up）は本番ビルド。コードを書いている間はこちらを使う。
+# 開発用: frontend をホットリロードの dev サーバーで動かす。
+# 既定（make up）は本番ビルド。
 COMPOSE_DEV = -f docker-compose.yml -f docker-compose.dev.yml
 
 build-dev:

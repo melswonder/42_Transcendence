@@ -65,7 +65,6 @@ func (u ProfileUpdate) Validate() error {
 	return nil
 }
 
-// ValidateHandle は handle として使える形かを確かめる。
 func ValidateHandle(handle string) error {
 	if len(handle) < handleMinLen || len(handle) > HandleMaxLen {
 		return ErrInvalidHandle

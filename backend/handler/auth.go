@@ -13,7 +13,6 @@ import (
 	"transcendence-backend/usecase"
 )
 
-// Cookie 名。
 const (
 	sessionCookie = "session"
 	stateCookie   = "oauth_state"
@@ -30,11 +29,6 @@ type AuthConfig struct {
 	SecureCookie bool
 }
 
-// AuthHandler は認証の HTTP 入口。Cookie の出し入れとリダイレクトだけを担い、判断は usecase に任せる。
-// Start は GET /auth/google。state / nonce を Cookie に預けて、Google の同意画面へ 302 で送る。
-// Callback は GET /auth/google/callback。state を照合してログインを成立させ、セッション Cookie を配る。
-// Me は GET /auth/me。ログイン中のユーザーを JSON で返す。未ログインなら 401。
-// Logout は POST /auth/logout。セッションを失効させて Cookie を消す。
 type AuthHandler struct {
 	uc  *usecase.AuthUsecase
 	cfg AuthConfig
@@ -101,7 +95,7 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ここで初めてログイン成立。生トークンは Cookie にしか出さない。
+	// 生トークンは Cookie にしか出さない。
 	h.setCookie(w, sessionCookie, result.SessionToken, time.Until(result.ExpiresAt))
 
 	http.Redirect(w, r, h.cfg.FrontendURL, http.StatusFound)

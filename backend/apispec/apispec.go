@@ -8,9 +8,6 @@
 //     フロントや外部クライアントが spec を見て並行で作業できるようにするため
 //   - infrastructure のモデルをそのまま外に出さないため。
 //     password_hash / token_hash / storage_key は公開 API に載せてはいけない
-//
-// 実装を始めるときは、対応する型を handler 層へ移し、アノテーションを実際の
-// ハンドラー関数のコメントへ移すとよい（その場合はこのパッケージを削除する）。
 package apispec
 
 // ErrorResponse は全エンドポイント共通の失敗時の形。

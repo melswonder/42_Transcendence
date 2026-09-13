@@ -4,7 +4,6 @@ FROM golang:1.26-alpine
 
 WORKDIR /app
 
-# ホットリロード用ツール air をインストール
 RUN go install github.com/air-verse/air@latest
 
 # migration を適用するために入れる。apk には無いのでリリースバイナリを直接取得する。
@@ -20,21 +19,15 @@ RUN apk add --no-cache curl \
 		"https://release.ariga.io/atlas/atlas-linux-${atlas_arch}-${ATLAS_VERSION}" \
 	&& chmod +x /usr/local/bin/atlas
 
-# 依存関係ファイルをコピー
 COPY go.mod go.sum* ./
-
-# 依存関係をダウンロード
 RUN go mod download
 
-# アプリケーションコードをコピー
 COPY . .
 
-# ポートを公開
 EXPOSE 4000
 
 # /app は compose でホストの ./backend にマウント上書きされるので、その外に置く。
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["docker-entrypoint.sh"]
 
-# air でホットリロード起動（開発モード）
 CMD ["air", "-c", ".air.toml"]

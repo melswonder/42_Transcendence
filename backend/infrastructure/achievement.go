@@ -39,9 +39,7 @@ func (r *AchievementRepo) UnlockedAt(ctx context.Context, userID uuid.UUID) (map
 	return unlocked, nil
 }
 
-// Unlock は解除済みとして記録する。
-//
-// 同じ実績を二重に解除しようとしても落とさない（DoNothing）。
+// Unlock は同じ実績を二重に解除しようとしても落とさない（DoNothing）。
 // 対戦の記録と同時に走るので、競合しても静かに片方が勝てばよい。
 func (r *AchievementRepo) Unlock(ctx context.Context, userID uuid.UUID, codes []string) error {
 	if len(codes) == 0 {

@@ -10,25 +10,21 @@ import (
 	"transcendence-backend/domain"
 )
 
-// MatchFilter は履歴・集計の共通の絞り込み。
-// ゼロ値は「絞らない」を意味する（From/To は零時刻、Mode/Outcome は空文字）。
+// MatchFilter は履歴・集計の共通の絞り込み。ゼロ値のフィールドは絞らない。
 type MatchFilter struct {
-	From    *time.Time
-	To      *time.Time
-	Mode    string
-	Outcome string
-	// Opponent を指定すると「この相手との対戦」だけに絞る。
+	From     *time.Time
+	To       *time.Time
+	Mode     string
+	Outcome  string
 	Opponent *uuid.UUID
 	Limit    int
 	Offset   int
 }
 
-// MatchRepository は対戦の永続化。実装は infrastructure 層にある。
 // RecordMatch は 1 対戦とその参加者を保存し、参加者のレーティング・XP・レベルを更新する。
-// 途中で失敗したら何も残さない（1 トランザクションで行う）。
+// 1 トランザクションで行うので、途中で失敗したら何も残さない。
 // ListMatches は自分が参加した決着済みの対戦を新しい順に返す。
-// CountMatches は同じ絞り込みでの総件数を返す（ページングの total 用）。
-// UsersByID は複数ユーザーをまとめて引く。存在しない ID は結果に入らない。
+// UsersByID は存在しない ID を結果に入れない。
 type MatchRepository interface {
 	RecordMatch(ctx context.Context, match domain.Match) error
 	ListMatches(ctx context.Context, userID uuid.UUID, f MatchFilter) ([]domain.MatchRecord, error)
@@ -48,7 +44,6 @@ type MatchNotifier interface {
 	NotifyMatchRecorded(match domain.Match)
 }
 
-// MatchUsecase は対戦結果の記録と履歴の取得を進める。
 type MatchUsecase struct {
 	repo         MatchRepository
 	notifier     MatchNotifier
@@ -62,9 +57,7 @@ func NewMatchUsecase(
 	return &MatchUsecase{repo: repo, notifier: notifier, achievements: achievements, now: time.Now}
 }
 
-// RecordMatch は決着した対戦を記録する。
-//
-// レーティングと XP はここで計算する。クライアントの申告をそのまま保存すると
+// RecordMatch はレーティングと XP をここで計算する。クライアントの申告をそのまま保存すると
 // いくらでも詐称できるため、受け取るのは「誰が・どの席で・勝ったか負けたか」だけ。
 func (u *MatchUsecase) RecordMatch(
 	ctx context.Context, match domain.Match,
@@ -108,9 +101,7 @@ func (u *MatchUsecase) RecordMatch(
 	return &match, users, nil
 }
 
-// applyRatings は各参加者の rating_before / rating_after / xp_gained を埋める。
-//
-// レーティングが動くのはランク戦だけ。練習や身内戦で下がると、
+// applyRatings でレーティングが動くのはランク戦だけ。練習や身内戦で下がると、
 // 対戦相手を選ぶ動機が歪むため。XP は全モードで入る。
 func applyRatings(
 	mode string, participants []domain.MatchParticipant, users map[uuid.UUID]domain.User,
@@ -147,7 +138,6 @@ func (u *MatchUsecase) syncAchievements(ctx context.Context, match domain.Match)
 	}
 }
 
-// ListMatches は履歴とその総件数を返す。
 func (u *MatchUsecase) ListMatches(
 	ctx context.Context, userID uuid.UUID, f MatchFilter,
 ) ([]domain.MatchRecord, int, error) {

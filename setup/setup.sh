@@ -1,15 +1,6 @@
 #!/usr/bin/env bash
-# ------------------------------------------------------------
-# 42_Transcendence ローカル開発環境セットアップ
-#   OS（macOS / Linux）を自動判定し、Go と TypeScript の
-#   両方（またはどちらか一方）をセットアップする。
-#
-# 使い方:
-#   ./setup.sh              # バックエンドとフロントエンド両方
-#   ./setup.sh backend      # バックエンド（Go）だけ
-#   ./setup.sh frontend     # フロントエンド（TypeScript）だけ
-#   ./setup.sh -h           # ヘルプ
-# ------------------------------------------------------------
+# ローカル開発環境セットアップ。OS（macOS / Linux）を自動判定する。
+# 使い方は ./setup.sh -h
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -27,7 +18,6 @@ Usage: ./setup.sh [target]
 EOF
 }
 
-# --- OS 判定 ---
 case "$(uname -s)" in
   Darwin) OS=macos ;;
   Linux)  OS=linux ;;
@@ -36,7 +26,6 @@ esac
 
 TARGET="${1:-all}"
 
-# --- .env を用意 ---
 setup_env() {
   if [ -f "$ROOT_DIR/.env" ]; then
     echo "✅ .env は既に存在します"

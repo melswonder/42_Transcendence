@@ -318,7 +318,6 @@ func (h *GameHandler) writeError(ctx context.Context, conn *websocket.Conn, err 
 	_ = wsjson.Write(ctx, conn, wsServerMessage{Type: "error", Code: code, Message: err.Error()})
 }
 
-// ライブ一覧の 1 行。
 type liveMatchResponse struct {
 	MatchID    string      `json:"match_id"`
 	Mode       string      `json:"mode"`
