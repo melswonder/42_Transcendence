@@ -90,33 +90,31 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
       args:
-        # NEXT_PUBLIC_* はビルド時にバンドルへ焼き込まれるので、runtime の
-        # environment だけでは効かない。同じ値を build arg でも渡す。
+        # NEXT_PUBLIC_* はビルド時にバンドルへ焼き込まれる。下の environment
+        # だけでは効かないので、同じ値をここにも渡す。
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://localhost/api}
     ports:
       - "3000:3000"
     environment:
-      # ブラウザから見た API の入口。Caddy がフロントと同一オリジンの /api を
-      # backend へ流す。別オリジンにすると Cookie がクロスサイト扱いになり、
-      # ブラウザ側の判定次第でセッションが保存されない。
+      # ブラウザから見た API の入口。Caddy が同一オリジンの /api を backend へ
+      # 流す。別オリジンにすると Cookie がクロスサイト扱いになり保存されない。
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://localhost/api}
-      # Server Component から呼ぶとき用。コンテナ内では localhost は
-      # frontend 自身を指すので、サービス名で backend を呼ぶ。
+      # Server Component から呼ぶとき用。コンテナ内の localhost は frontend
+      # 自身なので、サービス名で backend を呼ぶ。
       API_URL: http://backend:4000
-      # 別 PC からアクセスさせるときの追加ホスト（next.config の allowedDevOrigins）。
+      # dev サーバーの allowedDevOrigins 用（別 PC からアクセスするとき）。
       PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
     depends_on:
       backend:
         condition: service_healthy
-    # standalone の server.js は HOSTNAME の指定どおり IPv4 だけで待つ。
-    # localhost だとコンテナ内で ::1 が先に選ばれて繋がらないので IPv4 を明示する。
     healthcheck:
+      # localhost はコンテナ内で ::1 が先に選ばれる。server.js は IPv4 だけで
+      # 待つので IPv4 を明示する。
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/"]
       interval: 60s
       timeout: 15s
       retries: 3
-      # ビルド済みなので起動は一瞬（Ready in 〜100ms）。dev のような初回
-      # コンパイル待ちが無いぶん短くしてよい。
+      # ビルド済みなので起動は一瞬（Ready in 〜100ms）。
       start_period: 30s
       start_interval: 2s
     networks:

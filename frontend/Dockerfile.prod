@@ -1,29 +1,28 @@
-# 評価・動作確認用の本番ビルド。
-# pnpm dev はコンソールに Fast Refresh や React DevTools の案内を出すので、
+# 本番・評価用のフロントエンド。next build の成果物を standalone で動かす。
+# dev サーバーは Fast Refresh などをブラウザのコンソールに出すので、コンソールを
+# 検査する用途ではこちらを使う。dev 構成は docker-compose.dev.yml。
 
 FROM node:22-alpine AS build
-WORKDIR /build
+WORKDIR /app
 RUN corepack enable pnpm
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN corepack install && pnpm install --frozen-lockfile
 COPY . .
-# NEXT_PUBLIC_* はビルド時にバンドルへ焼き込まれる。runtime の environment では
-# 効かないので、必ず build arg で渡す。
+# NEXT_PUBLIC_* はバンドルへ焼き込まれるので、runtime の env では効かない。
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL NEXT_STANDALONE=1
 RUN pnpm build
 
 FROM node:22-alpine
-WORKDIR /srv
+WORKDIR /app
 ENV NODE_ENV=production
-# standalone は server.js と実行に必要な node_modules だけを含む。
-# static と public は別途コピーが必要（Next の仕様）。
-COPY --from=build /build/.next/standalone ./
-COPY --from=build /build/.next/static ./.next/static
-COPY --from=build /build/public ./public
-# Docker は HOSTNAME にコンテナ ID を入れる。standalone の server.js はそれを
-# bind アドレスとして使うので 0.0.0.0 に上書きする（caddy は別コンテナなので
-# 127.0.0.1 では届かない）。
+# standalone に入るのは server.js と実行に必要な node_modules だけ。
+# static と public は別途コピーする必要がある。
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
+COPY --from=build /app/public ./public
+# Docker は HOSTNAME にコンテナ ID を入れる。server.js はそれを bind アドレスに
+# 使うので、caddy から届くよう 0.0.0.0 に上書きする。
 ENV HOSTNAME=0.0.0.0 PORT=3000
 EXPOSE 3000
 CMD ["node", "server.js"]

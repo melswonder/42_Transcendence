@@ -82,6 +82,7 @@ export function PasswordAuthForm({ mode }: { mode: "login" | "signup" }) {
           <>
             <TextInput
               label={t("displayName")}
+              autoComplete="nickname"
               value={displayName}
               onChange={(e) => setDisplayName(e.currentTarget.value)}
               maxLength={50}
@@ -89,6 +90,7 @@ export function PasswordAuthForm({ mode }: { mode: "login" | "signup" }) {
             />
             <TextInput
               label={t("handle")}
+              autoComplete="username"
               description={t("handleHint")}
               value={handle}
               onChange={(e) => setHandle(e.currentTarget.value.toLowerCase())}
@@ -101,12 +103,16 @@ export function PasswordAuthForm({ mode }: { mode: "login" | "signup" }) {
         <TextInput
           label={t("email")}
           type="email"
+          autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.currentTarget.value)}
           required
         />
         <PasswordInput
           label={t("password")}
+          // Chrome は autocomplete の無いパスワード欄に警告を出す。
+          // 登録は new-password、ログインは current-password が正しい値。
+          autoComplete={mode === "signup" ? "new-password" : "current-password"}
           description={mode === "signup" ? t("passwordHint") : undefined}
           value={password}
           onChange={(e) => setPassword(e.currentTarget.value)}
@@ -117,6 +123,7 @@ export function PasswordAuthForm({ mode }: { mode: "login" | "signup" }) {
         {mode === "signup" && (
           <PasswordInput
             label={t("passwordConfirm")}
+            autoComplete="new-password"
             value={confirm}
             onChange={(e) => setConfirm(e.currentTarget.value)}
             required
