@@ -23,9 +23,13 @@ export function useStatsStream() {
     source.addEventListener("match_recorded", () => router.refresh());
 
     // 切断時の再接続は EventSource 側が自動で行うので、ここでは何もしない。
-    // ログを出すだけにしておかないと、再接続のたびに握り潰したことに気付けない。
-    source.onerror = () =>
-      console.warn("stats stream: connection lost, reconnecting");
+    // 開発中は握り潰したことに気付けるようログだけ出す。本番で出すと
+    // 「コンソールに警告が無いこと」を確かめる邪魔になるので dev 限定。
+    source.onerror = () => {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("stats stream: connection lost, reconnecting");
+      }
+    };
 
     return () => source.close();
   }, [router]);
