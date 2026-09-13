@@ -1,0 +1,22 @@
+# 開発用オーバーライド: frontend をホットリロードする dev サーバーに戻す。
+#   make build-dev && make up-dev
+#
+# 既定（docker-compose.yml 単体 = make up）は本番ビルド。
+# dev サーバーは Fast Refresh や React DevTools の案内をブラウザの
+# コンソールに出すので、コンソールを検査する用途には使わない。
+services:
+  frontend:
+    # 本番ビルドのイメージを上書きしないよう別タグにする。
+    image: transcendence-frontend-dev
+    build:
+      dockerfile: Dockerfile
+    # dev では NEXT_PUBLIC_* がリクエスト時に解決されるので build arg は不要。
+    # ソースを覗かせてホットリロードを効かせる。node_modules と .next は
+    # コンテナ側のものを使うため匿名ボリュームで隠す。
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    # 初回アクセスの Turbopack コンパイルを起動時に済ませる。
+    healthcheck:
+      start_period: 120s

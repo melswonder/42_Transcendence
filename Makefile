@@ -58,4 +58,21 @@ exec-backend:
 exec-frontend:
 	docker exec -it frontend bash
 
-.PHONY: all build up down stop start restart logs clean fclean re status exec-postgres exec-backend exec-frontend
+# --- 開発用: frontend をホットリロードの dev サーバーで動かす --------------
+# 既定（make up）は本番ビルド。コードを書いている間はこちらを使う。
+COMPOSE_DEV = -f docker-compose.yml -f docker-compose.dev.yml
+
+build-dev:
+	docker compose $(COMPOSE_DEV) build
+
+up-dev:
+	docker compose $(COMPOSE_DEV) up
+
+down-dev:
+	docker compose $(COMPOSE_DEV) down
+
+re-dev: down-dev build-dev up-dev
+
+.PHONY: all build up down stop start restart logs clean fclean re status \
+	exec-postgres exec-backend exec-frontend \
+	build-dev up-dev down-dev re-dev

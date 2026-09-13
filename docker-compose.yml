@@ -88,7 +88,11 @@ services:
     container_name: frontend
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
+      args:
+        # NEXT_PUBLIC_* はビルド時にバンドルへ焼き込まれるので、runtime の
+        # environment だけでは効かない。同じ値を build arg でも渡す。
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://localhost/api}
     ports:
       - "3000:3000"
     environment:
@@ -104,18 +108,17 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    # 初回アクセスの Turbopack コンパイルもここで済ませて、開いた瞬間から表示できるようにする。
+    # standalone の server.js は HOSTNAME の指定どおり IPv4 だけで待つ。
+    # localhost だとコンテナ内で ::1 が先に選ばれて繋がらないので IPv4 を明示する。
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/"]
       interval: 60s
       timeout: 15s
       retries: 3
-      start_period: 120s
+      # ビルド済みなので起動は一瞬（Ready in 〜100ms）。dev のような初回
+      # コンパイル待ちが無いぶん短くしてよい。
+      start_period: 30s
       start_interval: 2s
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
     networks:
       - transcendence-network
 
