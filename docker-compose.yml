@@ -60,7 +60,7 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       # Google Cloud Console に登録した値と完全一致させる必要がある。
       # ブラウザがアクセスする URL なので db や backend ではなく localhost。
-      GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL:-https://localhost:8443/auth/google/callback}
+      GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL}
       # ログイン後の戻り先。
       FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
     depends_on:
